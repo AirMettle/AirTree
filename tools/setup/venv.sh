@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+. "$ROOT_DIR/tools/utils/import.sh"
+
+import utils/common_func.sh
+import utils/build_utils.sh
+
+# Determine whether to use sudo (CodeBuild containers typically run as root)
+determine_sudo() {
+    if command -v sudo >/dev/null 2>&1; then
+        echo "sudo"
+    else
+        # If already root, no sudo needed; otherwise, bail out clearly
+        if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+            echo ""
+        else
+            log_error "sudo not found and not running as root. Install sudo or run as root."
+            exit 1
+        fi
+    fi
+}
+
+SUDO=$(determine_sudo)
+log_debug "Using sudo command: '${SUDO}'"
+
+PYTHON_VENV_DIR="${CMAKE_BUILD_DIR}/venv"
+
+# Avoid interactive prompts during apt operations
+export DEBIAN_FRONTEND=noninteractive
+
+log_info "Setting up Python environment..."
+
+# Find system Python
+find_system_python() {
+    find /bin /usr/bin /usr/local/bin -executable -name python3.12 | head -1 || true
+}
+
+SYSTEM_PYTHON=$(find_system_python)
+if [[ -z "$SYSTEM_PYTHON" ]]; then
+    log_error "Python 3.12 not found in standard locations"
+    exit 1
+fi
+log_info "Found system Python: $SYSTEM_PYTHON"
+
+# Create virtual environment if needed
+if [[ ! -x "${PYTHON_VENV_DIR}/bin/python3.12" ]]; then
+    log_info "Creating virtual environment..."
+
+    run_step "Removing existing venv directory" rm -rf "${PYTHON_VENV_DIR}"
+
+    # Try stdlib venv first
+    if run_step --allow-fail "Creating venv with stdlib venv" "${SYSTEM_PYTHON}" -m venv "${PYTHON_VENV_DIR}"; then
+        log_success "Created virtual environment with stdlib venv"
+    else
+        log_warn "stdlib venv failed (likely ensurepip missing). Attempting OS package install..."
+
+        if command -v apt >/dev/null 2>&1; then
+            # Get Python version
+            PYVER=$("${SYSTEM_PYTHON}" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+            log_debug "Python version: $PYVER"
+
+            run_step --allow-fail "Updating apt package list" ${SUDO} apt update
+
+            # Try to install venv package
+            if run_step --allow-fail "Installing python venv package" ${SUDO} apt install -y "python${PYVER}-venv"; then
+                log_debug "Installed python${PYVER}-venv package"
+            else
+                run_step "Installing python3.12-venv package" ${SUDO} apt install -y python3.12-venv
+            fi
+
+            # Try venv again
+            if run_step --allow-fail "Creating venv after package install" "${SYSTEM_PYTHON}" -m venv "${PYTHON_VENV_DIR}"; then
+                log_success "Created virtual environment with stdlib venv (after installing OS package)"
+            else
+                log_warn "stdlib venv still failing; falling back to virtualenv..."
+                create_venv_with_virtualenv
+            fi
+        else
+            log_info "apt not available; falling back to virtualenv..."
+            create_venv_with_virtualenv
+        fi
+    fi
+fi
+
+create_venv_with_virtualenv() {
+    # Install virtualenv if not present
+    if ! "${SYSTEM_PYTHON}" -m pip show virtualenv >/dev/null 2>&1; then
+        run_step "Installing virtualenv" "${SYSTEM_PYTHON}" -m pip install --user virtualenv
+    fi
+
+    run_step "Creating venv with virtualenv" \
+        env DEB_PYTHON_INSTALL_LAYOUT='deb' "${SYSTEM_PYTHON}" -m virtualenv "${PYTHON_VENV_DIR}"
+
+    log_success "Created virtual environment with virtualenv"
+}
+
+# Activate venv
+log_info "Activating virtual environment..."
+source "${PYTHON_VENV_DIR}/bin/activate"
+
+VENV_PYTHON="$(python -c 'import sys; print(sys.executable)')"
+log_info "Using venv Python: ${VENV_PYTHON}"
+log_info "Python version: $(python -V)"
+
+# Bootstrap pip if missing
+if ! python -m pip --version >/dev/null 2>&1; then
+    log_warn "pip missing in venv; bootstrapping with ensurepip..."
+    run_step --allow-fail "Bootstrapping pip with ensurepip" python -m ensurepip --upgrade
+fi
+
+log_success "Python virtual environment setup complete."
+# Installing pyyaml in the venv for version parsing
+run_step "Running pip upgrade" python -m pip install --upgrade pip
+run_step "Installing pyyaml in venv" python -m pip install pyyaml==6.0.2

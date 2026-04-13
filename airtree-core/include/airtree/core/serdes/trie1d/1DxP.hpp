@@ -1,0 +1,32 @@
+#ifndef AIRTREE_CORE_SCHEMA_TRIE1D_1DXPSER_HPP
+#define AIRTREE_CORE_SCHEMA_TRIE1D_1DXPSER_HPP
+
+
+#include <airtree/core/schema/trie1d/1DxP.hpp>
+#include <memory>
+#include <vector>
+#include <airtree/core/common/TrieHeader.hpp>
+
+
+void serialize_1DxP(const TrieNode_20 *node, std::vector<char> &buffer,
+                    bool recursive = true);
+
+void serialize_1DxP_l1(const TrieNode_20_Level1 *node,
+                       std::vector<char> &buffer, bool recursive = true);
+
+void serialize_1DxP_l2(const TrieNode_20_Level2 *node,
+                       std::vector<char> &buffer);
+std::unique_ptr<TrieNode_20> deserialize_1DxP(const std::vector<char> &buffer,
+                                              size_t &offset);
+
+std::unique_ptr<TrieNode_20_Level1>
+deserialize_1DxP_l1(const std::vector<char> &buffer, size_t &offset,
+                    bool recursive = true);
+std::unique_ptr<TrieNode_20_Level2>
+deserialize_1DxP_l2(const std::vector<char> &buffer, size_t &offset);
+
+[[nodiscard]] std::pair<std::unique_ptr<TrieNode_20>, trie_header>
+processBuffer_1DxP(const std::vector<char> &buffer);
+
+
+#endif // AIRTREE_CORE_SCHEMA_TRIE1D_1DXPSER_HPP

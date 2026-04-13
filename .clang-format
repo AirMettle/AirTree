@@ -1,0 +1,35 @@
+# Use LLVM style as the base style
+BasedOnStyle: LLVM
+ColumnLimit: 80
+
+# Indentation settings
+UseTab: Never
+
+# Line break settings
+MaxEmptyLinesToKeep: 2
+
+# Formatting settings for function parameters and declarations
+PenaltyBreakBeforeFirstCallParameter: 0
+PenaltyBreakString: 120
+
+# Align and format comments
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
+
+# Spacing settings
+SpaceBeforeParens: ControlStatements
+IndentWidth: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+# Maintain readability around variables and parameters
+BreakBeforeBraces: Attach
+BreakBeforeBinaryOperators: NonAssignment
+AllowShortFunctionsOnASingleLine: Empty
+
+# Sorting and alignment settings
+SortIncludes: Never
+PointerAlignment: Right
+
+# Additional readability settings
+AllowShortBlocksOnASingleLine: Empty
+Cpp11BracedListStyle: true
