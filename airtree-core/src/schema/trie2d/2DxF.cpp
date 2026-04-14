@@ -151,10 +151,7 @@ std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
         // Check special conditions and set ndims accordingly
         unsigned int isTle1Special = update_special_counts(tle1, specialCounts);
         unsigned int isTle2Special = update_special_counts(tle2, specialCounts);
-        // unsigned int isTle1Special =
-        // (tle1.TLE == 0 || tle1.TLE == 1 || tle1.TLE == 4 || tle1.TLE == 7);
-        // unsigned int isTle2Special =
-        // (tle2.TLE == 0 || tle2.TLE == 1 || tle2.TLE == 4 || tle2.TLE == 7);
+
         unsigned int ndims = (~((isTle1Special << 1) | isTle2Special)) & 0x3;
 
         unsigned int combined = 0;

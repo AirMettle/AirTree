@@ -64,11 +64,14 @@ TEST(Generate_2d_test_data_splits, Generate_2d_test_data_splits_fntest) {
   options.type = ConfigType::XP;
   // Split each dim's vector into two parts to generate two separate histogram
   // buffers
-  std::vector<char> piece1 = generate(dim1_part1, dim2_part1, options);
+  std::vector<char> piece1 =
+      airtree::core::api::generate(dim1_part1, dim2_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  std::vector<char> piece2 = generate(dim1_part2, dim2_part2, options);
+  std::vector<char> piece2 =
+      airtree::core::api::generate(dim1_part2, dim2_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  std::vector<char> result = generate(dim1_data, dim2_data, options);
+  std::vector<char> result =
+      airtree::core::api::generate(dim1_data, dim2_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_2DxP.bin");
   AirTreeWriter::Write(piece1, "2DxP_piece1.bin");
@@ -76,11 +79,11 @@ TEST(Generate_2d_test_data_splits, Generate_2d_test_data_splits_fntest) {
 
   options.type = ConfigType::XF;
   // Generate the 2DxF result
-  piece1 = generate(dim1_part1, dim2_part1, options);
+  piece1 = airtree::core::api::generate(dim1_part1, dim2_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  piece2 = generate(dim1_part2, dim2_part2, options);
+  piece2 = airtree::core::api::generate(dim1_part2, dim2_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  result = generate(dim1_data, dim2_data, options);
+  result = airtree::core::api::generate(dim1_data, dim2_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_2DxF.bin");
   AirTreeWriter::Write(piece1, "2DxF_piece1.bin");
@@ -96,7 +99,8 @@ TEST(Generate_2d_2x10, Generate_2d_2x10_fntest) {
   AirTreeOptions options;
   options.dimensions = 2;
   options.type = ConfigType::XP;
-  std::vector<char> result = generate(dim1_data, dim2_data, options);
+  std::vector<char> result =
+      airtree::core::api::generate(dim1_data, dim2_data, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -113,7 +117,8 @@ TEST(Generate_2d_88, DISABLED_Generate_2d_88_fntest) {
   AirTreeOptions options;
   options.dimensions = 2;
   options.type = ConfigType::XF;
-  std::vector<char> result = generate(dim1_data, dim2_data, options);
+  std::vector<char> result =
+      airtree::core::api::generate(dim1_data, dim2_data, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -288,7 +293,7 @@ TEST(HistogramSanity_2DxP, HistogramSanity_2DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 2;
   options.type = ConfigType::XP;
-  auto buffer = generate(dim1_data, dim2_data, options);
+  auto buffer = airtree::core::api::generate(dim1_data, dim2_data, options);
   verifyHistogramSanity2D(buffer, dim1_data, dim2_data);
   verifyBinAccuracy2DxP(buffer, dim1_data, dim2_data);
 }
@@ -324,7 +329,7 @@ TEST(MixedSpecialSanity_2D, MixedSpecialSanity_2DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 2;
   options.type = ConfigType::XP;
-  auto buffer = generate(d1, d2, options);
+  auto buffer = airtree::core::api::generate(d1, d2, options);
 
   // Total count must equal input row count (TLE files all rows)
   BinBoundary query(buffer);
@@ -354,7 +359,7 @@ TEST(Float32Sanity_2D, Float32Sanity_2DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 2;
   options.type = ConfigType::XP;
-  auto buffer = generate(float_d1, float_d2, options);
+  auto buffer = airtree::core::api::generate(float_d1, float_d2, options);
 
   std::vector<double> d1_dbl(float_d1.begin(), float_d1.end());
   std::vector<double> d2_dbl(float_d2.begin(), float_d2.end());
@@ -380,7 +385,7 @@ TEST(SaturationZoneSanity_2D, SaturationZoneSanity_2DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 2;
   options.type = ConfigType::XP;
-  auto buffer = generate(data, data, options);
+  auto buffer = airtree::core::api::generate(data, data, options);
   verifyHistogramSanity2D(buffer, data, data);
   verifyBinAccuracy2DxP(buffer, data, data);
 }

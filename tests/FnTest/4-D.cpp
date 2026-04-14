@@ -103,141 +103,143 @@ TEST(Generate_special_export_data, Generate_export_data_fntest) {
   options.dimensions = 2;
   options.type = ConfigType::XP;
   std::vector<char> result_2d_ss =
-      generate(special_data, special_data, options);
+      airtree::core::api::generate(special_data, special_data, options);
   AirTreeWriter::Write(result_2d_ss, "2DxP_special_special.bin");
 
   // [special, normal]
-  std::vector<char> result_2d_sn = generate(special_data, normal_data, options);
+  std::vector<char> result_2d_sn =
+      airtree::core::api::generate(special_data, normal_data, options);
   AirTreeWriter::Write(result_2d_sn, "2DxP_special_normal.bin");
 
   // [normal, special]
-  std::vector<char> result_2d_ns = generate(normal_data, special_data, options);
+  std::vector<char> result_2d_ns =
+      airtree::core::api::generate(normal_data, special_data, options);
   AirTreeWriter::Write(result_2d_ns, "2DxP_normal_special.bin");
 
   // [special, special, special]
   options.dimensions = 3;
   options.type = ConfigType::XP;
-  std::vector<char> result_3d_sss =
-      generate(special_data, special_data, special_data, options);
+  std::vector<char> result_3d_sss = airtree::core::api::generate(
+      special_data, special_data, special_data, options);
   AirTreeWriter::Write(result_3d_sss, "3DxP_special_special_special.bin");
 
   // [special, special, normal]
-  std::vector<char> result_3d_ssn =
-      generate(special_data, special_data, normal_data, options);
+  std::vector<char> result_3d_ssn = airtree::core::api::generate(
+      special_data, special_data, normal_data, options);
   AirTreeWriter::Write(result_3d_ssn, "3DxP_special_special_normal.bin");
 
   // [special, normal, special]
-  std::vector<char> result_3d_sns =
-      generate(special_data, normal_data, special_data, options);
+  std::vector<char> result_3d_sns = airtree::core::api::generate(
+      special_data, normal_data, special_data, options);
   AirTreeWriter::Write(result_3d_sns, "3DxP_special_normal_special.bin");
 
   // [normal, special, special]
-  std::vector<char> result_3d_nss =
-      generate(normal_data, special_data, special_data, options);
+  std::vector<char> result_3d_nss = airtree::core::api::generate(
+      normal_data, special_data, special_data, options);
   AirTreeWriter::Write(result_3d_nss, "3DxP_normal_special_special.bin");
 
   // [normal, normal, special]
-  std::vector<char> result_3d_nns =
-      generate(normal_data, normal_data, special_data, options);
+  std::vector<char> result_3d_nns = airtree::core::api::generate(
+      normal_data, normal_data, special_data, options);
   AirTreeWriter::Write(result_3d_nns, "3DxP_normal_normal_special.bin");
 
   // [normal, special, normal]
-  std::vector<char> result_3d_nsn =
-      generate(normal_data, special_data, normal_data, options);
+  std::vector<char> result_3d_nsn = airtree::core::api::generate(
+      normal_data, special_data, normal_data, options);
   AirTreeWriter::Write(result_3d_nsn, "3DxP_normal_special_normal.bin");
 
   // [special, normal, normal]
-  std::vector<char> result_3d_snn =
-      generate(special_data, normal_data, normal_data, options);
+  std::vector<char> result_3d_snn = airtree::core::api::generate(
+      special_data, normal_data, normal_data, options);
   AirTreeWriter::Write(result_3d_snn, "3DxP_special_normal_normal.bin");
 
   // [special, special, special, special]
   options.dimensions = 4;
   options.type = ConfigType::XP;
-  std::vector<char> result_4d_ssss =
-      generate(special_data, special_data, special_data, special_data, options);
+  std::vector<char> result_4d_ssss = airtree::core::api::generate(
+      special_data, special_data, special_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_ssss, "4DxP_special_special_special_special.bin");
 
   // [special, special, special, normal]
-  std::vector<char> result_4d_sssn =
-      generate(special_data, special_data, special_data, normal_data, options);
+  std::vector<char> result_4d_sssn = airtree::core::api::generate(
+      special_data, special_data, special_data, normal_data, options);
   AirTreeWriter::Write(
       result_4d_sssn, "4DxP_special_special_special_normal.bin");
 
   // [special, special, normal, special]
-  std::vector<char> result_4d_ssns =
-      generate(special_data, special_data, normal_data, special_data, options);
+  std::vector<char> result_4d_ssns = airtree::core::api::generate(
+      special_data, special_data, normal_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_ssns, "4DxP_special_special_normal_special.bin");
 
   // [special, normal, special, special]
-  std::vector<char> result_4d_snss =
-      generate(special_data, normal_data, special_data, special_data, options);
+  std::vector<char> result_4d_snss = airtree::core::api::generate(
+      special_data, normal_data, special_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_snss, "4DxP_special_normal_special_special.bin");
 
   // [normal, special, special, special]
-  std::vector<char> result_4d_nsss =
-      generate(normal_data, special_data, special_data, special_data, options);
+  std::vector<char> result_4d_nsss = airtree::core::api::generate(
+      normal_data, special_data, special_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_nsss, "4DxP_normal_special_special_special.bin");
 
   // [special, special, normal, normal]
-  std::vector<char> result_4d_ssnn =
-      generate(special_data, special_data, normal_data, normal_data, options);
+  std::vector<char> result_4d_ssnn = airtree::core::api::generate(
+      special_data, special_data, normal_data, normal_data, options);
   AirTreeWriter::Write(
       result_4d_ssnn, "4DxP_special_special_normal_normal.bin");
 
   // [special, normal, special, normal]
-  std::vector<char> result_4d_snsn =
-      generate(special_data, normal_data, special_data, normal_data, options);
+  std::vector<char> result_4d_snsn = airtree::core::api::generate(
+      special_data, normal_data, special_data, normal_data, options);
   AirTreeWriter::Write(
       result_4d_snsn, "4DxP_special_normal_special_normal.bin");
 
   // [special, normal, normal, special]
-  std::vector<char> result_4d_snns =
-      generate(special_data, normal_data, normal_data, special_data, options);
+  std::vector<char> result_4d_snns = airtree::core::api::generate(
+      special_data, normal_data, normal_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_snns, "4DxP_special_normal_normal_special.bin");
 
   // [normal, special, special, normal]
-  std::vector<char> result_4d_nssn =
-      generate(normal_data, special_data, special_data, normal_data, options);
+  std::vector<char> result_4d_nssn = airtree::core::api::generate(
+      normal_data, special_data, special_data, normal_data, options);
   AirTreeWriter::Write(
       result_4d_nssn, "4DxP_normal_special_special_normal.bin");
 
   // [normal, special, normal, special]
-  std::vector<char> result_4d_nsns =
-      generate(normal_data, special_data, normal_data, special_data, options);
+  std::vector<char> result_4d_nsns = airtree::core::api::generate(
+      normal_data, special_data, normal_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_nsns, "4DxP_normal_special_normal_special.bin");
 
   // [normal, normal, special, special]
-  std::vector<char> result_4d_nnss =
-      generate(normal_data, normal_data, special_data, special_data, options);
+  std::vector<char> result_4d_nnss = airtree::core::api::generate(
+      normal_data, normal_data, special_data, special_data, options);
   AirTreeWriter::Write(
       result_4d_nnss, "4DxP_normal_normal_special_special.bin");
 
   // [normal, normal, normal, special]
-  std::vector<char> result_4d_nnnn =
-      generate(normal_data, normal_data, normal_data, special_data, options);
+  std::vector<char> result_4d_nnnn = airtree::core::api::generate(
+      normal_data, normal_data, normal_data, special_data, options);
   AirTreeWriter::Write(result_4d_nnnn, "4DxP_normal_normal_normal_special.bin");
 
   // [normal, normal, special, normal]
-  std::vector<char> result_4d_nnsn2 =
-      generate(normal_data, normal_data, special_data, normal_data, options);
+  std::vector<char> result_4d_nnsn2 = airtree::core::api::generate(
+      normal_data, normal_data, special_data, normal_data, options);
   AirTreeWriter::Write(
       result_4d_nnsn2, "4DxP_normal_normal_special_normal.bin");
 
   // [normal, special, normal, normal]
-  std::vector<char> result_4d_nsnn =
-      generate(normal_data, special_data, normal_data, normal_data, options);
+  std::vector<char> result_4d_nsnn = airtree::core::api::generate(
+      normal_data, special_data, normal_data, normal_data, options);
   AirTreeWriter::Write(result_4d_nsnn, "4DxP_normal_special_normal_normal.bin");
 
   // [special, normal, normal, normal]
-  std::vector<char> result_4d_snnn =
-      generate(special_data, normal_data, normal_data, normal_data, options);
+  std::vector<char> result_4d_snnn = airtree::core::api::generate(
+      special_data, normal_data, normal_data, normal_data, options);
   AirTreeWriter::Write(result_4d_snnn, "4DxP_special_normal_normal_normal.bin");
 }
 
@@ -386,7 +388,8 @@ TEST(HistogramSanity_4DxP, HistogramSanity_4DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 4;
   options.type = ConfigType::XP;
-  auto buffer = generate(dim1_data, dim2_data, dim3_data, dim4_data, options);
+  auto buffer = airtree::core::api::generate(
+      dim1_data, dim2_data, dim3_data, dim4_data, options);
   verifyHistogramSanity4D(buffer, dim1_data.size());
   verifyBinAccuracy4DxP(buffer, dim1_data, dim2_data, dim3_data, dim4_data);
 }
@@ -440,7 +443,7 @@ TEST(MixedSpecialSanity_4D, MixedSpecialSanity_4DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 4;
   options.type = ConfigType::XP;
-  auto buffer = generate(d1, d2, d3, d4, options);
+  auto buffer = airtree::core::api::generate(d1, d2, d3, d4, options);
 
   BinBoundary query(buffer);
   auto result = query.generateBinBoundaries();
@@ -474,7 +477,7 @@ TEST(Float32Sanity_4D, Float32Sanity_4DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 4;
   options.type = ConfigType::XP;
-  auto buffer = generate(fd1, fd2, fd3, fd4, options);
+  auto buffer = airtree::core::api::generate(fd1, fd2, fd3, fd4, options);
 
   std::vector<double> d1(fd1.begin(), fd1.end());
   std::vector<double> d2(fd2.begin(), fd2.end());
@@ -501,7 +504,7 @@ TEST(SaturationZoneSanity_4D, SaturationZoneSanity_4DxP_fntest) {
   AirTreeOptions options;
   options.dimensions = 4;
   options.type = ConfigType::XP;
-  auto buffer = generate(data, data, data, data, options);
+  auto buffer = airtree::core::api::generate(data, data, data, data, options);
   verifyHistogramSanity4D(buffer, data.size());
   verifyBinAccuracy4DxP(buffer, data, data, data, data);
 }

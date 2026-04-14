@@ -44,15 +44,15 @@ generate(const std::vector<const FPHArray *> &arrays,
 template <typename T>
 [[nodiscard]] inline std::vector<char> generate(const std::vector<T> &array,
                                                 AirTreeOptions options = {}) {
-  options.dimensions = 1;             // Auto-correct dimensions just in case!
+  options.dimensions = 1; // Auto-correct dimensions just in case!
   FPHArray fph(array);
   return generate({&fph}, options); // Wraps in vector and delegates
 }
 
 // 2D Convenience Overload
-template <typename T>
-[[nodiscard]] inline std::vector<char> generate(const std::vector<T> &array1,
-                                                const std::vector<T> &array2,
+template <typename T1, typename T2>
+[[nodiscard]] inline std::vector<char> generate(const std::vector<T1> &array1,
+                                                const std::vector<T2> &array2,
                                                 AirTreeOptions options = {}) {
   options.dimensions = 2; // Auto-correct dimensions just in case!
   FPHArray fph1(array1), fph2(array2);
@@ -60,20 +60,20 @@ template <typename T>
 }
 
 // 3D Convenience Overload...
-template <typename T>
+template <typename T1, typename T2, typename T3>
 [[nodiscard]] inline std::vector<char>
-generate(const std::vector<T> &array1, const std::vector<T> &array2,
-         const std::vector<T> &array3, AirTreeOptions options = {}) {
+generate(const std::vector<T1> &array1, const std::vector<T2> &array2,
+         const std::vector<T3> &array3, AirTreeOptions options = {}) {
   options.dimensions = 3;
   FPHArray fph1(array1), fph2(array2), fph3(array3);
   return generate({&fph1, &fph2, &fph3}, options);
 }
 
 // 4D Convenience Overload...
-template <typename T>
+template <typename T1, typename T2, typename T3, typename T4>
 [[nodiscard]] inline std::vector<char>
-generate(const std::vector<T> &array1, const std::vector<T> &array2,
-         const std::vector<T> &array3, const std::vector<T> &array4,
+generate(const std::vector<T1> &array1, const std::vector<T2> &array2,
+         const std::vector<T3> &array3, const std::vector<T4> &array4,
          AirTreeOptions options = {}) {
   options.dimensions = 4;
   FPHArray fph1(array1), fph2(array2), fph3(array3), fph4(array4);
