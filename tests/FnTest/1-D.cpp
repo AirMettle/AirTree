@@ -1,5 +1,4 @@
 #include <airtree/core/api/AirTreeGenerator.hpp>
-#include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/Reconstruct.hpp>
@@ -46,25 +45,17 @@ TEST(Generate_1d_test_data_splits, Generate_1d_test_data_splits_fntest) {
   std::vector<double> dim1_part2(dim1_data.begin() + split, dim1_data.end());
   std::cout << "Dim1 Part2 size: " << dim1_part2.size() << std::endl;
 
-  FPHArray array0_input1 =
-      buildFPHArray(dim1_part1.data(), static_cast<int>(dim1_part1.size()));
-  FPHArray array0_input2 =
-      buildFPHArray(dim1_part2.data(), static_cast<int>(dim1_part2.size()));
-
-  FPHArray array0_complete =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XP;
 
   // Split each dim's vector into two parts to generate two separate histogram
   // buffers
-  std::vector<char> piece1 = generate(array0_input1, options);
+  std::vector<char> piece1 = generate(dim1_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  std::vector<char> piece2 = generate(array0_input2, options);
+  std::vector<char> piece2 = generate(dim1_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  std::vector<char> result = generate(array0_complete, options);
+  std::vector<char> result = generate(dim1_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_1DxP.bin");
   AirTreeWriter::Write(piece1, "1DxP_piece1.bin");
@@ -72,11 +63,11 @@ TEST(Generate_1d_test_data_splits, Generate_1d_test_data_splits_fntest) {
 
   // Generate the 1DxF result
   options.type = ConfigType::XF;
-  piece1 = generate(array0_input1, options);
+  piece1 = generate(dim1_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  piece2 = generate(array0_input2, options);
+  piece2 = generate(dim1_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  result = generate(array0_complete, options);
+  result = generate(dim1_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_1DxF.bin");
   AirTreeWriter::Write(piece1, "1DxF_piece1.bin");
@@ -84,11 +75,11 @@ TEST(Generate_1d_test_data_splits, Generate_1d_test_data_splits_fntest) {
 
   // 1DxT
   options.type = ConfigType::XT;
-  piece1 = generate(array0_input1, options);
+  piece1 = generate(dim1_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  piece2 = generate(array0_input2, options);
+  piece2 = generate(dim1_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  result = generate(array0_complete, options);
+  result = generate(dim1_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_1DxT.bin");
   AirTreeWriter::Write(piece1, "1DxT_piece1.bin");
@@ -100,14 +91,11 @@ TEST(Generate_13Colonies, Generate_13Colonies_fntest) {
   // Check that data is non-empty and has the expected structure
   ASSERT_FALSE(dim1_data.empty()) << "Data from binary file is empty.";
 
-  FPHArray array0 =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XT;
 
-  std::vector<char> result = generate(array0, options);
+  std::vector<char> result = generate(dim1_data, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -121,14 +109,11 @@ TEST(Generate_Apollo16, Generate_Apollo16_fntest) {
   // Check that data is non-empty and has the expected structure
   ASSERT_FALSE(dim1_data.empty()) << "Data from binary file is empty.";
 
-  FPHArray array0 =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XF;
 
-  std::vector<char> result = generate(array0, options);
+  std::vector<char> result = generate(dim1_data, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -141,14 +126,11 @@ TEST(Generate_Roaring20, Generate_Roaring20_fntest) {
   // Check that data is non-empty and has the expected structure
   ASSERT_FALSE(dim1_data.empty()) << "Data from binary file is empty.";
 
-  FPHArray array0 =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XP;
 
-  std::vector<char> result = generate(array0, options);
+  std::vector<char> result = generate(dim1_data, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -330,36 +312,30 @@ static unsigned int encode_1DxF(double val) {
 
 TEST(HistogramSanity_1DxP, HistogramSanity_1DxP_fntest) {
   ASSERT_FALSE(dim1_data.empty());
-  FPHArray array =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XP;
-  auto buffer = generate(array, options);
+  auto buffer = generate(dim1_data, options);
   verifyHistogramSanity1D(buffer, dim1_data);
   verifyBinAccuracy1D(buffer, dim1_data, encode_1DxP, 20);
 }
 
 TEST(HistogramSanity_1DxT, HistogramSanity_1DxT_fntest) {
   ASSERT_FALSE(dim1_data.empty());
-  FPHArray array =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XT;
-  auto buffer = generate(array, options);
+  auto buffer = generate(dim1_data, options);
   verifyHistogramSanity1D(buffer, dim1_data);
   verifyBinAccuracy1D(buffer, dim1_data, encode_1DxT, 13);
 }
 
 TEST(HistogramSanity_1DxF, HistogramSanity_1DxF_fntest) {
   ASSERT_FALSE(dim1_data.empty());
-  FPHArray array =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XF;
-  auto buffer = generate(array, options);
+  auto buffer = generate(dim1_data, options);
   verifyHistogramSanity1D(buffer, dim1_data);
   verifyBinAccuracy1D(buffer, dim1_data, encode_1DxF, 16);
 }
@@ -378,11 +354,10 @@ TEST(SaturationZoneSanity, SaturationZoneSanity_1DxP_fntest) {
     }
   }
 
-  FPHArray array = buildFPHArray(data.data(), static_cast<int>(data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XP;
-  auto buffer = generate(array, options);
+  auto buffer = generate(data, options);
   verifyHistogramSanity1D(buffer, data);
   verifyBinAccuracy1D(buffer, data, encode_1DxP, 20);
 }
@@ -399,11 +374,10 @@ TEST(SaturationZoneSanity, SaturationZoneSanity_1DxT_fntest) {
     }
   }
 
-  FPHArray array = buildFPHArray(data.data(), static_cast<int>(data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XT;
-  auto buffer = generate(array, options);
+  auto buffer = generate(data, options);
   verifyHistogramSanity1D(buffer, data);
   verifyBinAccuracy1D(buffer, data, encode_1DxT, 13);
 }
@@ -420,11 +394,10 @@ TEST(SaturationZoneSanity, SaturationZoneSanity_1DxF_fntest) {
     }
   }
 
-  FPHArray array = buildFPHArray(data.data(), static_cast<int>(data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XF;
-  auto buffer = generate(array, options);
+  auto buffer = generate(data, options);
   verifyHistogramSanity1D(buffer, data);
   verifyBinAccuracy1D(buffer, data, encode_1DxF, 16);
 }
@@ -439,12 +412,10 @@ TEST(Float32Sanity, Float32Sanity_1DxP_fntest) {
       -0.5f,  -0.5001f, 0.001f,   0.0001f, 10.0f,  1000.0f,
   };
 
-  FPHArray array =
-      buildFPHArray(float_data.data(), static_cast<int>(float_data.size()));
   AirTreeOptions options;
   options.dimensions = 1;
   options.type = ConfigType::XP;
-  auto buffer = generate(array, options);
+  auto buffer = generate(float_data, options);
 
   // Convert to double for verification (matching the encoder's path)
   std::vector<double> as_double(float_data.begin(), float_data.end());

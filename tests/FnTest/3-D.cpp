@@ -66,40 +66,18 @@ TEST(Generate_3d_test_data_splits, Generate_3d_test_data_splits_fntest) {
   std::vector<double> dim3_part2(dim3_data.begin() + split, dim3_data.end());
   std::cout << "Dim3 Part2 size: " << dim3_part2.size() << std::endl;
 
-  FPHArray array0_input1 =
-      buildFPHArray(dim1_part1.data(), static_cast<int>(dim1_part1.size()));
-  FPHArray array1_input1 =
-      buildFPHArray(dim2_part1.data(), static_cast<int>(dim2_part1.size()));
-  FPHArray array2_input1 =
-      buildFPHArray(dim3_part1.data(), static_cast<int>(dim3_part1.size()));
-
-  FPHArray array0_input2 =
-      buildFPHArray(dim1_part2.data(), static_cast<int>(dim1_part2.size()));
-  FPHArray array1_input2 =
-      buildFPHArray(dim2_part2.data(), static_cast<int>(dim2_part2.size()));
-  FPHArray array2_input2 =
-      buildFPHArray(dim3_part2.data(), static_cast<int>(dim3_part2.size()));
-
-  FPHArray array0_complete =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-  FPHArray array1_complete =
-      buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
-  FPHArray array2_complete =
-      buildFPHArray(dim3_data.data(), static_cast<int>(dim3_data.size()));
-
   // Split each dim's vector into two parts to generate two separate histogram
   // buffers
   AirTreeOptions options;
   options.dimensions = 3;
   options.type = ConfigType::XP;
   std::vector<char> piece1 =
-      generate(array0_input1, array1_input1, array2_input1, options);
+      generate(dim1_part1, dim2_part1, dim3_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
   std::vector<char> piece2 =
-      generate(array0_input2, array1_input2, array2_input2, options);
+      generate(dim1_part2, dim2_part2, dim3_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  std::vector<char> result =
-      generate(array0_complete, array1_complete, array2_complete, options);
+  std::vector<char> result = generate(dim1_data, dim2_data, dim3_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_3DxP.bin");
   AirTreeWriter::Write(piece1, "3DxP_piece1.bin");
@@ -107,11 +85,11 @@ TEST(Generate_3d_test_data_splits, Generate_3d_test_data_splits_fntest) {
 
   // Generate the 3DxF result
   options.type = ConfigType::XF;
-  piece1 = generate(array0_input1, array1_input1, array2_input1, options);
+  piece1 = generate(dim1_part1, dim2_part1, dim3_part1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  piece2 = generate(array0_input2, array1_input2, array2_input2, options);
+  piece2 = generate(dim1_part2, dim2_part2, dim3_part2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  result = generate(array0_complete, array1_complete, array2_complete, options);
+  result = generate(dim1_data, dim2_data, dim3_data, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_3DxF.bin");
   AirTreeWriter::Write(piece1, "3DxF_piece1.bin");
@@ -124,17 +102,10 @@ TEST(Generate_3d_888, Generate_3d_888_fntest) {
   ASSERT_FALSE(dim2_data.empty()) << "Data from dim2.bin file is empty.";
   ASSERT_FALSE(dim3_data.empty()) << "Data from dim3.bin file is empty.";
 
-  FPHArray array0 =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-  FPHArray array1 =
-      buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
-  FPHArray array2 =
-      buildFPHArray(dim3_data.data(), static_cast<int>(dim3_data.size()));
-
   AirTreeOptions options;
   options.dimensions = 3;
   options.type = ConfigType::XF;
-  std::vector<char> result = generate(array0, array1, array2, options);
+  std::vector<char> result = generate(dim1_data, dim2_data, dim3_data, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -280,16 +251,10 @@ TEST(HistogramSanity_3DxP, HistogramSanity_3DxP_fntest) {
   ASSERT_FALSE(dim1_data.empty());
   ASSERT_FALSE(dim2_data.empty());
   ASSERT_FALSE(dim3_data.empty());
-  FPHArray a0 =
-      buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
-  FPHArray a1 =
-      buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
-  FPHArray a2 =
-      buildFPHArray(dim3_data.data(), static_cast<int>(dim3_data.size()));
   AirTreeOptions options;
   options.dimensions = 3;
   options.type = ConfigType::XP;
-  auto buffer = generate(a0, a1, a2, options);
+  auto buffer = generate(dim1_data, dim2_data, dim3_data, options);
   verifyHistogramSanity3D(buffer, dim1_data.size());
   verifyBinAccuracy3DxP(buffer, dim1_data, dim2_data, dim3_data);
 }
@@ -331,13 +296,10 @@ TEST(MixedSpecialSanity_3D, MixedSpecialSanity_3DxP_fntest) {
     d3.push_back(s);
   }
 
-  FPHArray a0 = buildFPHArray(d1.data(), static_cast<int>(d1.size()));
-  FPHArray a1 = buildFPHArray(d2.data(), static_cast<int>(d2.size()));
-  FPHArray a2 = buildFPHArray(d3.data(), static_cast<int>(d3.size()));
   AirTreeOptions options;
   options.dimensions = 3;
   options.type = ConfigType::XP;
-  auto buffer = generate(a0, a1, a2, options);
+  auto buffer = generate(d1, d2, d3, options);
 
   BinBoundary query(buffer);
   auto result = query.generateBinBoundaries();
@@ -365,13 +327,10 @@ TEST(Float32Sanity_3D, Float32Sanity_3DxP_fntest) {
   ASSERT_EQ(fd1.size(), fd2.size());
   ASSERT_EQ(fd1.size(), fd3.size());
 
-  FPHArray a0 = buildFPHArray(fd1.data(), static_cast<int>(fd1.size()));
-  FPHArray a1 = buildFPHArray(fd2.data(), static_cast<int>(fd2.size()));
-  FPHArray a2 = buildFPHArray(fd3.data(), static_cast<int>(fd3.size()));
   AirTreeOptions options;
   options.dimensions = 3;
   options.type = ConfigType::XP;
-  auto buffer = generate(a0, a1, a2, options);
+  auto buffer = generate(fd1, fd2, fd3, options);
 
   std::vector<double> d1(fd1.begin(), fd1.end());
   std::vector<double> d2(fd2.begin(), fd2.end());
@@ -393,13 +352,11 @@ TEST(SaturationZoneSanity_3D, SaturationZoneSanity_3DxP_fntest) {
       data.push_back(-base * (1.0 - eps));
     }
   }
-  FPHArray a0 = buildFPHArray(data.data(), static_cast<int>(data.size()));
-  FPHArray a1 = buildFPHArray(data.data(), static_cast<int>(data.size()));
-  FPHArray a2 = buildFPHArray(data.data(), static_cast<int>(data.size()));
+
   AirTreeOptions options;
   options.dimensions = 3;
   options.type = ConfigType::XP;
-  auto buffer = generate(a0, a1, a2, options);
+  auto buffer = generate(data, data, data, options);
   verifyHistogramSanity3D(buffer, data.size());
   verifyBinAccuracy3DxP(buffer, data, data, data);
 }
