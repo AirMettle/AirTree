@@ -2,7 +2,7 @@
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BIN_BOUNDARY_BIN_BOUNDARY_HPP
 
 #include <airtree/core/common/SpecialCounts.hpp>
-#include <airtree/core/common/TrieHeader.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 
 #include <memory>
@@ -170,7 +170,7 @@ private:
   BinBoundary4DList buildBinBoundaries4DxP();
 
   std::unique_ptr<SpecialCounts> specialCounts_;
-  std::unique_ptr<trie_header> header_;
+  std::unique_ptr<airtree::core::common::AirTreeHeader> header_;
   size_t offset_ = 0;
   std::vector<char> buffer_;
 };

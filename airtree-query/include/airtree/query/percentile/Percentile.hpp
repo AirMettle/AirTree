@@ -2,6 +2,7 @@
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -40,7 +41,7 @@ private:
   std::vector<char> buffer_;
   AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
-  trie_header header_;
+  airtree::core::common::AirTreeHeader header_;
 };
 
 } // namespace airtree::query::percentile

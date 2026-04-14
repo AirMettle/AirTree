@@ -1,5 +1,5 @@
 #include <airtree/core/common/SpecialCounts.hpp>
-#include <airtree/core/common/TrieHeader.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/bin-boundary/BinBoundary.hpp>
 #include <algorithm>
 #include <bitset>
@@ -907,12 +907,15 @@ BinBoundary::BinBoundary(std::vector<char> buffer) {
   }
 
   buffer_ = std::move(buffer);
-  offset_ = 0;
-  trie_header header = deserializeTrieHeader(buffer_, offset_);
-  header_ = std::make_unique<trie_header>(header);
+  auto header = airtree::core::common::deserializeHeader(buffer_);
+  header_ = std::make_unique<airtree::core::common::AirTreeHeader>(header);
+  offset_ = header.header_length;
 
-  std::cout << "Header Type: " << header.type << std::endl;
-  std::cout << "Header Config: " << header.config << std::endl;
+  auto params = airtree::core::common::configParams(header);
+  std::cout << "Header Dims: " << static_cast<int>(params.dims) << std::endl;
+  std::cout << "Header Config: 0x" << std::hex
+            << static_cast<int>(static_cast<uint8_t>(header.config))
+            << std::dec << std::endl;
 
   specialCounts_ = std::make_unique<SpecialCounts>();
 
@@ -924,40 +927,36 @@ BinBoundary::BinBoundary(std::vector<char> buffer) {
 }
 
 BinBoundaryResult BinBoundary::generateBinBoundaries() {
-  if (std::strcmp(header_->config, "113") == 0) { // 1DxT - TrieNode_13 - 8 + 5
-    BinBoundary1DList res_1DxT = buildBinBoundaries1DxT();
-    BinBoundaryResult result =
-        BinBoundaryResult(std::move(specialCounts_), res_1DxT);
-    return std::move(result);
-  } else if (std::strcmp(header_->config, "116")
-             == 0) { // 1DxF - TrieNode_16 - 8 + 8
-    BinBoundary1DList res_1DxF = buildBinBoundaries1DxF();
-    BinBoundaryResult result =
-        BinBoundaryResult(std::move(specialCounts_), res_1DxF);
-    return std::move(result);
-  } else if (std::strcmp(header_->config, "120")
-             == 0) { // 1DxP - TrieNode_20 - 8 + 6 + 6
-    BinBoundary1DList res_1DxP = buildBinBoundaries1DxP();
-    BinBoundaryResult result =
-        BinBoundaryResult(std::move(specialCounts_), res_1DxP);
-    return std::move(result);
-  } else if (std::strcmp(header_->config, "210") == 0) { // 2DxP
-    BinBoundary2DList res_2DxP = buildBinBoundaries2DxP();
-    BinBoundaryResult result =
-        BinBoundaryResult(std::move(specialCounts_), res_2DxP);
-    return std::move(result);
-  } else if (std::strcmp(header_->config, "310") == 0) { // 3DxP
-    BinBoundary3DList res_3DxP = buildBinBoundaries3DxP();
-    BinBoundaryResult result =
-        BinBoundaryResult(std::move(specialCounts_), res_3DxP);
-    return std::move(result);
-  } else if (std::strcmp(header_->config, "410") == 0) { // 4DxP
-    BinBoundary4DList res_4DxP = buildBinBoundaries4DxP();
-    BinBoundaryResult result =
-        BinBoundaryResult(std::move(specialCounts_), res_4DxP);
-    return std::move(result);
-  } else {
-    SPDLOG_ERROR("Unsupported configuration: {}", header_->config);
+  using airtree::core::common::ConfigWire;
+  switch (header_->config) {
+  case ConfigWire::Config_1D_Tiny: {
+    auto res = buildBinBoundaries1DxT();
+    return BinBoundaryResult(std::move(specialCounts_), res);
+  }
+  case ConfigWire::Config_1D_Fast: {
+    auto res = buildBinBoundaries1DxF();
+    return BinBoundaryResult(std::move(specialCounts_), res);
+  }
+  case ConfigWire::Config_1D_Precise: {
+    auto res = buildBinBoundaries1DxP();
+    return BinBoundaryResult(std::move(specialCounts_), res);
+  }
+  case ConfigWire::Config_2D_Precise: {
+    auto res = buildBinBoundaries2DxP();
+    return BinBoundaryResult(std::move(specialCounts_), res);
+  }
+  case ConfigWire::Config_3D_Precise: {
+    auto res = buildBinBoundaries3DxP();
+    return BinBoundaryResult(std::move(specialCounts_), res);
+  }
+  case ConfigWire::Config_4D_Precise: {
+    auto res = buildBinBoundaries4DxP();
+    return BinBoundaryResult(std::move(specialCounts_), res);
+  }
+  default:
+    SPDLOG_ERROR("Unsupported configuration: 0x{:02x}",
+                 static_cast<uint8_t>(header_->config));
+    throw std::runtime_error("Unsupported BinBoundary configuration");
   }
 }
 
