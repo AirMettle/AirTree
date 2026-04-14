@@ -1,4 +1,5 @@
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/Reconstruct.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
@@ -16,6 +17,7 @@
 #include <vector>
 
 using namespace airtree::core::io;
+using namespace airtree::core::api;
 using namespace airtree::query::bin_boundary;
 
 const std::string dim1_file_path = "../../tests/TestData/dim1_vx.bin";
@@ -51,7 +53,10 @@ TEST(Generate_4d_4x10, Generate_4d_4x10_fntest) {
   FPHArray array3 =
       buildFPHArray(dim4_data.data(), static_cast<int>(dim4_data.size()));
 
-  std::vector<char> result = generate_4DxP(array0, array1, array2, array3);
+  AirTreeOptions options;
+  options.dimensions = 4;
+  options.type = ConfigType::XP;
+  std::vector<char> result = generate(array0, array1, array2, array3, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -76,7 +81,10 @@ TEST(Generate_4d_4x8, Generate_4d_4x8_fntest) {
   FPHArray array3 =
       buildFPHArray(dim4_data.data(), static_cast<int>(dim4_data.size()));
 
-  std::vector<char> result = generate_4DxF(array0, array1, array2, array3);
+  AirTreeOptions options;
+  options.dimensions = 4;
+  options.type = ConfigType::XF;
+  std::vector<char> result = generate(array0, array1, array2, array3, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -97,150 +105,161 @@ TEST(Generate_special_export_data, Generate_export_data_fntest) {
   FPHArray normal_array =
       buildFPHArray(normal_data.data(), static_cast<int>(normal_data.size()));
 
-  std::vector<char> result = generate_1DxT(special_array, true);
+  AirTreeOptions options;
+  options.dimensions = 1;
+  options.type = ConfigType::XT;
+  std::vector<char> result = generate(special_array, options);
   AirTreeWriter::Write(result, "1DxT_special.bin");
 
-  result = generate_1DxP(special_array, true);
+  options.type = ConfigType::XP;
+  result = generate(special_array, options);
   AirTreeWriter::Write(result, "1DxP_special.bin");
 
-  result = generate_1DxF(special_array, true);
+  options.type = ConfigType::XF;
+  result = generate(special_array, options);
   AirTreeWriter::Write(result, "1DxF_special.bin");
 
   // [special, special]
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
   std::vector<char> result_2d_ss =
-      generate_2DxP(special_array, special_array, true);
+      generate(special_array, special_array, options);
   AirTreeWriter::Write(result_2d_ss, "2DxP_special_special.bin");
 
   // [special, normal]
   std::vector<char> result_2d_sn =
-      generate_2DxP(special_array, normal_array, true);
+      generate(special_array, normal_array, options);
   AirTreeWriter::Write(result_2d_sn, "2DxP_special_normal.bin");
 
   // [normal, special]
   std::vector<char> result_2d_ns =
-      generate_2DxP(normal_array, special_array, true);
+      generate(normal_array, special_array, options);
   AirTreeWriter::Write(result_2d_ns, "2DxP_normal_special.bin");
 
   // [special, special, special]
+  options.dimensions = 3;
+  options.type = ConfigType::XP;
   std::vector<char> result_3d_sss =
-      generate_3DxP(special_array, special_array, special_array, true);
+      generate(special_array, special_array, special_array, options);
   AirTreeWriter::Write(result_3d_sss, "3DxP_special_special_special.bin");
 
   // [special, special, normal]
   std::vector<char> result_3d_ssn =
-      generate_3DxP(special_array, special_array, normal_array, true);
+      generate(special_array, special_array, normal_array, options);
   AirTreeWriter::Write(result_3d_ssn, "3DxP_special_special_normal.bin");
 
   // [special, normal, special]
   std::vector<char> result_3d_sns =
-      generate_3DxP(special_array, normal_array, special_array, true);
+      generate(special_array, normal_array, special_array, options);
   AirTreeWriter::Write(result_3d_sns, "3DxP_special_normal_special.bin");
 
   // [normal, special, special]
   std::vector<char> result_3d_nss =
-      generate_3DxP(normal_array, special_array, special_array, true);
+      generate(normal_array, special_array, special_array, options);
   AirTreeWriter::Write(result_3d_nss, "3DxP_normal_special_special.bin");
 
   // [normal, normal, special]
   std::vector<char> result_3d_nns =
-      generate_3DxP(normal_array, normal_array, special_array, true);
+      generate(normal_array, normal_array, special_array, options);
   AirTreeWriter::Write(result_3d_nns, "3DxP_normal_normal_special.bin");
 
   // [normal, special, normal]
   std::vector<char> result_3d_nsn =
-      generate_3DxP(normal_array, special_array, normal_array, true);
+      generate(normal_array, special_array, normal_array, options);
   AirTreeWriter::Write(result_3d_nsn, "3DxP_normal_special_normal.bin");
 
   // [special, normal, normal]
   std::vector<char> result_3d_snn =
-      generate_3DxP(special_array, normal_array, normal_array, true);
+      generate(special_array, normal_array, normal_array, options);
   AirTreeWriter::Write(result_3d_snn, "3DxP_special_normal_normal.bin");
 
   // [special, special, special, special]
-  std::vector<char> result_4d_ssss = generate_4DxP(
-      special_array, special_array, special_array, special_array, true);
+  options.dimensions = 4;
+  options.type = ConfigType::XP;
+  std::vector<char> result_4d_ssss = generate(
+      special_array, special_array, special_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_ssss, "4DxP_special_special_special_special.bin");
 
   // [special, special, special, normal]
-  std::vector<char> result_4d_sssn = generate_4DxP(
-      special_array, special_array, special_array, normal_array, true);
+  std::vector<char> result_4d_sssn = generate(
+      special_array, special_array, special_array, normal_array, options);
   AirTreeWriter::Write(
       result_4d_sssn, "4DxP_special_special_special_normal.bin");
 
   // [special, special, normal, special]
-  std::vector<char> result_4d_ssns = generate_4DxP(
-      special_array, special_array, normal_array, special_array, true);
+  std::vector<char> result_4d_ssns = generate(
+      special_array, special_array, normal_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_ssns, "4DxP_special_special_normal_special.bin");
 
   // [special, normal, special, special]
-  std::vector<char> result_4d_snss = generate_4DxP(
-      special_array, normal_array, special_array, special_array, true);
+  std::vector<char> result_4d_snss = generate(
+      special_array, normal_array, special_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_snss, "4DxP_special_normal_special_special.bin");
 
   // [normal, special, special, special]
-  std::vector<char> result_4d_nsss = generate_4DxP(
-      normal_array, special_array, special_array, special_array, true);
+  std::vector<char> result_4d_nsss = generate(
+      normal_array, special_array, special_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_nsss, "4DxP_normal_special_special_special.bin");
 
   // [special, special, normal, normal]
-  std::vector<char> result_4d_ssnn = generate_4DxP(
-      special_array, special_array, normal_array, normal_array, true);
+  std::vector<char> result_4d_ssnn = generate(
+      special_array, special_array, normal_array, normal_array, options);
   AirTreeWriter::Write(
       result_4d_ssnn, "4DxP_special_special_normal_normal.bin");
 
   // [special, normal, special, normal]
-  std::vector<char> result_4d_snsn = generate_4DxP(
-      special_array, normal_array, special_array, normal_array, true);
+  std::vector<char> result_4d_snsn = generate(
+      special_array, normal_array, special_array, normal_array, options);
   AirTreeWriter::Write(
       result_4d_snsn, "4DxP_special_normal_special_normal.bin");
 
   // [special, normal, normal, special]
-  std::vector<char> result_4d_snns = generate_4DxP(
-      special_array, normal_array, normal_array, special_array, true);
+  std::vector<char> result_4d_snns = generate(
+      special_array, normal_array, normal_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_snns, "4DxP_special_normal_normal_special.bin");
 
   // [normal, special, special, normal]
-  std::vector<char> result_4d_nssn = generate_4DxP(
-      normal_array, special_array, special_array, normal_array, true);
+  std::vector<char> result_4d_nssn = generate(
+      normal_array, special_array, special_array, normal_array, options);
   AirTreeWriter::Write(
       result_4d_nssn, "4DxP_normal_special_special_normal.bin");
 
   // [normal, special, normal, special]
-  std::vector<char> result_4d_nsns = generate_4DxP(
-      normal_array, special_array, normal_array, special_array, true);
+  std::vector<char> result_4d_nsns = generate(
+      normal_array, special_array, normal_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_nsns, "4DxP_normal_special_normal_special.bin");
 
   // [normal, normal, special, special]
-  std::vector<char> result_4d_nnss = generate_4DxP(
-      normal_array, normal_array, special_array, special_array, true);
+  std::vector<char> result_4d_nnss = generate(
+      normal_array, normal_array, special_array, special_array, options);
   AirTreeWriter::Write(
       result_4d_nnss, "4DxP_normal_normal_special_special.bin");
 
   // [normal, normal, normal, special]
-  std::vector<char> result_4d_nnnn = generate_4DxP(
-      normal_array, normal_array, normal_array, special_array, true);
+  std::vector<char> result_4d_nnnn = generate(
+      normal_array, normal_array, normal_array, special_array, options);
   AirTreeWriter::Write(result_4d_nnnn, "4DxP_normal_normal_normal_special.bin");
 
   // [normal, normal, special, normal]
-  std::vector<char> result_4d_nnsn2 = generate_4DxP(
-      normal_array, normal_array, special_array, normal_array, true);
+  std::vector<char> result_4d_nnsn2 = generate(
+      normal_array, normal_array, special_array, normal_array, options);
   AirTreeWriter::Write(
       result_4d_nnsn2, "4DxP_normal_normal_special_normal.bin");
 
   // [normal, special, normal, normal]
-  std::vector<char> result_4d_nsnn = generate_4DxP(
-      normal_array, special_array, normal_array, normal_array, true);
+  std::vector<char> result_4d_nsnn = generate(
+      normal_array, special_array, normal_array, normal_array, options);
   AirTreeWriter::Write(result_4d_nsnn, "4DxP_normal_special_normal_normal.bin");
 
   // [special, normal, normal, normal]
-  std::vector<char> result_4d_snnn = generate_4DxP(
-      special_array, normal_array, normal_array, normal_array, true);
+  std::vector<char> result_4d_snnn = generate(
+      special_array, normal_array, normal_array, normal_array, options);
   AirTreeWriter::Write(result_4d_snnn, "4DxP_special_normal_normal_normal.bin");
 }
 
@@ -394,7 +413,10 @@ TEST(HistogramSanity_4DxP, HistogramSanity_4DxP_fntest) {
       buildFPHArray(dim3_data.data(), static_cast<int>(dim3_data.size()));
   FPHArray a3 =
       buildFPHArray(dim4_data.data(), static_cast<int>(dim4_data.size()));
-  auto buffer = generate_4DxP(a0, a1, a2, a3);
+  AirTreeOptions options;
+  options.dimensions = 4;
+  options.type = ConfigType::XP;
+  auto buffer = generate(a0, a1, a2, a3, options);
   verifyHistogramSanity4D(buffer, dim1_data.size());
   verifyBinAccuracy4DxP(buffer, dim1_data, dim2_data, dim3_data, dim4_data);
 }
@@ -449,7 +471,10 @@ TEST(MixedSpecialSanity_4D, MixedSpecialSanity_4DxP_fntest) {
   FPHArray a1 = buildFPHArray(d2.data(), static_cast<int>(d2.size()));
   FPHArray a2 = buildFPHArray(d3.data(), static_cast<int>(d3.size()));
   FPHArray a3 = buildFPHArray(d4.data(), static_cast<int>(d4.size()));
-  auto buffer = generate_4DxP(a0, a1, a2, a3);
+  AirTreeOptions options;
+  options.dimensions = 4;
+  options.type = ConfigType::XP;
+  auto buffer = generate(a0, a1, a2, a3, options);
 
   BinBoundary query(buffer);
   auto result = query.generateBinBoundaries();
@@ -484,7 +509,10 @@ TEST(Float32Sanity_4D, Float32Sanity_4DxP_fntest) {
   FPHArray a1 = buildFPHArray(fd2.data(), static_cast<int>(fd2.size()));
   FPHArray a2 = buildFPHArray(fd3.data(), static_cast<int>(fd3.size()));
   FPHArray a3 = buildFPHArray(fd4.data(), static_cast<int>(fd4.size()));
-  auto buffer = generate_4DxP(a0, a1, a2, a3);
+  AirTreeOptions options;
+  options.dimensions = 4;
+  options.type = ConfigType::XP;
+  auto buffer = generate(a0, a1, a2, a3, options);
 
   std::vector<double> d1(fd1.begin(), fd1.end());
   std::vector<double> d2(fd2.begin(), fd2.end());
@@ -511,7 +539,10 @@ TEST(SaturationZoneSanity_4D, SaturationZoneSanity_4DxP_fntest) {
   FPHArray a1 = buildFPHArray(data.data(), static_cast<int>(data.size()));
   FPHArray a2 = buildFPHArray(data.data(), static_cast<int>(data.size()));
   FPHArray a3 = buildFPHArray(data.data(), static_cast<int>(data.size()));
-  auto buffer = generate_4DxP(a0, a1, a2, a3);
+  AirTreeOptions options;
+  options.dimensions = 4;
+  options.type = ConfigType::XP;
+  auto buffer = generate(a0, a1, a2, a3, options);
   verifyHistogramSanity4D(buffer, data.size());
   verifyBinAccuracy4DxP(buffer, data, data, data, data);
 }

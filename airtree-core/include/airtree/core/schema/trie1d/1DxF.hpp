@@ -5,6 +5,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <memory>
 #include <bitset>
 #include <vector>
@@ -101,6 +102,18 @@ execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
 execSerialization_TrieNode16(const std::unique_ptr<TrieNode_16> &root,
                              const SpecialCounts &specialCounts,
                              uint64_t trieSize, bool default_mode);
+
+namespace airtree::core::schema::trie1d {
+
+
+class Generator1DxF : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie1d
 
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE1D_1DXF_HPP

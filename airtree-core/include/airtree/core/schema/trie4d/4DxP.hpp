@@ -5,6 +5,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <vector>
 
 struct Node4D_4x10_l0;
@@ -74,5 +75,16 @@ std::vector<char> generate_4DxP(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3, const FPHArray &array4,
                                 bool default_mode = true);
 
+
+namespace airtree::core::schema::trie4d {
+
+class Generator4DxP : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie4d
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE4D_4DXP_HPP

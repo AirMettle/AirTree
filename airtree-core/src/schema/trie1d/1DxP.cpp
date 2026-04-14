@@ -10,8 +10,17 @@
 
 
 using namespace airtree::core;
+using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
 
+std::vector<char>
+Generator1DxP::generate(const std::vector<const FPHArray *> &arrays,
+                       bool default_mode) const {
+  if (arrays.size() != 1) {
+    throw std::invalid_argument("Expected exactly 1 array for 1D generation");
+  }
+  return generate_1DxP(*arrays[0], default_mode);
+}
 std::unique_ptr<TrieNode_20> CreateParentNode_20() {
   auto parentNode = std::make_unique<TrieNode_20>();
   parentNode->populated.reset();
@@ -25,9 +34,10 @@ void createAndInsertFP20(TrieNode_20 *node, uint64_t fpNumber,
   unsigned int internal20 = createInternal20Bit(fpNumber, default_mode);
 
   // Extract the three indices
-  unsigned int index8 = (internal20 >> 12) & 0xFF;       // Upper 8 bits (level 0)
-  unsigned int index6_level1 = (internal20 >> 6) & 0x3F; // Middle 6 bits (level 1)
-  unsigned int index6_level2 = internal20 & 0x3F;        // Lower 6 bits (level 2)
+  unsigned int index8 = (internal20 >> 12) & 0xFF; // Upper 8 bits (level 0)
+  unsigned int index6_level1 =
+      (internal20 >> 6) & 0x3F;                   // Middle 6 bits (level 1)
+  unsigned int index6_level2 = internal20 & 0x3F; // Lower 6 bits (level 2)
 
   // Trie Insertion Logic
   if (!node->populated.test(index8)) {
@@ -56,9 +66,10 @@ void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber,
   unsigned int internal20 = createInternal20Bit_32(fpNumber, default_mode);
 
   // Extract the three indices
-  unsigned int index8 = (internal20 >> 12) & 0xFF;       // Upper 8 bits (level 0)
-  unsigned int index6_level1 = (internal20 >> 6) & 0x3F; // Middle 6 bits (level 1)
-  unsigned int index6_level2 = internal20 & 0x3F;        // Lower 6 bits (level 2)
+  unsigned int index8 = (internal20 >> 12) & 0xFF; // Upper 8 bits (level 0)
+  unsigned int index6_level1 =
+      (internal20 >> 6) & 0x3F;                   // Middle 6 bits (level 1)
+  unsigned int index6_level2 = internal20 & 0x3F; // Lower 6 bits (level 2)
 
   // Trie Insertion Logic
   if (!node->populated.test(index8)) {

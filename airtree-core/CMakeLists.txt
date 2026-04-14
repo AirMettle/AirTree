@@ -44,6 +44,8 @@ set(SOURCE_FILES
 
     ${SRC_DIR}/utils/TrieManager.cpp
     ${SRC_DIR}/utils/Utils.cpp
+
+    ${SRC_DIR}/api/AirTreeGenerator.cpp
 )
 
 # Create the library

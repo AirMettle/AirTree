@@ -5,6 +5,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <airtree/core/schema/trie1d/1DxF.hpp>
 #include <vector>
 
@@ -55,5 +56,15 @@ execSerialize_4D_4x8(TLE_4D_4x8 *root, uint64_t &curr_trie_size,
                                               const FPHArray &array4,
                                               bool default_mode = true);
 
+namespace airtree::core::schema::trie4d {
+
+class Generator4DxF : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie4d
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE4D_4DXF_HPP
