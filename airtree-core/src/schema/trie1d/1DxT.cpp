@@ -16,7 +16,7 @@ using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
 
 std::vector<char>
-Generate1DxT::generate(const std::vector<const FPHArray *> &arrays,
+Generator1DxT::generate(const std::vector<const FPHArray *> &arrays,
                        bool default_mode) const {
   if (arrays.size() != 1) {
     throw std::invalid_argument("Expected exactly 1 array for 1D generation");

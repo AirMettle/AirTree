@@ -106,7 +106,7 @@ execSerialization_TrieNode16(const std::unique_ptr<TrieNode_16> &root,
 namespace airtree::core::schema::trie1d {
 
 
-class Generate1DxF : public airtree::core::api::AirTreeGenerator {
+class Generator1DxF : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
   generate(const std::vector<const FPHArray *> &arrays,

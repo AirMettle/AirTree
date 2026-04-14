@@ -12,11 +12,11 @@ AirTreeGeneratorFactory::create(const AirTreeOptions &options) {
   if (options.dimensions == 1) {
     switch (options.type) {
     case ConfigType::XF:
-      return std::make_unique<Generate1DxF>();
+      return std::make_unique<Generator1DxF>();
     case ConfigType::XT:
-      return std::make_unique<Generate1DxT>();
+      return std::make_unique<Generator1DxT>();
     case ConfigType::XP:
-      return std::make_unique<Generate1DxP>();
+      return std::make_unique<Generator1DxP>();
     case ConfigType::XNUM:
     default:
       throw std::invalid_argument("Unsupported configuration type for 1D");
