@@ -1,136 +1,85 @@
 #include <gtest/gtest.h>
-#include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 
+using namespace airtree::core::common;
 
-TEST(HeaderDeserialization, Header4D) {
+TEST(HeaderDeserialization, RoundTrip1D) {
+  auto header = makeHeader(ConfigWire::Config_1D_Tiny,
+                           {0x01, 0x00, 0x00, 0x00},
+                           500, 10, 5, 100, 80, 3);
 
   std::vector<char> buffer;
-  bool default_mode = true;
-  size_t offset = 0;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
 
-  buffer.reserve(sizeof(trie_header));
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 4;
-  t_header.precision_bits = 6;
-  t_header.node_width = 10;
-  strcpy(t_header.type, "4-D");
-  strcpy(t_header.config, "5x8");
-  t_header.mode = default_mode ? 1 : 0;
-  // Add the logic to handle the special counts from the TLE
-  t_header.trie_root_ref = sizeof(trie_header);
-  serializeTrieHeader(t_header, buffer);
+  auto decoded = deserializeHeader(buffer);
 
-  trie_header t_header_deserialized = deserializeTrieHeader(buffer, offset);
-
-  EXPECT_EQ(strcmp(t_header.type_code, t_header_deserialized.type_code), 0);
-  EXPECT_EQ(t_header.version, t_header_deserialized.version);
-  EXPECT_EQ(t_header.m_width, t_header_deserialized.m_width);
-  EXPECT_EQ(t_header.precision_bits, t_header_deserialized.precision_bits);
-  EXPECT_EQ(t_header.node_width, t_header_deserialized.node_width);
-  EXPECT_EQ(strcmp(t_header.type, t_header_deserialized.type), 0);
-  EXPECT_EQ(strcmp(t_header.config, t_header_deserialized.config), 0);
-  EXPECT_EQ(t_header.mode, t_header_deserialized.mode);
-  EXPECT_EQ(t_header.trie_root_ref, t_header_deserialized.trie_root_ref);
+  EXPECT_EQ(decoded.version, 1);
+  EXPECT_EQ(decoded.header_length, kHeaderLength);
+  EXPECT_EQ(decoded.config, ConfigWire::Config_1D_Tiny);
+  EXPECT_EQ(decoded.trie_count, 500u);
+  EXPECT_EQ(decoded.pos_inf_count, 10u);
+  EXPECT_EQ(decoded.neg_inf_count, 5u);
+  EXPECT_EQ(decoded.pos_zero_count, 100u);
+  EXPECT_EQ(decoded.neg_zero_count, 80u);
+  EXPECT_EQ(decoded.nan_count, 3u);
 }
 
-TEST(HeaderDeserialization, Header3D) {
+TEST(HeaderDeserialization, RoundTrip2D) {
+  auto header = makeHeader(ConfigWire::Config_2D_Fast,
+                           {0x01, 0x02, 0x00, 0x00},
+                           1000, 0, 0, 0, 0, 0);
 
   std::vector<char> buffer;
-  bool default_mode = true;
-  size_t offset = 0;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
 
-  buffer.reserve(sizeof(trie_header));
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 3;
-  t_header.precision_bits = 5;
-  t_header.node_width = 8;
-  strcpy(t_header.type, "3-D");
-  strcpy(t_header.config, "cmp");
-  t_header.mode = default_mode ? 1 : 0;
-  // Add the logic to handle the special counts from the TLE
-  t_header.trie_root_ref = sizeof(trie_header);
-  serializeTrieHeader(t_header, buffer);
+  auto decoded = deserializeHeader(buffer);
 
-  trie_header t_header_deserialized = deserializeTrieHeader(buffer, offset);
-
-  EXPECT_EQ(strcmp(t_header.type_code, t_header_deserialized.type_code), 0);
-  EXPECT_EQ(t_header.version, t_header_deserialized.version);
-  EXPECT_EQ(t_header.m_width, t_header_deserialized.m_width);
-  EXPECT_EQ(t_header.precision_bits, t_header_deserialized.precision_bits);
-  EXPECT_EQ(t_header.node_width, t_header_deserialized.node_width);
-  EXPECT_EQ(strcmp(t_header.type, t_header_deserialized.type), 0);
-  EXPECT_EQ(strcmp(t_header.config, t_header_deserialized.config), 0);
-  EXPECT_EQ(t_header.mode, t_header_deserialized.mode);
-  EXPECT_EQ(t_header.trie_root_ref, t_header_deserialized.trie_root_ref);
+  EXPECT_EQ(decoded.version, 1);
+  EXPECT_EQ(decoded.config, ConfigWire::Config_2D_Fast);
+  EXPECT_EQ(decoded.data_types[0], 0x01);
+  EXPECT_EQ(decoded.data_types[1], 0x02);
+  EXPECT_EQ(decoded.trie_count, 1000u);
 }
 
-TEST(HeaderDeserialization, Header2D) {
+TEST(HeaderDeserialization, RoundTrip3D) {
+  auto header = makeHeader(ConfigWire::Config_3D_Fast,
+                           {0x01, 0x01, 0x01, 0x00},
+                           2000, 1, 2, 3, 4, 5);
 
   std::vector<char> buffer;
-  bool default_mode = true;
-  size_t offset = 0;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
 
-  buffer.reserve(sizeof(trie_header));
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 3;
-  t_header.precision_bits = 5;
-  t_header.node_width = 8;
-  strcpy(t_header.type, "2-D");
-  strcpy(t_header.config, "210");
-  t_header.mode = default_mode ? 1 : 0;
-  // Add the logic to handle the special counts from the TLE
-  t_header.trie_root_ref = sizeof(trie_header);
-  serializeTrieHeader(t_header, buffer);
+  auto decoded = deserializeHeader(buffer);
 
-  trie_header t_header_deserialized = deserializeTrieHeader(buffer, offset);
-  EXPECT_EQ(strcmp(t_header.type_code, t_header_deserialized.type_code), 0);
-  EXPECT_EQ(t_header.version, t_header_deserialized.version);
-  EXPECT_EQ(t_header.m_width, t_header_deserialized.m_width);
-  EXPECT_EQ(t_header.precision_bits, t_header_deserialized.precision_bits);
-  EXPECT_EQ(t_header.node_width, t_header_deserialized.node_width);
-  EXPECT_EQ(strcmp(t_header.type, t_header_deserialized.type), 0);
-  EXPECT_EQ(strcmp(t_header.config, t_header_deserialized.config), 0);
-  EXPECT_EQ(t_header.mode, t_header_deserialized.mode);
-  EXPECT_EQ(t_header.trie_root_ref, t_header_deserialized.trie_root_ref);
+  EXPECT_EQ(decoded.version, 1);
+  EXPECT_EQ(decoded.config, ConfigWire::Config_3D_Fast);
+  EXPECT_EQ(decoded.trie_count, 2000u);
+  EXPECT_EQ(decoded.pos_inf_count, 1u);
+  EXPECT_EQ(decoded.neg_inf_count, 2u);
+  EXPECT_EQ(decoded.pos_zero_count, 3u);
+  EXPECT_EQ(decoded.neg_zero_count, 4u);
+  EXPECT_EQ(decoded.nan_count, 5u);
 }
 
-TEST(HeaderDeserialization, Header1D) {
+TEST(HeaderDeserialization, RoundTrip4D) {
+  auto header = makeHeader(ConfigWire::Config_4D_Fast,
+                           {0x01, 0x02, 0x03, 0x04},
+                           3000, 0, 0, 0, 0, 0);
 
   std::vector<char> buffer;
-  bool default_mode = true;
-  size_t offset = 0;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
 
-  buffer.reserve(sizeof(trie_header));
-  trie_header t_header;
+  auto decoded = deserializeHeader(buffer);
 
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 5;
-  t_header.precision_bits = 13;
-  t_header.node_width = 8;
-  strcpy(t_header.type, "1-D");
-  strcpy(t_header.config, "848");
-  t_header.mode = default_mode ? 1 : 0;
-  t_header.trie_root_ref = sizeof(trie_header);
-  serializeTrieHeader(t_header, buffer);
-
-  trie_header t_header_deserialized = deserializeTrieHeader(buffer, offset);
-
-  std::cout << "Offset: " << offset << std::endl;
-
-  EXPECT_EQ(strcmp(t_header.type_code, t_header_deserialized.type_code), 0);
-  EXPECT_EQ(t_header.version, t_header_deserialized.version);
-  EXPECT_EQ(t_header.m_width, t_header_deserialized.m_width);
-  EXPECT_EQ(t_header.precision_bits, t_header_deserialized.precision_bits);
-  EXPECT_EQ(t_header.node_width, t_header_deserialized.node_width);
-  EXPECT_EQ(strcmp(t_header.type, t_header_deserialized.type), 0);
-  EXPECT_EQ(strcmp(t_header.config, t_header_deserialized.config), 0);
-  EXPECT_EQ(t_header.mode, t_header_deserialized.mode);
-  EXPECT_EQ(t_header.trie_root_ref, t_header_deserialized.trie_root_ref);
+  EXPECT_EQ(decoded.version, 1);
+  EXPECT_EQ(decoded.config, ConfigWire::Config_4D_Fast);
+  EXPECT_EQ(decoded.data_types[0], 0x01);
+  EXPECT_EQ(decoded.data_types[1], 0x02);
+  EXPECT_EQ(decoded.data_types[2], 0x03);
+  EXPECT_EQ(decoded.data_types[3], 0x04);
+  EXPECT_EQ(decoded.trie_count, 3000u);
 }

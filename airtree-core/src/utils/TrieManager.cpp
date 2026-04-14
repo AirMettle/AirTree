@@ -5,6 +5,7 @@
 #include <airtree/core/serdes/trie3d/3DxP.hpp>
 #include <cstring>
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <cmath>
 
 
@@ -520,76 +521,57 @@ uint64_t TrieManager::getTrieSize2DxP() const {
 std::vector<char>
 TrieManager::MockTrieHeader(int precisionBits, bool default_mode,
                             const SpecialCounts &specialCounts) const {
-  std::vector<char> buffer;
+  using namespace airtree::core;
+using namespace airtree::core::common;
 
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 5;
-  t_header.precision_bits = precisionBits;
-  t_header.node_width = 8;
-  strcpy(t_header.type, "1-D");
-
-  // Set config based on the precisionBits value.
+  ConfigWire config;
   if (precisionBits == 13)
-    strcpy(t_header.config, "113");
+    config = ConfigWire::Config_1D_Tiny;
   else if (precisionBits == 16)
-    strcpy(t_header.config, "116");
+    config = ConfigWire::Config_1D_Fast;
   else if (precisionBits == 20)
-    strcpy(t_header.config, "120");
+    config = ConfigWire::Config_1D_Precise;
   else
-    strcpy(t_header.config, "UNK");
+    throw std::invalid_argument("Unknown precisionBits for 1D MockTrieHeader");
 
-  t_header.mode = default_mode ? 1 : 0;
-  t_header.pos_inf_count = specialCounts.posInfCount;
-  t_header.neg_inf_count = specialCounts.negInfCount;
-  t_header.pos_zero_count = specialCounts.posZeroCount;
-  t_header.neg_zero_count = specialCounts.negZeroCount;
-  t_header.nan_count = specialCounts.nanCount;
-  t_header.trie_root_ref = sizeof(trie_header);
+  auto header = makeHeader(config, {0, 0, 0, 0}, 1,
+                           specialCounts.posInfCount,
+                           specialCounts.negInfCount,
+                           specialCounts.posZeroCount,
+                           specialCounts.negZeroCount,
+                           specialCounts.nanCount);
 
-
-  // Serialize the header into the buffer.
-  serializeTrieHeader(t_header, buffer);
-
-  // Return the serialized header buffer.
+  std::vector<char> buffer;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
   return buffer;
 }
 
 std::vector<char>
 TrieManager::MockTrieHeader2D(int precisionBits, bool default_mode,
                               const SpecialCounts &specialCounts) const {
-  std::vector<char> buffer;
+  using namespace airtree::core;
+using namespace airtree::core::common;
 
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 1;
-  t_header.m_width = 4;
-  t_header.precision_bits = precisionBits;
-  t_header.node_width = t_header.m_width + precisionBits;
-  strcpy(t_header.type, "2-D");
-
-  // std::cout << "MockTrieHeader2D: precisionBits = " << precisionBits
-  // << ", node_width = " << t_header.node_width
-  // << std::endl;
-  // Set config based on the precisionBits value.
-  if (t_header.node_width == 10)
-    strcpy(t_header.config, "210");
+  int node_width = 4 + precisionBits;
+  ConfigWire config;
+  if (node_width == 8)
+    config = ConfigWire::Config_2D_Fast;
+  else if (node_width == 10)
+    config = ConfigWire::Config_2D_Precise;
   else
-    strcpy(t_header.config, "UNK");
+    throw std::invalid_argument("Unknown node_width for 2D MockTrieHeader");
 
-  t_header.mode = default_mode ? 1 : 0;
-  t_header.pos_inf_count = specialCounts.posInfCount;
-  t_header.neg_inf_count = specialCounts.negInfCount;
-  t_header.pos_zero_count = specialCounts.posZeroCount;
-  t_header.neg_zero_count = specialCounts.negZeroCount;
-  t_header.nan_count = specialCounts.nanCount;
-  t_header.trie_root_ref = sizeof(trie_header);
+  auto header = makeHeader(config, {0, 0, 0, 0}, 1,
+                           specialCounts.posInfCount,
+                           specialCounts.negInfCount,
+                           specialCounts.posZeroCount,
+                           specialCounts.negZeroCount,
+                           specialCounts.nanCount);
 
-  // Serialize the header into the buffer.
-  serializeTrieHeader(t_header, buffer);
-
-  // Return the serialized header buffer.
+  std::vector<char> buffer;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
   return buffer;
 }
 
@@ -666,33 +648,27 @@ uint64_t TrieManager::getTrieSize3DxP() const {
 std::vector<char>
 TrieManager::MockTrieHeader3D(int precisionBits, bool default_mode,
                               const SpecialCounts &specialCounts) const {
-  std::vector<char> buffer;
+using namespace airtree::core;
+using namespace airtree::core::common;
 
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 4;
-  t_header.precision_bits = precisionBits;
-  t_header.node_width = t_header.m_width + precisionBits;
-  strcpy(t_header.type, "3-D");
-
-  // Set config based on the precisionBits value.
-  if (t_header.node_width == 10)
-    strcpy(t_header.config, "310");
+  int node_width = 4 + precisionBits;
+  ConfigWire config;
+  if (node_width == 8)
+    config = ConfigWire::Config_3D_Fast;
+  else if (node_width == 10)
+    config = ConfigWire::Config_3D_Precise;
   else
-    strcpy(t_header.config, "UNK");
+    throw std::invalid_argument("Unknown node_width for 3D MockTrieHeader");
 
-  t_header.mode = default_mode ? 1 : 0;
-  t_header.pos_inf_count = specialCounts.posInfCount;
-  t_header.neg_inf_count = specialCounts.negInfCount;
-  t_header.pos_zero_count = specialCounts.posZeroCount;
-  t_header.neg_zero_count = specialCounts.negZeroCount;
-  t_header.nan_count = specialCounts.nanCount;
-  t_header.trie_root_ref = sizeof(trie_header);
+  auto header = makeHeader(config, {0, 0, 0, 0}, 1,
+                           specialCounts.posInfCount,
+                           specialCounts.negInfCount,
+                           specialCounts.posZeroCount,
+                           specialCounts.negZeroCount,
+                           specialCounts.nanCount);
 
-  // Serialize the header into the buffer.
-  serializeTrieHeader(t_header, buffer);
-
-  // Return the serialized header buffer.
+  std::vector<char> buffer;
+  serializeHeader(header, buffer);
+  finalizeHeader(buffer, 0);
   return buffer;
 }

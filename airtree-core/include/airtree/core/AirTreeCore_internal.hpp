@@ -17,7 +17,7 @@
 #include <airtree/core/common/Reconstruct.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
 #include <airtree/core/common/TLE.hpp>
-#include <airtree/core/common/TrieHeader.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/AirTreeType.hpp>
 
 
@@ -39,7 +39,6 @@
 #include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/core/serdes/Count.hpp>
 #include <airtree/core/serdes/EOF.hpp>
-#include <airtree/core/serdes/Header.hpp>
 #include <airtree/core/serdes/ND.hpp>
 
 // ─────────────────────────────────────────────────────────────────────────────
