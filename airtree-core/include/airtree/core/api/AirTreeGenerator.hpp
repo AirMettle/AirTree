@@ -42,8 +42,9 @@ generate(const std::vector<const FPHArray *> &arrays,
 }
 
 // 1D Convenience Overload
-[[nodiscard]] inline std::vector<char>
-generate(const FPHArray &array, const AirTreeOptions &options = {}) {
+[[nodiscard]] inline std::vector<char> generate(const FPHArray &array,
+                                                AirTreeOptions options = {}) {
+  options.dimensions = 1;             // Auto-correct dimensions just in case!
   return generate({&array}, options); // Wraps in vector and delegates
 }
 
@@ -51,7 +52,7 @@ generate(const FPHArray &array, const AirTreeOptions &options = {}) {
 [[nodiscard]] inline std::vector<char> generate(const FPHArray &array1,
                                                 const FPHArray &array2,
                                                 AirTreeOptions options = {}) {
-  options.dimensions = 2; // Auto-correct dimensions just in case!
+  options.dimensions = 2;
   return generate({&array1, &array2}, options);
 }
 
