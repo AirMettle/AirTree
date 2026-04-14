@@ -8,7 +8,17 @@
 #include <airtree/util/UUID.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::schema::trie3d;
 using namespace airtree::util::uuid;
+
+std::vector<char>
+Generator3DxP::generate(const std::vector<const FPHArray *> &arrays,
+                        bool default_mode) const {
+  if (arrays.size() != 3) {
+    throw std::invalid_argument("Expected exactly 3 arrays for 3D generation");
+  }
+  return generate_3DxP(*arrays[0], *arrays[1], *arrays[2], default_mode);
+}
 
 void insertintoTrie_3D_3x10(TLE_3D_3x10 *root, unsigned int combined,
                             unsigned int combinedTLE, int ndims,

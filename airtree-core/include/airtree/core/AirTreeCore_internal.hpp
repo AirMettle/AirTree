@@ -76,4 +76,9 @@
 #include <airtree/core/serdes/trie4d/4DxP.hpp>
 #include <airtree/core/serdes/trie4d/4DxF.hpp>
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Core API
+// ─────────────────────────────────────────────────────────────────────────────
+#include <airtree/core/api/AirTreeGenerator.hpp>
+
 #endif // AIRTREE_CORE_AirTreeCore_INTERNAL_HPP

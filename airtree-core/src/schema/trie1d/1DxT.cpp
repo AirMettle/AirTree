@@ -10,8 +10,17 @@
 
 
 using namespace airtree::core;
+using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
 
+std::vector<char>
+Generate1DxT::generate(const std::vector<const FPHArray *> &arrays,
+                       bool default_mode) const {
+  if (arrays.size() != 1) {
+    throw std::invalid_argument("Expected exactly 1 array for 1D generation");
+  }
+  return generate_1DxT(*arrays[0], default_mode);
+}
 
 std::unique_ptr<TrieNode_13> CreateParentNode() {
   auto parentNode = std::make_unique<TrieNode_13>();

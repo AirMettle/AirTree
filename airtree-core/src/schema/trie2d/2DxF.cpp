@@ -9,7 +9,17 @@
 #include <string>
 
 using namespace airtree::core;
+using namespace airtree::core::schema::trie2d;
 using namespace airtree::util::uuid;
+
+std::vector<char>
+Generator2DxF::generate(const std::vector<const FPHArray *> &arrays,
+                        bool default_mode) const {
+  if (arrays.size() != 2) {
+    throw std::invalid_argument("Expected exactly 2 arrays for 2D generation");
+  }
+  return generate_2DxF(*arrays[0], *arrays[1], default_mode);
+}
 
 std::unique_ptr<TLETrieNode_2D> CreateParentNode_TLE2D88() {
   auto parentNode = std::make_unique<TLETrieNode_2D>();

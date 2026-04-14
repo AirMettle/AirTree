@@ -7,6 +7,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 
 /**
 * @brief TLETrieNode : Trie Node for the TLE level of the 2-D trie
@@ -33,5 +34,17 @@ execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
 [[nodiscard]] std::vector<char> generate_2DxF(const FPHArray &array1,
                                               const FPHArray &array2,
                                               bool default_mode = true);
+
+namespace airtree::core::schema::trie2d {
+
+class Generator2DxF : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie2d
+
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE2D_2DXF_HPP

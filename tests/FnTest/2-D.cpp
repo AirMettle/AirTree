@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <airtree/core/api/AirTreeGenerator.hpp>
+#include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/Reconstruct.hpp>
@@ -17,6 +19,7 @@
 
 
 using namespace airtree::core::io;
+using namespace airtree::core::api;
 using namespace airtree::query::bin_boundary;
 
 
@@ -71,25 +74,29 @@ TEST(Generate_2d_test_data_splits, Generate_2d_test_data_splits_fntest) {
   FPHArray array1_complete =
       buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
 
-
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
   // Split each dim's vector into two parts to generate two separate histogram
   // buffers
-  std::vector<char> piece1 = generate_2DxP(array0_input1, array1_input1);
+  std::vector<char> piece1 = generate(array0_input1, array1_input1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  std::vector<char> piece2 = generate_2DxP(array0_input2, array1_input2);
+  std::vector<char> piece2 = generate(array0_input2, array1_input2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  std::vector<char> result = generate_2DxP(array0_complete, array1_complete);
+  std::vector<char> result =
+      generate(array0_complete, array1_complete, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_2DxP.bin");
   AirTreeWriter::Write(piece1, "2DxP_piece1.bin");
   AirTreeWriter::Write(piece2, "2DxP_piece2.bin");
 
+  options.type = ConfigType::XF;
   // Generate the 2DxF result
-  piece1 = generate_2DxF(array0_input1, array1_input1);
+  piece1 = generate(array0_input1, array1_input1, options);
   std::cout << "Piece1 size: " << piece1.size() << std::endl;
-  piece2 = generate_2DxF(array0_input2, array1_input2);
+  piece2 = generate(array0_input2, array1_input2, options);
   std::cout << "Piece2 size: " << piece2.size() << std::endl;
-  result = generate_2DxF(array0_complete, array1_complete);
+  result = generate(array0_complete, array1_complete, options);
   std::cout << "Result size: " << result.size() << std::endl;
   AirTreeWriter::Write(result, "Original_2DxF.bin");
   AirTreeWriter::Write(piece1, "2DxF_piece1.bin");
@@ -106,7 +113,10 @@ TEST(Generate_2d_2x10, Generate_2d_2x10_fntest) {
       buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
   FPHArray array1 =
       buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
-  std::vector<char> result = generate_2DxP(array0, array1);
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
+  std::vector<char> result = generate(array0, array1, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -125,7 +135,10 @@ TEST(Generate_2d_88, DISABLED_Generate_2d_88_fntest) {
   FPHArray array1 =
       buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
 
-  std::vector<char> result = generate_2DxF(array0, array1);
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XF;
+  std::vector<char> result = generate(array0, array1, options);
 
   std::string result_hash = hashBuffer(result);
 
@@ -301,7 +314,10 @@ TEST(HistogramSanity_2DxP, HistogramSanity_2DxP_fntest) {
       buildFPHArray(dim1_data.data(), static_cast<int>(dim1_data.size()));
   FPHArray array1 =
       buildFPHArray(dim2_data.data(), static_cast<int>(dim2_data.size()));
-  auto buffer = generate_2DxP(array0, array1);
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
+  auto buffer = generate(array0, array1, options);
   verifyHistogramSanity2D(buffer, dim1_data, dim2_data);
   verifyBinAccuracy2DxP(buffer, dim1_data, dim2_data);
 }
@@ -336,7 +352,10 @@ TEST(MixedSpecialSanity_2D, MixedSpecialSanity_2DxP_fntest) {
 
   FPHArray a0 = buildFPHArray(d1.data(), static_cast<int>(d1.size()));
   FPHArray a1 = buildFPHArray(d2.data(), static_cast<int>(d2.size()));
-  auto buffer = generate_2DxP(a0, a1);
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
+  auto buffer = generate(a0, a1, options);
 
   // Total count must equal input row count (TLE files all rows)
   BinBoundary query(buffer);
@@ -367,7 +386,10 @@ TEST(Float32Sanity_2D, Float32Sanity_2DxP_fntest) {
       buildFPHArray(float_d1.data(), static_cast<int>(float_d1.size()));
   FPHArray a1 =
       buildFPHArray(float_d2.data(), static_cast<int>(float_d2.size()));
-  auto buffer = generate_2DxP(a0, a1);
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
+  auto buffer = generate(a0, a1, options);
 
   std::vector<double> d1_dbl(float_d1.begin(), float_d1.end());
   std::vector<double> d2_dbl(float_d2.begin(), float_d2.end());
@@ -392,7 +414,10 @@ TEST(SaturationZoneSanity_2D, SaturationZoneSanity_2DxP_fntest) {
   // Use the same data for both dimensions
   FPHArray array0 = buildFPHArray(data.data(), static_cast<int>(data.size()));
   FPHArray array1 = buildFPHArray(data.data(), static_cast<int>(data.size()));
-  auto buffer = generate_2DxP(array0, array1);
+  AirTreeOptions options;
+  options.dimensions = 2;
+  options.type = ConfigType::XP;
+  auto buffer = generate(array0, array1, options);
   verifyHistogramSanity2D(buffer, data, data);
   verifyBinAccuracy2DxP(buffer, data, data);
 }

@@ -5,6 +5,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <memory>
 #include <bitset>
 #include <vector>
@@ -116,5 +117,15 @@ void createAndInsertFP20(TrieNode_20 *node, uint64_t fpNumber,
 void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber,
                             uint64_t &curr_trie_size, bool default_mode);
 
+namespace airtree::core::schema::trie1d {
+
+class Generate1DxP : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie1d
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE1D_1DXP_HPP

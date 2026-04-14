@@ -9,7 +9,18 @@
 #include <string>
 
 using namespace airtree::core;
+using namespace airtree::core::schema::trie4d;
 using namespace airtree::util::uuid;
+
+std::vector<char>
+Generator4DxF::generate(const std::vector<const FPHArray *> &arrays,
+                        bool default_mode) const {
+  if (arrays.size() != 4) {
+    throw std::invalid_argument("Expected exactly 4 arrays for 4D generation");
+  }
+  return generate_4DxF(
+      *arrays[0], *arrays[1], *arrays[2], *arrays[3], default_mode);
+}
 
 std::unique_ptr<TLE_4D_4x8> CreateParentNode_TLE4D_4x8() {
   auto parentNode = std::make_unique<TLE_4D_4x8>();

@@ -5,6 +5,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <vector>
 
 
@@ -49,5 +50,15 @@ execSerialize_2D_2x10(TLEoption3_2D *root, uint64_t &curr_trie_size,
 [[nodiscard]] std::vector<char> generate_2DxP(const FPHArray &array1,
                                               const FPHArray &array2,
                                               bool default_mode = true);
+namespace airtree::core::schema::trie2d {
+
+class Generator2DxP : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie2d
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE2D_2DXP_HPP

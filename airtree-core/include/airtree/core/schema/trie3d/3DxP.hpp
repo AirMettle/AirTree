@@ -5,6 +5,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/api/AirTreeGenerator.hpp>
 #include <vector>
 
 struct Node3D_3x10_l0;
@@ -65,5 +66,15 @@ execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
                                               const FPHArray &array3,
                                               bool default_mode = true);
 
+namespace airtree::core::schema::trie3d {
+
+class Generator3DxP : public airtree::core::api::AirTreeGenerator {
+public:
+  [[nodiscard]] std::vector<char>
+  generate(const std::vector<const FPHArray *> &arrays,
+           bool default_mode) const override;
+};
+
+} // namespace airtree::core::schema::trie3d
 
 #endif // AIRTREE_CORE_SCHEMA_TRIE3D_3DXP_HPP

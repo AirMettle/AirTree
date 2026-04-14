@@ -8,7 +8,17 @@
 #include <airtree/util/UUID.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
+
+std::vector<char>
+Generate1DxF::generate(const std::vector<const FPHArray *> &arrays,
+                       bool default_mode) const {
+  if (arrays.size() != 1) {
+    throw std::invalid_argument("Expected exactly 1 array for 1D generation");
+  }
+  return generate_1DxF(*arrays[0], default_mode);
+}
 
 std::unique_ptr<TrieNode_16> CreateParentNode_16() {
   auto parentNode = std::make_unique<TrieNode_16>();
@@ -23,8 +33,8 @@ void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber,
   unsigned int internal16 = createInternal16Bit(fpNumber, default_mode);
 
   // Extract the two 8-bit indices
-  unsigned int index8 = (internal16 >> 8) & 0xFF;         // Upper 8 bits (level 0)
-  unsigned int index8_level2 = internal16 & 0xFF;         // Lower 8 bits (level 1)
+  unsigned int index8 = (internal16 >> 8) & 0xFF; // Upper 8 bits (level 0)
+  unsigned int index8_level2 = internal16 & 0xFF; // Lower 8 bits (level 1)
 
   // Trie Insertion Logic
   if (!node->populated.test(index8)) {
@@ -45,8 +55,8 @@ void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber,
   unsigned int internal16 = createInternal16Bit_32(fpNumber, default_mode);
 
   // Extract the two 8-bit indices
-  unsigned int index8 = (internal16 >> 8) & 0xFF;         // Upper 8 bits (level 0)
-  unsigned int index8_level2 = internal16 & 0xFF;         // Lower 8 bits (level 1)
+  unsigned int index8 = (internal16 >> 8) & 0xFF; // Upper 8 bits (level 0)
+  unsigned int index8_level2 = internal16 & 0xFF; // Lower 8 bits (level 1)
 
   // Trie Insertion Logic
   if (!node->populated.test(index8)) {
