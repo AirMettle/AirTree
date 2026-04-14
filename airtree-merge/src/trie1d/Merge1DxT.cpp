@@ -6,16 +6,18 @@
 using namespace airtree::merge;
 using namespace airtree::merge::dim1;
 using namespace airtree::core;
+using namespace airtree::core::common;
 
 std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
                                    const std::vector<char> &buffer2) {
-  size_t offset1 = 0, offset2 = 0;
+  auto header1 = airtree::core::common::deserializeHeader(buffer1);
+  auto header2 = airtree::core::common::deserializeHeader(buffer2);
+  size_t offset1 = header1.header_length;
+  size_t offset2 = header2.header_length;
+  auto mergedHeader = mergeHeaders(header1, header2);
   std::vector<char> mergedBuffer;
-  // Deserialize and merge headers.
-  trie_header header1 = deserializeTrieHeader(buffer1, offset1);
-  trie_header header2 = deserializeTrieHeader(buffer2, offset2);
-  trie_header mergedHeader = mergeHeaders(header1, header2);
-  serializeTrieHeader(mergedHeader, mergedBuffer);
+  airtree::core::common::serializeHeader(mergedHeader, mergedBuffer);
+  size_t header_end = mergedBuffer.size();
   SPDLOG_LOGGER_INFO(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
@@ -54,6 +56,7 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
 
   // Add EOF marker and serialize the merged trie.
   add_EOF(mergedBuffer);
+  airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
   SPDLOG_LOGGER_INFO(
       logger(), "Serialized merged trie (root and children) successfully");
   return mergedBuffer;

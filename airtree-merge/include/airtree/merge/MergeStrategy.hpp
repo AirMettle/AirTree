@@ -6,6 +6,7 @@
 #include <memory>
 #include <bitset>
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 
 using namespace airtree::core;
 
@@ -18,7 +19,7 @@ public:
                                   const std::vector<char> &buf2) = 0;
 
 protected:
-  trie_header mergeHeaders(trie_header &header1, const trie_header &header2);
+  airtree::core::common::AirTreeHeader mergeHeaders(airtree::core::common::AirTreeHeader &header1, const airtree::core::common::AirTreeHeader &header2);
   void add_EOF(std::vector<char> &buffer);
   // Merge two Level 1 nodes for TrieNode_16.
   std::unique_ptr<TrieNode_16_Level1>
