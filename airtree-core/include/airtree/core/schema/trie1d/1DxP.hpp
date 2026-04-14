@@ -119,7 +119,7 @@ void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber,
 
 namespace airtree::core::schema::trie1d {
 
-class Generate1DxP : public airtree::core::api::AirTreeGenerator {
+class Generator1DxP : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
   generate(const std::vector<const FPHArray *> &arrays,
