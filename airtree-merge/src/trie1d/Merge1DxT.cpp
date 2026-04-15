@@ -16,14 +16,14 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
   trie_header header2 = deserializeTrieHeader(buffer2, offset2);
   trie_header mergedHeader = mergeHeaders(header1, header2);
   serializeTrieHeader(mergedHeader, mergedBuffer);
-  SPDLOG_LOGGER_INFO(logger(), "Merged headers successfully");
+  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
   std::bitset<BINS_256> pop1, pop2;
   auto mergedRoot = Root_merge<TrieNode_13, BINS_256>(
       buffer1, buffer2, offset1, offset2, pop1, pop2);
   serialize_1DxT(mergedRoot.get(), mergedBuffer, false);
-  SPDLOG_LOGGER_INFO(logger(), "Serialized merged trie (root) successfully");
+  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Serialized merged trie (root) successfully");
   mergedRoot.reset();
 
   // Merge the level-1 children based on original populated flags.
@@ -55,7 +55,7 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
   // Add EOF marker and serialize the merged trie.
   add_EOF(mergedBuffer);
   SPDLOG_LOGGER_INFO(
-      logger(), "Serialized merged trie (root and children) successfully");
+      airtree::merge::logger(), "Serialized merged trie (root and children) successfully");
   return mergedBuffer;
 }
 
@@ -63,17 +63,17 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
 std::unique_ptr<TrieNode_13_Level1>
 Merge1DxT::mergeTrieNode13Level1(std::unique_ptr<TrieNode_13_Level1> node1,
                                  std::unique_ptr<TrieNode_13_Level1> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeTrieNode13Level1");
+  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Entering mergeTrieNode13Level1");
   if (!node1) {
-    SPDLOG_LOGGER_INFO(logger(), "node1 is nullptr, returning node2");
+    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node1 is nullptr, returning node2");
     return node2;
   }
   if (!node2) {
-    SPDLOG_LOGGER_INFO(logger(), "node2 is nullptr, returning node1");
+    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node2 is nullptr, returning node1");
     return node1;
   }
   for (size_t i = 0; i < BINS_32; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie13 Level1 index {}: {} + {}", i,
+    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Merging Trie13 Level1 index {}: {} + {}", i,
                        node1->counts[i], node2->counts[i]);
     node1->counts[i] += node2->counts[i];
   }
@@ -85,18 +85,18 @@ Merge1DxT::mergeTrieNode13Level1(std::unique_ptr<TrieNode_13_Level1> node1,
 std::unique_ptr<TrieNode_13>
 mergeTrieNode13(std::unique_ptr<TrieNode_13> node1,
                 std::unique_ptr<TrieNode_13> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeTrieNode13");
+  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Entering mergeTrieNode13");
   if (!node1) {
-    SPDLOG_LOGGER_INFO(logger(), "node1 is nullptr, returning node2");
+    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node1 is nullptr, returning node2");
     return node2;
   }
   if (!node2) {
-    SPDLOG_LOGGER_INFO(logger(), "node2 is nullptr, returning node1");
+    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node2 is nullptr, returning node1");
     return node1;
   }
 
   for (size_t i = 0; i < BINS_256; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie13 Level0 index {}", i);
+    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Merging Trie13 Level0 index {}", i);
     // Merge the counts at this index.
     node1->counts[i] += node2->counts[i];
 

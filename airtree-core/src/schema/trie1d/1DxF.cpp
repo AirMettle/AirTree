@@ -8,12 +8,12 @@
 #include <airtree/util/UUID.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::api;
 using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
 
-std::vector<char>
-Generator1DxF::generate(const std::vector<const FPHArray *> &arrays,
-                       bool default_mode) const {
+std::vector<char> Generator1DxF::generate(
+    const std::vector<const FPHArray *> &arrays, bool default_mode) const {
   if (arrays.size() != 1) {
     throw std::invalid_argument("Expected exactly 1 array for 1D generation");
   }
@@ -116,12 +116,11 @@ execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
   std::unique_ptr<TrieNode_16> root = CreateParentNode_16();
   curr_trie_size = sizeof(TrieNode_16);
 
-  switch (array.type) {
-  case FPH_dtype::Double: {
-    const double *values = static_cast<const double *>(array.values);
+  auto process_array = [&](const auto *typed_values) {
     for (int i = 0; i < array.length; ++i) {
+      double value = static_cast<double>(typed_values[i]);
       uint64_t fpNumber;
-      std::memcpy(&fpNumber, &values[i], sizeof(values[i]));
+      std::memcpy(&fpNumber, &value, sizeof(value));
       if (!isSpecialCase(fpNumber, specialCounts)) {
         createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
         if (enable_threshold_1D && curr_trie_size > threshold_1D) {
@@ -131,80 +130,15 @@ execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
           SPDLOG_LOGGER_ERROR(
               logger(),
               "Insertion process stopped at index {} of the input dataset.", i);
-          SPDLOG_LOGGER_ERROR(logger(), "Last failed value: {}", values[i]);
-          break;
-        }
-      }
-    }
-  } break;
-  case FPH_dtype::Float: {
-    const float *values = static_cast<const float *>(array.values);
-    for (int i = 0; i < array.length; ++i) {
-      double doubleValue =
-          static_cast<double>(values[i]); // Convert float to double
-      uint64_t fpNumber;
-      std::memcpy(&fpNumber, &doubleValue, sizeof(doubleValue));
-      if (!isSpecialCase(fpNumber, specialCounts)) {
-        createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
-        if (enable_threshold_1D && curr_trie_size > threshold_1D) {
-          SPDLOG_LOGGER_ERROR(logger(),
-                              "Trie size exceeded threshold limit of {}.",
-                              threshold_1D);
           SPDLOG_LOGGER_ERROR(
-              logger(),
-              "Insertion process stopped at index {} of the input dataset.", i);
-          SPDLOG_LOGGER_ERROR(logger(), "Last failed value: {}", values[i]);
+              logger(), "Last failed value: {}", typed_values[i]);
           break;
         }
       }
     }
-  } break;
-  case FPH_dtype::Int32: {
-    const int32_t *values = static_cast<const int32_t *>(array.values);
-    for (int i = 0; i < array.length; ++i) {
-      double floatValue = int32_to_double(values[i]);
-      uint64_t fpNumber;
-      std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
-      if (!isSpecialCase(fpNumber, specialCounts)) {
-        createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
-        if (enable_threshold_1D && curr_trie_size > threshold_1D) {
-          SPDLOG_LOGGER_ERROR(logger(),
-                              "Trie size exceeded threshold limit of {}.",
-                              threshold_1D);
-          SPDLOG_LOGGER_ERROR(
-              logger(),
-              "Insertion process stopped at index {} of the input dataset.", i);
-          SPDLOG_LOGGER_ERROR(logger(), "Last failed value: {}", values[i]);
-          break;
-        }
-      }
-    }
-  } break;
-  case FPH_dtype::Int64: {
-    const int64_t *values = static_cast<const int64_t *>(array.values);
-    for (int i = 0; i < array.length; ++i) {
-      double floatValue = int64_to_double(values[i]);
-      uint64_t fpNumber;
-      std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
-      if (!isSpecialCase(fpNumber, specialCounts)) {
-        createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
-        if (enable_threshold_1D && curr_trie_size > threshold_1D) {
-          SPDLOG_LOGGER_ERROR(logger(),
-                              "Trie size exceeded threshold limit of {}.",
-                              threshold_1D);
-          SPDLOG_LOGGER_ERROR(
-              logger(),
-              "Insertion process stopped at index {} of the input dataset.", i);
-          SPDLOG_LOGGER_ERROR(logger(), "Last failed value: {}", values[i]);
-          break;
-        }
-      }
-    }
-  } break;
-  default:
-    SPDLOG_LOGGER_ERROR(logger(), "Unknown data type");
-    break;
-  }
+  };
+
+  dispatchFPHArray(array, process_array);
   return root;
 }
 

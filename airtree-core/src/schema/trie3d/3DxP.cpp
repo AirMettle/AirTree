@@ -1,3 +1,4 @@
+#include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie3d/3DxP.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
@@ -8,6 +9,7 @@
 #include <airtree/util/UUID.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::api;
 using namespace airtree::core::schema::trie3d;
 using namespace airtree::util::uuid;
 
@@ -214,94 +216,105 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
   std::unique_ptr<TLE_3D_3x10> root = std::make_unique<TLE_3D_3x10>();
   curr_trie_size += sizeof(TLE_3D_3x10);
 
-  unsigned int internalFPHNumber1;
-  unsigned int internalFPHNumber2;
-  unsigned int internalFPHNumber3;
+  dispatchFPHArray(array1, [&](const auto *vals1) {
+    dispatchFPHArray(array2, [&](const auto *vals2) {
+      dispatchFPHArray(array3, [&](const auto *vals3) {
+        for (int i = 0; i < array1.length; ++i) {
 
-  for (int i = 0; i < array1.length; ++i) {
-    TLE tle1, tle2, tle3;
+          std::pair<TLE, unsigned int> input_1 =
+              internal_10bit(vals1[i], default_mode);
+          std::pair<TLE, unsigned int> input_2 =
+              internal_10bit(vals2[i], default_mode);
+          std::pair<TLE, unsigned int> input_3 =
+              internal_10bit(vals3[i], default_mode);
 
-    std::pair<TLE, unsigned int> input_1 =
-        internal_10bit(array1, i, default_mode);
-    std::pair<TLE, unsigned int> input_2 =
-        internal_10bit(array2, i, default_mode);
-    std::pair<TLE, unsigned int> input_3 =
-        internal_10bit(array3, i, default_mode);
+          TLE tle1 = input_1.first;
+          TLE tle2 = input_2.first;
+          TLE tle3 = input_3.first;
 
-    tle1 = input_1.first;
-    tle2 = input_2.first;
-    tle3 = input_3.first;
+          unsigned int internalFPHNumber1 = input_1.second;
+          unsigned int internalFPHNumber2 = input_2.second;
+          unsigned int internalFPHNumber3 = input_3.second;
 
-    internalFPHNumber1 = input_1.second;
-    internalFPHNumber2 = input_2.second;
-    internalFPHNumber3 = input_3.second;
+          // Combine three 3-bit TLE values into a 9-bit number
+          unsigned int combinedTLE =
+              (tle1.TLE << 6) | (tle2.TLE << 3) | tle3.TLE;
 
-    // Combine three 3-bit TLE values into a 9-bit number
-    unsigned int combinedTLE = (tle1.TLE << 6) | (tle2.TLE << 3) | tle3.TLE;
+          // Check special conditions and set ndims accordingly
+          unsigned int isTle1Special =
+              update_special_counts(tle1, specialCounts);
+          unsigned int isTle2Special =
+              update_special_counts(tle2, specialCounts);
+          unsigned int isTle3Special =
+              update_special_counts(tle3, specialCounts);
+          // bool isTle1Special =
+          //     (tle1.TLE == 0 || tle1.TLE == 1 || tle1.TLE == 4 || tle1.TLE ==
+          //     7);
+          // bool isTle2Special =
+          //     (tle2.TLE == 0 || tle2.TLE == 1 || tle2.TLE == 4 || tle2.TLE ==
+          //     7);
+          // bool isTle3Special =
+          //     (tle3.TLE == 0 || tle3.TLE == 1 || tle3.TLE == 4 || tle3.TLE ==
+          //     7);
 
-    // Check special conditions and set ndims accordingly
-    unsigned int isTle1Special = update_special_counts(tle1, specialCounts);
-    unsigned int isTle2Special = update_special_counts(tle2, specialCounts);
-    unsigned int isTle3Special = update_special_counts(tle3, specialCounts);
-    // bool isTle1Special =
-    //     (tle1.TLE == 0 || tle1.TLE == 1 || tle1.TLE == 4 || tle1.TLE == 7);
-    // bool isTle2Special =
-    //     (tle2.TLE == 0 || tle2.TLE == 1 || tle2.TLE == 4 || tle2.TLE == 7);
-    // bool isTle3Special =
-    //     (tle3.TLE == 0 || tle3.TLE == 1 || tle3.TLE == 4 || tle3.TLE == 7);
+          int ndims = (~((isTle1Special << 2) | (isTle2Special << 1)
+                         | isTle3Special << 0))
+                      & 0x7;
+          unsigned int combined = 0;
 
-    int ndims =
-        (~((isTle1Special << 2) | (isTle2Special << 1) | isTle3Special << 0))
-        & 0x7;
-    unsigned int combined = 0;
+          switch (ndims) {
+          case 0:
+            combined = 0;
+            break;
+          case 1:
+            combined = internalFPHNumber3;
+            break;
+          case 2:
+            combined = internalFPHNumber2;
+            break;
+          case 3:
+            combined =
+                combine_chunks_10b(internalFPHNumber2, internalFPHNumber3);
+            break;
+          case 4:
+            combined = internalFPHNumber1;
+            break;
+          case 5:
+            combined =
+                combine_chunks_10b(internalFPHNumber1, internalFPHNumber3);
+            break;
+          case 6:
+            combined =
+                combine_chunks_10b(internalFPHNumber1, internalFPHNumber2);
+            break;
+          case 7:
+            combined = combine_chunks_10b(
+                internalFPHNumber1, internalFPHNumber2, internalFPHNumber3);
+            break;
+          default:
+            SPDLOG_LOGGER_ERROR(logger(), "Invalid number of dimensions");
+            break;
+          }
 
-    switch (ndims) {
-    case 0:
-      combined = 0;
-      break;
-    case 1:
-      combined = internalFPHNumber3;
-      break;
-    case 2:
-      combined = internalFPHNumber2;
-      break;
-    case 3:
-      combined = combine_chunks_10b(internalFPHNumber2, internalFPHNumber3);
-      break;
-    case 4:
-      combined = internalFPHNumber1;
-      break;
-    case 5:
-      combined = combine_chunks_10b(internalFPHNumber1, internalFPHNumber3);
-      break;
-    case 6:
-      combined = combine_chunks_10b(internalFPHNumber1, internalFPHNumber2);
-      break;
-    case 7:
-      combined = combine_chunks_10b(
-          internalFPHNumber1, internalFPHNumber2, internalFPHNumber3);
-      break;
-    default:
-      SPDLOG_LOGGER_ERROR(logger(), "Invalid number of dimensions");
-      break;
-    }
-
-    insertintoTrie_3D_3x10(
-        root.get(), combined, combinedTLE, ndims, curr_trie_size);
-    if (enable_threshold_3D && curr_trie_size > threshold_3D) {
-      SPDLOG_LOGGER_ERROR(
-          logger(), "Trie size exceeded threshold limit of {}.", threshold_3D);
-      SPDLOG_LOGGER_ERROR(
-          logger(),
-          "Insertion process stopped at index {} of the input dataset.", i);
-      SPDLOG_LOGGER_ERROR(logger(),
-                          "Last filed values -> @ 0: {} @ 1: {} @ 2: {}",
-                          static_cast<const double *>(array1.values)[i],
-                          static_cast<const double *>(array2.values)[i],
-                          static_cast<const double *>(array3.values)[i]);
-      break;
-    }
-  }
+          insertintoTrie_3D_3x10(
+              root.get(), combined, combinedTLE, ndims, curr_trie_size);
+          if (enable_threshold_3D && curr_trie_size > threshold_3D) {
+            SPDLOG_LOGGER_ERROR(logger(),
+                                "Trie size exceeded threshold limit of {}.",
+                                threshold_3D);
+            SPDLOG_LOGGER_ERROR(
+                logger(),
+                "Insertion process stopped at index {} of the input dataset.",
+                i);
+            SPDLOG_LOGGER_ERROR(logger(),
+                                "Last filed values -> @ 0: {} @ 1: {} @ 2: {}",
+                                vals1[i], vals2[i], vals3[i]);
+            break;
+          }
+        }
+      });
+    });
+  });
 
   return root;
 }

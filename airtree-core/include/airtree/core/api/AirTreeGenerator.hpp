@@ -3,8 +3,7 @@
 
 #include <vector>
 #include <memory>
-
-class FPHArray; // Forward declaration of FPHArray
+#include <airtree/core/common/FPHArray.hpp>
 
 namespace airtree::core::api {
 enum class ConfigType {
@@ -42,35 +41,64 @@ generate(const std::vector<const FPHArray *> &arrays,
 }
 
 // 1D Convenience Overload
-[[nodiscard]] inline std::vector<char> generate(const FPHArray &array,
+template <typename T>
+[[nodiscard]] inline std::vector<char> generate(const std::vector<T> &array,
                                                 AirTreeOptions options = {}) {
-  options.dimensions = 1;             // Auto-correct dimensions just in case!
-  return generate({&array}, options); // Wraps in vector and delegates
+  options.dimensions = 1; // Auto-correct dimensions just in case!
+  FPHArray fph(array);
+  return generate({&fph}, options); // Wraps in vector and delegates
 }
 
 // 2D Convenience Overload
-[[nodiscard]] inline std::vector<char> generate(const FPHArray &array1,
-                                                const FPHArray &array2,
+template <typename T1, typename T2>
+[[nodiscard]] inline std::vector<char> generate(const std::vector<T1> &array1,
+                                                const std::vector<T2> &array2,
                                                 AirTreeOptions options = {}) {
-  options.dimensions = 2;
-  return generate({&array1, &array2}, options);
+  options.dimensions = 2; // Auto-correct dimensions just in case!
+  FPHArray fph1(array1), fph2(array2);
+  return generate({&fph1, &fph2}, options);
 }
 
 // 3D Convenience Overload...
-[[nodiscard]] inline std::vector<char> generate(const FPHArray &array1,
-                                                const FPHArray &array2,
-                                                const FPHArray &array3,
-                                                AirTreeOptions options = {}) {
+template <typename T1, typename T2, typename T3>
+[[nodiscard]] inline std::vector<char>
+generate(const std::vector<T1> &array1, const std::vector<T2> &array2,
+         const std::vector<T3> &array3, AirTreeOptions options = {}) {
   options.dimensions = 3;
-  return generate({&array1, &array2, &array3}, options);
+  FPHArray fph1(array1), fph2(array2), fph3(array3);
+  return generate({&fph1, &fph2, &fph3}, options);
 }
 
 // 4D Convenience Overload...
+template <typename T1, typename T2, typename T3, typename T4>
 [[nodiscard]] inline std::vector<char>
-generate(const FPHArray &array1, const FPHArray &array2, const FPHArray &array3,
-         const FPHArray &array4, AirTreeOptions options = {}) {
+generate(const std::vector<T1> &array1, const std::vector<T2> &array2,
+         const std::vector<T3> &array3, const std::vector<T4> &array4,
+         AirTreeOptions options = {}) {
   options.dimensions = 4;
-  return generate({&array1, &array2, &array3, &array4}, options);
+  FPHArray fph1(array1), fph2(array2), fph3(array3), fph4(array4);
+  return generate({&fph1, &fph2, &fph3, &fph4}, options);
+}
+
+template <typename Func>
+void dispatchFPHArray(const FPHArray &array, Func &&process_func) {
+  switch (array.type) {
+  case FPH_dtype::Double: {
+    process_func(static_cast<const double *>(array.values));
+  } break;
+  case FPH_dtype::Float: {
+    process_func(static_cast<const float *>(array.values));
+  } break;
+  case FPH_dtype::Int32: {
+    process_func(static_cast<const int32_t *>(array.values));
+  } break;
+  case FPH_dtype::Int64: {
+    process_func(static_cast<const int64_t *>(array.values));
+  } break;
+  default:
+    throw std::runtime_error("Unknown data type in FPHArray");
+    break;
+  }
 }
 
 } // namespace airtree::core::api
