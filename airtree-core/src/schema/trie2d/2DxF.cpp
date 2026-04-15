@@ -1,3 +1,4 @@
+#include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie2d/2DxF.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
@@ -10,6 +11,7 @@
 
 using namespace airtree::core;
 using namespace airtree::core::common;
+using namespace airtree::core::api;
 using namespace airtree::core::schema::trie2d;
 using namespace airtree::util::uuid;
 
@@ -130,67 +132,65 @@ std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
   std::unique_ptr<TLETrieNode_2D> root = CreateParentNode_TLE2D88();
   curr_trie_size += sizeof(TLETrieNode_2D);
 
-  unsigned int internalFPHNumber1 = 0;
-  unsigned int internalFPHNumber2 = 0;
+  dispatchFPHArray(array1, [&](const auto *vals1) {
+    dispatchFPHArray(array2, [&](const auto *vals2) {
+      for (int i = 0; i < array1.length; ++i) {
 
-  for (int i = 0; i < array1.length; ++i) {
-    TLE tle1, tle2;
+        std::pair<TLE, unsigned int> input_1 =
+            internal_8bit(vals1[i], default_mode);
+        std::pair<TLE, unsigned int> input_2 =
+            internal_8bit(vals2[i], default_mode);
 
-    std::pair<TLE, unsigned int> input_1 =
-        internal_8bit(array1, i, default_mode);
-    std::pair<TLE, unsigned int> input_2 =
-        internal_8bit(array2, i, default_mode);
+        TLE tle1 = input_1.first;
+        TLE tle2 = input_2.first;
 
-    tle1 = input_1.first;
-    tle2 = input_2.first;
+        unsigned int internalFPHNumber1 = input_1.second;
+        unsigned int internalFPHNumber2 = input_2.second;
 
-    internalFPHNumber1 = input_1.second;
-    internalFPHNumber2 = input_2.second;
+        unsigned int combinedTLE = (tle1.TLE << 3) | tle2.TLE;
 
-    unsigned int combinedTLE = (tle1.TLE << 3) | tle2.TLE;
+        // Check special conditions and set ndims accordingly
+        unsigned int isTle1Special = update_special_counts(tle1, specialCounts);
+        unsigned int isTle2Special = update_special_counts(tle2, specialCounts);
 
-    // Check special conditions and set ndims accordingly
-    unsigned int isTle1Special = update_special_counts(tle1, specialCounts);
-    unsigned int isTle2Special = update_special_counts(tle2, specialCounts);
-    // unsigned int isTle1Special =
-    // (tle1.TLE == 0 || tle1.TLE == 1 || tle1.TLE == 4 || tle1.TLE == 7);
-    // unsigned int isTle2Special =
-    // (tle2.TLE == 0 || tle2.TLE == 1 || tle2.TLE == 4 || tle2.TLE == 7);
-    unsigned int ndims = (~((isTle1Special << 1) | isTle2Special)) & 0x3;
+        unsigned int ndims = (~((isTle1Special << 1) | isTle2Special)) & 0x3;
 
-    unsigned int combined = 0;
+        unsigned int combined = 0;
 
-    switch (ndims) {
-    case 0:
-      combined = 0; // No need to compute internal numbers
-      break;
-    case 1:
-      combined = internalFPHNumber2;
-      break;
-    case 2:
-      combined = internalFPHNumber1;
-      break;
-    case 3:
-      combined = combine_chunks_8b_temp(internalFPHNumber1, internalFPHNumber2);
-      break;
-    default:
-      SPDLOG_LOGGER_ERROR(logger(), "Invalid value for ndims");
-      break;
-    }
-    insertintoTLETrie_2D_88(
-        root.get(), combined, combinedTLE, ndims, curr_trie_size);
-    if (enable_threshold_2D && curr_trie_size > threshold_2D) {
-      SPDLOG_LOGGER_ERROR(
-          logger(), "Trie size exceeded threshold limit of {}.", threshold_2D);
-      SPDLOG_LOGGER_ERROR(
-          logger(),
-          "Insertion process stopped at index {} of the input dataset.", i);
-      SPDLOG_LOGGER_ERROR(logger(), "Last filed values -> @ 0: {} @ 1: {}",
-                          static_cast<const double *>(array1.values)[i],
-                          static_cast<const double *>(array2.values)[i]);
-      break;
-    }
-  }
+        switch (ndims) {
+        case 0:
+          combined = 0; // No need to compute internal numbers
+          break;
+        case 1:
+          combined = internalFPHNumber2;
+          break;
+        case 2:
+          combined = internalFPHNumber1;
+          break;
+        case 3:
+          combined =
+              combine_chunks_8b_temp(internalFPHNumber1, internalFPHNumber2);
+          break;
+        default:
+          SPDLOG_LOGGER_ERROR(logger(), "Invalid value for ndims");
+          break;
+        }
+        insertintoTLETrie_2D_88(
+            root.get(), combined, combinedTLE, ndims, curr_trie_size);
+        if (enable_threshold_2D && curr_trie_size > threshold_2D) {
+          SPDLOG_LOGGER_ERROR(logger(),
+                              "Trie size exceeded threshold limit of {}.",
+                              threshold_2D);
+          SPDLOG_LOGGER_ERROR(
+              logger(),
+              "Insertion process stopped at index {} of the input dataset.", i);
+          SPDLOG_LOGGER_ERROR(logger(), "Last filed values -> @ 0: {} @ 1: {}",
+                              vals1[i], vals2[i]);
+          break;
+        }
+      }
+    });
+  });
 
   return root;
 }

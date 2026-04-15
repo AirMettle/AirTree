@@ -10,6 +10,7 @@
 
 using namespace airtree::core;
 using namespace airtree::core::common;
+using namespace airtree::core::api;
 using namespace airtree::core::schema::trie4d;
 using namespace airtree::util::uuid;
 
@@ -243,132 +244,133 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
   std::unique_ptr<TLE_4D_4x8> root = CreateParentNode_TLE4D_4x8();
   curr_trie_size += sizeof(TLE_4D_4x8);
 
-  unsigned int internalFPHNumber1 = 0;
-  unsigned int internalFPHNumber2 = 0;
-  unsigned int internalFPHNumber3 = 0;
-  unsigned int internalFPHNumber4 = 0;
+  dispatchFPHArray(array1, [&](const auto *vals1) {
+    dispatchFPHArray(array2, [&](const auto *vals2) {
+      dispatchFPHArray(array3, [&](const auto *vals3) {
+        dispatchFPHArray(array4, [&](const auto *vals4) {
+          for (int i = 0; i < array1.length; ++i) {
 
-  for (int i = 0; i < array1.length; ++i) {
-    TLE tle1, tle2, tle3, tle4;
+            std::pair<TLE, unsigned int> input_1 =
+                internal_8bit(vals1[i], default_mode);
+            std::pair<TLE, unsigned int> input_2 =
+                internal_8bit(vals2[i], default_mode);
+            std::pair<TLE, unsigned int> input_3 =
+                internal_8bit(vals3[i], default_mode);
+            std::pair<TLE, unsigned int> input_4 =
+                internal_8bit(vals4[i], default_mode);
 
-    std::pair<TLE, unsigned int> input_1 =
-        internal_8bit(array1, i, default_mode);
-    std::pair<TLE, unsigned int> input_2 =
-        internal_8bit(array2, i, default_mode);
-    std::pair<TLE, unsigned int> input_3 =
-        internal_8bit(array3, i, default_mode);
-    std::pair<TLE, unsigned int> input_4 =
-        internal_8bit(array4, i, default_mode);
+            TLE tle1 = input_1.first;
+            TLE tle2 = input_2.first;
+            TLE tle3 = input_3.first;
+            TLE tle4 = input_4.first;
 
-    tle1 = input_1.first;
-    tle2 = input_2.first;
-    tle3 = input_3.first;
-    tle4 = input_4.first;
+            unsigned int internalFPHNumber1 = input_1.second;
+            unsigned int internalFPHNumber2 = input_2.second;
+            unsigned int internalFPHNumber3 = input_3.second;
+            unsigned int internalFPHNumber4 = input_4.second;
 
-    internalFPHNumber1 = input_1.second;
-    internalFPHNumber2 = input_2.second;
-    internalFPHNumber3 = input_3.second;
-    internalFPHNumber4 = input_4.second;
+            // Combine four 3-bit TLE values into a 12-bit number
+            unsigned int combinedTLE =
+                (tle1.TLE << 9) | (tle2.TLE << 6) | (tle3.TLE << 3) | tle4.TLE;
 
-    // Combine four 3-bit TLE values into a 12-bit number
-    unsigned int combinedTLE =
-        (tle1.TLE << 9) | (tle2.TLE << 6) | (tle3.TLE << 3) | tle4.TLE;
+            // Check special conditions and set ndims accordingly
+            bool isTle1Special = update_special_counts(tle1, specialCounts);
+            bool isTle2Special = update_special_counts(tle2, specialCounts);
+            bool isTle3Special = update_special_counts(tle3, specialCounts);
+            bool isTle4Special = update_special_counts(tle4, specialCounts);
 
-    // Check special conditions and set ndims accordingly
-    bool isTle1Special = update_special_counts(tle1, specialCounts);
-    bool isTle2Special = update_special_counts(tle2, specialCounts);
-    bool isTle3Special = update_special_counts(tle3, specialCounts);
-    bool isTle4Special = update_special_counts(tle4, specialCounts);
-    // bool isTle1Special =
-    //     (tle1.TLE == 0 || tle1.TLE == 1 || tle1.TLE == 4 || tle1.TLE == 7);
-    // bool isTle2Special =
-    //     (tle2.TLE == 0 || tle2.TLE == 1 || tle2.TLE == 4 || tle2.TLE == 7);
-    // bool isTle3Special =
-    //     (tle3.TLE == 0 || tle3.TLE == 1 || tle3.TLE == 4 || tle3.TLE == 7);
-    // bool isTle4Special =
-    //     (tle4.TLE == 0 || tle4.TLE == 1 || tle4.TLE == 4 || tle4.TLE == 7);
+            int ndims = (~((isTle1Special << 3) | (isTle2Special << 2)
+                           | (isTle3Special << 1) | isTle4Special << 0))
+                        & 0xF;
+            unsigned int combined = 0;
 
-    int ndims = (~((isTle1Special << 3) | (isTle2Special << 2)
-                   | (isTle3Special << 1) | isTle4Special << 0))
-                & 0xF;
-    unsigned int combined = 0;
+            switch (ndims) {
+            case 0: // 0000
+              combined = 0;
+              break;
+            case 1: // 0001
+              combined = internalFPHNumber4;
+              break;
+            case 2: // 0010
+              combined = internalFPHNumber3;
+              break;
+            case 3: // 0011
+              combined =
+                  combine_chunks_8b(internalFPHNumber3, internalFPHNumber4);
+              break;
+            case 4: // 0100
+              combined = internalFPHNumber2;
+              break;
+            case 5: // 0101
+              combined =
+                  combine_chunks_8b(internalFPHNumber2, internalFPHNumber4);
+              break;
+            case 6: // 0110
+              combined =
+                  combine_chunks_8b(internalFPHNumber2, internalFPHNumber3);
+              break;
+            case 7: // 0111
+              combined = combine_chunks_8b(
+                  internalFPHNumber2, internalFPHNumber3, internalFPHNumber4);
+              break;
+            case 8: // 1000
+              combined = internalFPHNumber1;
+              break;
+            case 9: // 1001
+              combined =
+                  combine_chunks_8b(internalFPHNumber1, internalFPHNumber4);
+              break;
+            case 10: // 1010
+              combined =
+                  combine_chunks_8b(internalFPHNumber1, internalFPHNumber3);
+              break;
+            case 11: // 1011
+              combined = combine_chunks_8b(
+                  internalFPHNumber1, internalFPHNumber3, internalFPHNumber4);
+              break;
+            case 12: // 1100
+              combined =
+                  combine_chunks_8b(internalFPHNumber1, internalFPHNumber2);
+              break;
+            case 13: // 1101
+              combined = combine_chunks_8b(
+                  internalFPHNumber1, internalFPHNumber2, internalFPHNumber4);
+              break;
+            case 14: // 1110
+              combined = combine_chunks_8b(
+                  internalFPHNumber1, internalFPHNumber2, internalFPHNumber3);
+              break;
+            case 15: // 1111
+              combined =
+                  combine_chunks_8b(internalFPHNumber1, internalFPHNumber2,
+                                    internalFPHNumber3, internalFPHNumber4);
+              break;
+            default:
+              SPDLOG_LOGGER_ERROR(logger(), "Invalid ndims value");
+              break;
+            }
 
-    switch (ndims) {
-    case 0: // 0000
-      combined = 0;
-      break;
-    case 1: // 0001
-      combined = internalFPHNumber4;
-      break;
-    case 2: // 0010
-      combined = internalFPHNumber3;
-      break;
-    case 3: // 0011
-      combined = combine_chunks_8b(internalFPHNumber3, internalFPHNumber4);
-      break;
-    case 4: // 0100
-      combined = internalFPHNumber2;
-      break;
-    case 5: // 0101
-      combined = combine_chunks_8b(internalFPHNumber2, internalFPHNumber4);
-      break;
-    case 6: // 0110
-      combined = combine_chunks_8b(internalFPHNumber2, internalFPHNumber3);
-      break;
-    case 7: // 0111
-      combined = combine_chunks_8b(
-          internalFPHNumber2, internalFPHNumber3, internalFPHNumber4);
-      break;
-    case 8: // 1000
-      combined = internalFPHNumber1;
-      break;
-    case 9: // 1001
-      combined = combine_chunks_8b(internalFPHNumber1, internalFPHNumber4);
-      break;
-    case 10: // 1010
-      combined = combine_chunks_8b(internalFPHNumber1, internalFPHNumber3);
-      break;
-    case 11: // 1011
-      combined = combine_chunks_8b(
-          internalFPHNumber1, internalFPHNumber3, internalFPHNumber4);
-      break;
-    case 12: // 1100
-      combined = combine_chunks_8b(internalFPHNumber1, internalFPHNumber2);
-      break;
-    case 13: // 1101
-      combined = combine_chunks_8b(
-          internalFPHNumber1, internalFPHNumber2, internalFPHNumber4);
-      break;
-    case 14: // 1110
-      combined = combine_chunks_8b(
-          internalFPHNumber1, internalFPHNumber2, internalFPHNumber3);
-      break;
-    case 15: // 1111
-      combined = combine_chunks_8b(internalFPHNumber1, internalFPHNumber2,
-                                   internalFPHNumber3, internalFPHNumber4);
-      break;
-    default:
-      SPDLOG_LOGGER_ERROR(logger(), "Invalid ndims value");
-      break;
-    }
-
-    insertintoTrie_4D_4x8(
-        root.get(), combined, combinedTLE, ndims, curr_trie_size);
-    if (enable_threshold_4D && curr_trie_size > threshold_4D) {
-      SPDLOG_LOGGER_ERROR(
-          logger(), "Trie size exceeded threshold limit of {}.", threshold_4D);
-      SPDLOG_LOGGER_ERROR(
-          logger(),
-          "Insertion process stopped at index {} of the input dataset.", i);
-      SPDLOG_LOGGER_ERROR(
-          logger(), "Last filed values -> @ 0: {} @ 1: {} @ 2: {} @ 3: {}",
-          static_cast<const double *>(array1.values)[i],
-          static_cast<const double *>(array2.values)[i],
-          static_cast<const double *>(array3.values)[i],
-          static_cast<const double *>(array4.values)[i]);
-      break;
-    }
-  }
+            insertintoTrie_4D_4x8(
+                root.get(), combined, combinedTLE, ndims, curr_trie_size);
+            if (enable_threshold_4D && curr_trie_size > threshold_4D) {
+              SPDLOG_LOGGER_ERROR(logger(),
+                                  "Trie size exceeded threshold limit of {}.",
+                                  threshold_4D);
+              SPDLOG_LOGGER_ERROR(
+                  logger(),
+                  "Insertion process stopped at index {} of the input dataset.",
+                  i);
+              SPDLOG_LOGGER_ERROR(
+                  logger(),
+                  "Last filed values -> @ 0: {} @ 1: {} @ 2: {} @ 3: {}",
+                  vals1[i], vals2[i], vals3[i], vals4[i]);
+              break;
+            }
+          }
+        });
+      });
+    });
+  });
 
   return root;
 }

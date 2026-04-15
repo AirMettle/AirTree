@@ -174,10 +174,11 @@ TEST_F(TestCDF, TestCDF1DxT_InterpolationVsStep) {
 
   // Step function should drop down to the lower bound's cumulative count
   double step_result = cdf->getCDF(halfway_value, false);
-  SPDLOG_LOGGER_INFO(logger(), "step_result: {}", step_result);
+  SPDLOG_LOGGER_INFO(airtree::query::logger(), "step_result: {}", step_result);
   // Interpolated function should calculate the fractional count
   double interpolated_result = cdf->getCDF(halfway_value, true);
-  SPDLOG_LOGGER_INFO(logger(), "interpolated_result: {}", interpolated_result);
+  SPDLOG_LOGGER_INFO(
+      airtree::query::logger(), "interpolated_result: {}", interpolated_result);
 
   // The interpolated result should logically be higher than the step result
   // for a value halfway through a bin
@@ -191,13 +192,13 @@ TEST_F(TestCDF, TestCDF1DxT_InterpolationVsStep) {
 
 //   std::ofstream outFile("cdf_export_test.csv");
 //   if (!outFile.is_open()) {
-//     SPDLOG_LOGGER_ERROR(logger(), "failed to open file");
+//     SPDLOG_LOGGER_ERROR(airtree::query::logger(), "failed to open file");
 //   }
 
 //   TrieManager trieManager;
 //   for (size_t idx = ((n_bins / 2) - 10); idx < ((n_bins / 2) + 10); idx++) {
-//     SPDLOG_LOGGER_INFO(logger(), "Currently working on index {}", idx);
-//     auto internal_rep = histogram->getInternalRepresentation(idx);
+//     SPDLOG_LOGGER_INFO(airtree::query::logger(), "Currently working on index
+//     {}", idx); auto internal_rep = histogram->getInternalRepresentation(idx);
 //     uint64_t prefix_8 = (internal_rep >> 5) & 0xFF;
 //     uint64_t suffix_5 = internal_rep & 0x1F;
 
@@ -206,7 +207,7 @@ TEST_F(TestCDF, TestCDF1DxT_InterpolationVsStep) {
 //     // auto val = reConstruct<double>(internal_rep, 13);
 //     auto val = histogram->getFPNumber(idx);
 //     SPDLOG_LOGGER_INFO(
-//         logger(),
+//         airtree::query::logger(),
 //         "Inserted value: {} at index: {} (prefix_8: {}, suffix_5: {})", val,
 //         idx, prefix_8, suffix_5);
 //   }
