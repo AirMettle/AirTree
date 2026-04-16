@@ -3,10 +3,11 @@
 #include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/core/serdes/Count.hpp>
 #include <airtree/core/serdes/EOF.hpp>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/Logger.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::common;
 
 void serialize_1DxF_l1(const TrieNode_16_Level1 *node,
                                          std::vector<char> &buffer) {
@@ -141,32 +142,19 @@ deserialize_1DxF(const std::vector<char> &buffer,
 }
 
 
-std::pair<std::unique_ptr<TrieNode_16>, trie_header>
+std::pair<std::unique_ptr<TrieNode_16>, airtree::core::common::AirTreeHeader>
 processBuffer_1DxF(const std::vector<char> &buffer) {
-  trie_header header;
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  size_t offset = header.header_length;
 
-  // Deserialize the header
-  if (buffer.size() >= sizeof(trie_header)) {
-    header = deserializeTrieHeader(buffer);
-  } else {
-    SPDLOG_LOGGER_ERROR(
-        logger(), "Buffer is too small to contain a valid trie header.");
-    // Handle the error or set default values for the header
-  }
-
-  // Start deserialization of TrieNode after the trie header
-  size_t index = sizeof(trie_header);
   std::unique_ptr<TrieNode_16> root = nullptr;
 
-  if (index < buffer.size()) {
-    // root = deserializeTrieNode_16(buffer, index);
-    root = deserialize_1DxF(buffer, index);
+  if (offset < buffer.size()) {
+    root = deserialize_1DxF(buffer, offset);
 
     if (root.get() == nullptr) {
       SPDLOG_LOGGER_ERROR(
           logger(), "Deserialization resulted in a null root node.");
-    } else {
-      // std::cout << "Root node is valid." << std::endl;
     }
   } else {
     SPDLOG_LOGGER_ERROR(logger(), "Insufficient buffer size for trie data.");

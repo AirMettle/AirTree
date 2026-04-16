@@ -2,13 +2,13 @@
 #define AIRTREE_CORE_SERDES_TRIE4D_4DXPSER_HPP
 
 #include <airtree/core/schema/trie4d/4DxP.hpp>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 
 void serialize_4DxP(const TLE_4D_4x10 *node, std::vector<char> &buffer,
                     bool recursive = true);
 [[nodiscard]] std::unique_ptr<TLE_4D_4x10>
 deserialize_4DxP(std::vector<char> buffer, size_t &offset);
-[[nodiscard]] std::pair<std::unique_ptr<TLE_4D_4x10>, trie_header>
+[[nodiscard]] std::pair<std::unique_ptr<TLE_4D_4x10>, airtree::core::common::AirTreeHeader>
 processBuffer_4DxP(const std::vector<char> &buffer);
 
 void serialize_4DxP_l0(const Node4D_4x10_l0 *node, std::vector<char> &buffer,

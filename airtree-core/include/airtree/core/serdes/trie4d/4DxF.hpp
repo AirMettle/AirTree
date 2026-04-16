@@ -3,7 +3,7 @@
 
 
 #include <airtree/core/schema/trie4d/4DxF.hpp>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 
 void serialize_4DxF(const TLE_4D_4x8 *node, std::vector<char> &buffer,
                     bool recursively = true);
@@ -32,7 +32,7 @@ deserialize_4DxF_l2(const std::vector<char> &buffer, size_t &offset, int level,
 [[nodiscard]] std::unique_ptr<TrieNode_16_Level1>
 deserialize_4DxF_l3(const std::vector<char> &buffer, size_t &offset, int level);
 
-[[nodiscard]] std::pair<std::unique_ptr<TLE_4D_4x8>, trie_header>
+[[nodiscard]] std::pair<std::unique_ptr<TLE_4D_4x8>, airtree::core::common::AirTreeHeader>
 processBuffer_4DxF(const std::vector<char> &buffer);
 
 

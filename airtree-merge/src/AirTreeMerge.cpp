@@ -2,39 +2,42 @@
 #include <airtree/merge/MergeFactory.hpp>
 #include <airtree/merge/Logger.hpp>
 #include <airtree/core/io/AirTreeReader.hpp>
-#include <cstring>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <stdexcept>
 #include <fstream>
 
+using namespace airtree::core;
 using namespace airtree::core::common;
 using namespace airtree::core::io;
 
 namespace airtree::merge {
 
-// Helper function to detect MergeConfig from trie header config string
-MergeConfig detectConfigFromHeader(const char *config) {
-  if (std::strcmp(config, "113") == 0) {
+// Helper function to detect MergeConfig from AirTreeHeader config enum
+MergeConfig detectConfigFromHeader(ConfigWire config) {
+  switch (config) {
+  case ConfigWire::Config_1D_Tiny:
     return MergeConfig::Dx1_T;
-  } else if (std::strcmp(config, "116") == 0) {
+  case ConfigWire::Config_1D_Fast:
     return MergeConfig::Dx1_F;
-  } else if (std::strcmp(config, "120") == 0) {
+  case ConfigWire::Config_1D_Precise:
     return MergeConfig::Dx1_P;
-  } else if (std::strcmp(config, "288") == 0) {
+  case ConfigWire::Config_2D_Fast:
     return MergeConfig::Dx2_F;
-  } else if (std::strcmp(config, "210") == 0) {
+  case ConfigWire::Config_2D_Precise:
     return MergeConfig::Dx2_P;
-  } else if (std::strcmp(config, "888") == 0) {
+  case ConfigWire::Config_3D_Fast:
     return MergeConfig::Dx3_F;
-  } else if (std::strcmp(config, "310") == 0) {
+  case ConfigWire::Config_3D_Precise:
     return MergeConfig::Dx3_P;
-  } else if (std::strcmp(config, "4x8") == 0) {
+  case ConfigWire::Config_4D_Fast:
     return MergeConfig::Dx4_F;
-  } else if (std::strcmp(config, "410") == 0) {
+  case ConfigWire::Config_4D_Precise:
     return MergeConfig::Dx4_P;
-  } else {
-    SPDLOG_LOGGER_ERROR(logger(), "Unsupported trie configuration: {}", config);
-    throw std::runtime_error("Unsupported AirTree configuration: "
-                             + std::string(config));
+  default:
+    SPDLOG_LOGGER_ERROR(logger(), "Unsupported trie configuration: 0x{:02x}",
+                        static_cast<uint8_t>(config));
+    throw std::runtime_error("Unsupported AirTree configuration: 0x"
+                             + std::to_string(static_cast<uint8_t>(config)));
   }
 }
 
@@ -67,17 +70,20 @@ std::vector<char> mergeAirTree(const std::vector<char> &buffer1,
   const auto &header1 = reader1.getHeader();
   const auto &header2 = reader2.getHeader();
 
-  if (std::strcmp(header1.config, header2.config) != 0) {
+  if (header1.config != header2.config) {
     SPDLOG_LOGGER_ERROR(
         logger(),
-        "Cannot merge buffers with different configurations: {} vs {}",
-        header1.config, header2.config);
-    throw std::runtime_error("Buffer configuration mismatch: "
-                             + std::string(header1.config) + " vs "
-                             + std::string(header2.config));
+        "Cannot merge buffers with different configurations: 0x{:02x} vs 0x{:02x}",
+        static_cast<uint8_t>(header1.config),
+        static_cast<uint8_t>(header2.config));
+    throw std::runtime_error(
+        "Buffer configuration mismatch: 0x"
+        + std::to_string(static_cast<uint8_t>(header1.config)) + " vs 0x"
+        + std::to_string(static_cast<uint8_t>(header2.config)));
   }
 
-  SPDLOG_LOGGER_INFO(logger(), "Detected configuration: {}", header1.config);
+  SPDLOG_LOGGER_INFO(logger(), "Detected configuration: 0x{:02x}",
+                     static_cast<uint8_t>(header1.config));
 
   // Detect MergeConfig and perform merge
   MergeConfig config = detectConfigFromHeader(header1.config);

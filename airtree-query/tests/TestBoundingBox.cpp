@@ -717,8 +717,8 @@ TEST_F(TestBoundingBox,
       "/home/rjairaj/workspace/AirMettle/Floating-Point-Histogram-2d-fix/build/"
       "export/data/histogram_data_TSLA_price_2d_3.bin");
 
-  std::size_t offset_ = 0;
-  deserializeTrieHeader(serialized_trie, offset_);
+  auto hdr_ = airtree::core::common::deserializeHeader(serialized_trie);
+  std::size_t offset_ = hdr_.header_length;
   auto root = deserialize_2DxP(serialized_trie, offset_);
   uint64_t tle_count = 0;
   for (size_t tle_idx = 0; tle_idx < BINS_64; ++tle_idx) {

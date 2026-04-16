@@ -5,7 +5,7 @@
 #include <airtree/core/schema/trie1d/1DxP.hpp>
 #include <memory>
 #include <vector>
-#include <airtree/core/common/TrieHeader.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 
 
 void serialize_1DxP(const TrieNode_20 *node, std::vector<char> &buffer,
@@ -25,7 +25,7 @@ deserialize_1DxP_l1(const std::vector<char> &buffer, size_t &offset,
 std::unique_ptr<TrieNode_20_Level2>
 deserialize_1DxP_l2(const std::vector<char> &buffer, size_t &offset);
 
-[[nodiscard]] std::pair<std::unique_ptr<TrieNode_20>, trie_header>
+[[nodiscard]] std::pair<std::unique_ptr<TrieNode_20>, airtree::core::common::AirTreeHeader>
 processBuffer_1DxP(const std::vector<char> &buffer);
 
 

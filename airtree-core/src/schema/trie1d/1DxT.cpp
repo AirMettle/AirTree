@@ -2,7 +2,7 @@
 #include <airtree/core/schema/trie1d/1DxT.hpp>
 #include <airtree/core/common/Conversion.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/serdes/trie1d/1DxT.hpp>
 #include <airtree/core/Logger.hpp>
 
@@ -11,6 +11,7 @@
 
 
 using namespace airtree::core;
+using namespace airtree::core::common;
 using namespace airtree::core::api;
 using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
@@ -144,25 +145,18 @@ std::vector<char>
 execSerialization_TrieNode13(const std::unique_ptr<TrieNode_13> &root,
                              const SpecialCounts &specialCounts,
                              uint64_t trieSize, bool default_mode) {
+  auto header = airtree::core::common::makeHeader(
+      ConfigWire::Config_1D_Tiny, {}, 0,
+      specialCounts.posInfCount, specialCounts.negInfCount,
+      specialCounts.posZeroCount, specialCounts.negZeroCount,
+      specialCounts.nanCount);
+
   std::vector<char> buffer;
-  buffer.reserve(sizeof(trie_header) + trieSize);
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 4;
-  t_header.precision_bits = 7;
-  t_header.node_width = 8;
-  strcpy(t_header.type, "1-D");
-  strcpy(t_header.config, "113");
-  t_header.mode = default_mode ? 1 : 0;
-  t_header.pos_inf_count = specialCounts.posInfCount;
-  t_header.neg_inf_count = specialCounts.negInfCount;
-  t_header.pos_zero_count = specialCounts.posZeroCount;
-  t_header.neg_zero_count = specialCounts.negZeroCount;
-  t_header.nan_count = specialCounts.nanCount;
-  t_header.trie_root_ref = sizeof(trie_header);
-  serializeTrieHeader(t_header, buffer);
+  buffer.reserve(kHeaderLength + trieSize);
+  serializeHeader(header, buffer);
+  size_t header_end = buffer.size();
   serialize_1DxT(root.get(), buffer);
+  finalizeHeader(buffer, buffer.size() - header_end);
 
   return buffer;
 }

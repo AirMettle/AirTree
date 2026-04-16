@@ -2,13 +2,14 @@
 #include <airtree/core/schema/trie3d/3DxF.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
 #include <airtree/core/serdes/trie3d/3DxF.hpp>
 #include <airtree/util/UUID.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::common;
 using namespace airtree::core::api;
 using namespace airtree::core::schema::trie3d;
 using namespace airtree::util::uuid;
@@ -276,27 +277,18 @@ std::vector<char>
 execSerialize_3D_888(TLE_3D_888 *root, uint64_t &curr_trie_size,
                      std::unique_ptr<SpecialCounts> &specialCounts,
                      bool default_mode) {
+  auto header = airtree::core::common::makeHeader(
+      ConfigWire::Config_3D_Fast, {}, 0,
+      specialCounts->posInfCount, specialCounts->negInfCount,
+      specialCounts->posZeroCount, specialCounts->negZeroCount,
+      specialCounts->nanCount);
+
   std::vector<char> buffer;
-
-  buffer.reserve(sizeof(trie_header) + curr_trie_size);
-  trie_header t_header;
-  strcpy(t_header.type_code, "HierFPHG");
-  t_header.version = 0;
-  t_header.m_width = 3;
-  t_header.precision_bits = 5;
-  t_header.node_width = 8;
-  t_header.nan_count = specialCounts->nanCount;
-  t_header.neg_inf_count = specialCounts->negInfCount;
-  t_header.pos_inf_count = specialCounts->posInfCount;
-  t_header.pos_zero_count = specialCounts->posZeroCount;
-  strcpy(t_header.type, "3-D");
-  strcpy(t_header.config, "888");
-  t_header.mode = default_mode ? 1 : 0;
-  // Add the logic to handle the special counts from the TLE
-  t_header.trie_root_ref = sizeof(trie_header);
-  serializeTrieHeader(t_header, buffer);
-
+  buffer.reserve(kHeaderLength + curr_trie_size);
+  serializeHeader(header, buffer);
+  size_t header_end = buffer.size();
   serialize_3DxF(root, buffer);
+  finalizeHeader(buffer, buffer.size() - header_end);
 
   return buffer;
 }

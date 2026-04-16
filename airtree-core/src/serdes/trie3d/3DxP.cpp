@@ -4,16 +4,17 @@
 #include <airtree/core/serdes/ND.hpp>
 #include <airtree/core/serdes/EOF.hpp>
 #include <airtree/core/common/NDims.hpp>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/Logger.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::common;
 
-std::pair<std::unique_ptr<TLE_3D_3x10>, trie_header>
+std::pair<std::unique_ptr<TLE_3D_3x10>, airtree::core::common::AirTreeHeader>
 processBuffer_3DxP(const std::vector<char> &buffer) {
 
-  size_t offset = 0;
-  trie_header t_header_deserialized = deserializeTrieHeader(buffer, offset);
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  size_t offset = header.header_length;
 
   std::unique_ptr<TLE_3D_3x10> node = nullptr;
 
@@ -24,7 +25,7 @@ processBuffer_3DxP(const std::vector<char> &buffer) {
         logger(), "Deserialization failed. Offset is out of bounds.");
   }
 
-  return std::make_pair(std::move(node), t_header_deserialized);
+  return std::make_pair(std::move(node), header);
 }
 
 void serialize_3DxP_l2(const Node3D_3x10_l2 *node, std::vector<char> &buffer) {

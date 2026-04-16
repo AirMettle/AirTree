@@ -20,6 +20,8 @@
 // Floating Point Trie project includes
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
+#include <airtree/core/common/ConfigRegistry.hpp>
 #include <airtree/query/AirTreeQuery_internal.hpp>
 
 
@@ -38,13 +40,11 @@ std::shared_ptr<arrow::Table> export1DToArrow_1DxT(
                                                  size_t &)) {
 
   // 1) Deserialize header + root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "1-D"
-      || std::string(header.config) != "113") {
-    throw std::invalid_argument("Invalid trie header for 1D_1x13 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_1D_Tiny) {
+    throw std::invalid_argument("Invalid config for 1D_1x13 structure");
   }
+  size_t offset = header.header_length;
   auto root_up = deserializeRoot(buffer, offset);
   if (!root_up)
     throw std::runtime_error("Failed to deserialize trie root");
@@ -120,13 +120,11 @@ std::shared_ptr<arrow::Table> export1DToArrow_1DxF(
                                                  size_t &)) {
 
   // 1) Deserialize header + root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "1-D"
-      || std::string(header.config) != "116") {
-    throw std::invalid_argument("Invalid trie header for 1D_1x16 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_1D_Fast) {
+    throw std::invalid_argument("Invalid config for 1D_1x16 structure");
   }
+  size_t offset = header.header_length;
   auto root_up = deserializeRoot(buffer, offset);
   if (!root_up)
     throw std::runtime_error("Failed to deserialize trie root");
@@ -198,13 +196,11 @@ std::shared_ptr<arrow::Table> export1DToArrow_1DxP(
                                                  size_t &)) {
 
   // 1) Deserialize header + root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "1-D"
-      || std::string(header.config) != "120") {
-    throw std::invalid_argument("Invalid trie header for 1D_1x20 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_1D_Precise) {
+    throw std::invalid_argument("Invalid config for 1D_1x20 structure");
   }
+  size_t offset = header.header_length;
   // std::cout << "Special numbers in header:" << std::endl;
   // std::cout << "  +Inf: " << header.pos_inf_count << std::endl;
   // std::cout << "  -Inf: " << header.neg_inf_count << std::endl;
@@ -294,13 +290,11 @@ std::shared_ptr<arrow::Table> export2DToArrow_2DxP(
     std::unique_ptr<RootNode> (*deserializeRoot)(std::vector<char>, size_t &)) {
 
   // 1) Deserialize header + root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "2-D"
-      || std::string(header.config) != "210") {
-    throw std::invalid_argument("Invalid trie header for 2D_10 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_2D_Precise) {
+    throw std::invalid_argument("Invalid config for 2D_10 structure");
   }
+  size_t offset = header.header_length;
   // std::cout << "Special numbers in header:" << std::endl;
   // std::cout << "  +Inf: " << header.pos_inf_count << std::endl;
   // std::cout << "  -Inf: " << header.neg_inf_count << std::endl;
@@ -463,13 +457,11 @@ std::shared_ptr<arrow::Table> export2DToArrow_2DxF(
     std::unique_ptr<RootNode> (*deserializeRoot)(std::vector<char>, size_t &)) {
 
   // 1) Deserialize header + root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "2-D"
-      || std::string(header.config) != "288") {
-    throw std::invalid_argument("Invalid trie header for 2D_88 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_2D_Fast) {
+    throw std::invalid_argument("Invalid config for 2D_88 structure");
   }
+  size_t offset = header.header_length;
   auto root_up = deserializeRoot(buffer, offset);
   if (!root_up)
     throw std::runtime_error("Failed to deserialize trie root");
@@ -579,13 +571,11 @@ std::shared_ptr<arrow::Table> export3DToArrow_3DxP(
                                                  size_t &)) {
 
   // 1) Deserialize header + trie root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "3-D"
-      || std::string(header.config) != "310") {
-    throw std::invalid_argument("Invalid trie header for 3D_3x10 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_3D_Precise) {
+    throw std::invalid_argument("Invalid config for 3D_3x10 structure");
   }
+  size_t offset = header.header_length;
   auto root_up = deserializeRoot(buffer, offset);
   if (!root_up)
     throw std::runtime_error("Failed to deserialize trie root");
@@ -893,13 +883,11 @@ std::shared_ptr<arrow::Table> export3DToArrow_3DxF(
                                                  size_t &)) {
 
   // 1) Deserialize header + root
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "3-D"
-      || std::string(header.config) != "888") {
-    throw std::invalid_argument("Invalid trie header for 3D_888 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_3D_Fast) {
+    throw std::invalid_argument("Invalid config for 3D_888 structure");
   }
+  size_t offset = header.header_length;
   auto root_up = deserializeRoot(buffer, offset);
   if (!root_up)
     throw std::runtime_error("Failed to deserialize trie root");
@@ -1112,15 +1100,11 @@ std::shared_ptr<arrow::Table> export4DToArrow_4DxP(
     const std::vector<char> &buffer,
     std::unique_ptr<RootNode> (*deserializeRoot)(std::vector<char>, size_t &)) {
 
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-
-  // --- header sanity check ---
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "4-D"
-      || std::string(header.config) != "410") {
-    throw std::invalid_argument("Invalid trie header for 4D_4x10 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_4D_Precise) {
+    throw std::invalid_argument("Invalid config for 4D_4x10 structure");
   }
+  size_t offset = header.header_length;
 
   auto root = deserializeRoot(buffer, offset);
   if (!root)
@@ -1474,15 +1458,11 @@ std::shared_ptr<arrow::Table> export4DToArrow_4DxF(
     const std::vector<char> &buffer,
     std::unique_ptr<RootNode> (*deserializeRoot)(std::vector<char>, size_t &)) {
 
-  size_t offset = 0;
-  trie_header header = deserializeTrieHeader(buffer, offset);
-
-  // --- header sanity check ---
-  if (std::string(header.type_code) != "HierFPHG"
-      || std::string(header.type) != "4-D"
-      || std::string(header.config) != "4x8") {
-    throw std::invalid_argument("Invalid trie header for 4D_4x8 structure");
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  if (header.config != airtree::core::common::ConfigWire::Config_4D_Fast) {
+    throw std::invalid_argument("Invalid config for 4D_4x8 structure");
   }
+  size_t offset = header.header_length;
 
   auto root = deserializeRoot(buffer, offset);
   if (!root)

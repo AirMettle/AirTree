@@ -30,7 +30,6 @@ set(SOURCE_FILES
     ${SRC_DIR}/serdes/BooleanArray.cpp
     ${SRC_DIR}/serdes/Count.cpp
     ${SRC_DIR}/serdes/EOF.cpp
-    ${SRC_DIR}/serdes/Header.cpp
     ${SRC_DIR}/serdes/ND.cpp
     ${SRC_DIR}/serdes/trie1d/1DxF.cpp
     ${SRC_DIR}/serdes/trie1d/1DxP.cpp
@@ -46,6 +45,9 @@ set(SOURCE_FILES
     ${SRC_DIR}/utils/Utils.cpp
 
     ${SRC_DIR}/api/AirTreeGenerator.cpp
+
+    ${SRC_DIR}/common/ConfigRegistry.cpp
+    ${SRC_DIR}/common/AirTreeHeader.cpp
 )
 
 # Create the library
@@ -68,6 +70,7 @@ add_executable(ut_core
     tests/TestCombineChunks.cpp 
     tests/TestFpInternal_1D.cpp
     tests/TestFpInternalManual.cpp
+    tests/TestAirTreeHeader.cpp
     tests/TestHeaderDeserialization.cpp
     tests/TestInterleave.cpp
     tests/TestReconstuctionOrignalFP.cpp

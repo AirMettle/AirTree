@@ -8,12 +8,13 @@
 #include <airtree/core/Logger.hpp>
 
 using namespace airtree::core;
+using namespace airtree::core::common;
 
-std::pair<std::unique_ptr<TLE_3D_888>, trie_header>
+std::pair<std::unique_ptr<TLE_3D_888>, airtree::core::common::AirTreeHeader>
 processBuffer_3DxF(const std::vector<char> &buffer) {
 
-  size_t offset = 0;
-  trie_header t_header_deserialized = deserializeTrieHeader(buffer, offset);
+  auto header = airtree::core::common::deserializeHeader(buffer);
+  size_t offset = header.header_length;
 
   std::unique_ptr<TLE_3D_888> node = nullptr;
 
@@ -24,7 +25,7 @@ processBuffer_3DxF(const std::vector<char> &buffer) {
         logger(), "Deserialization failed. Offset is out of bounds.");
   }
 
-  return std::make_pair(std::move(node), t_header_deserialized);
+  return std::make_pair(std::move(node), header);
 }
 
 void serialize_3DxF_l0(const Node3D_888_l0 *node, std::vector<char> &buffer,

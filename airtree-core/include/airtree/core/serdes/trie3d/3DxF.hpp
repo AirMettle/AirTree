@@ -2,7 +2,7 @@
 #define AIRTREE_CORE_SERDES_TRIE3D_3DXFSER_HPP
 
 #include <airtree/core/schema/trie3d/3DxF.hpp>
-#include <airtree/core/serdes/Header.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 
 void serialize_3DxF(const TLE_3D_888 *node, std::vector<char> &buffer,
                     bool recursive = true);
@@ -10,7 +10,7 @@ void serialize_3DxF(const TLE_3D_888 *node, std::vector<char> &buffer,
 void serialize_3DxF_l0(const Node3D_888_l0 *node, std::vector<char> &buffer,
                        bool recursive = true);
 
-[[nodiscard]] std::pair<std::unique_ptr<TLE_3D_888>, trie_header>
+[[nodiscard]] std::pair<std::unique_ptr<TLE_3D_888>, airtree::core::common::AirTreeHeader>
 processBuffer_3DxF(const std::vector<char> &buffer);
 
 [[nodiscard]] std::unique_ptr<TLE_3D_888>

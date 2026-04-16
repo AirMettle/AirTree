@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/meta/Histogram.hpp>
 #include <vector>
 
@@ -25,7 +26,7 @@ private:
   std::vector<char> buffer_;
   AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
-  trie_header header_;
+  airtree::core::common::AirTreeHeader header_;
 };
 
 } // namespace airtree::query::cdf

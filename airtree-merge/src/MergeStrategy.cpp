@@ -4,10 +4,11 @@
 
 using namespace airtree::merge;
 
-trie_header
-airtree::merge::MergeStrategy::mergeHeaders(trie_header &header1,
-                                            const trie_header &header2) {
+airtree::core::common::AirTreeHeader
+airtree::merge::MergeStrategy::mergeHeaders(airtree::core::common::AirTreeHeader &header1,
+                                            const airtree::core::common::AirTreeHeader &header2) {
   SPDLOG_LOGGER_INFO(logger(), "Entering mergeHeaders");
+  header1.trie_count += header2.trie_count;
   header1.pos_inf_count = header1.pos_inf_count + header2.pos_inf_count;
   header1.neg_inf_count = header1.neg_inf_count + header2.neg_inf_count;
   header1.pos_zero_count = header1.pos_zero_count + header2.pos_zero_count;
