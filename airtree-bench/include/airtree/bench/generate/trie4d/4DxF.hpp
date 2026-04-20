@@ -1,5 +1,5 @@
-#ifndef AIRTREE_BENCH_GENERATE_TRIE1D_1DXF_HPP
-#define AIRTREE_BENCH_GENERATE_TRIE1D_1DXF_HPP
+#ifndef AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP
+#define AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP
 
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/bench/BenchmarkData.hpp>
@@ -25,7 +25,7 @@ protected:
 
   template <typename T> void runCreateAndInsert(::benchmark::State &state) {
     if (BenchmarkData<T>::fpharrays.empty()
-        && BenchmarkData<T>::fpharrays.size() != 4) {
+        || BenchmarkData<T>::fpharrays.size() < 4) {
       state.SkipWithError("Data array is empty. Skipping benchmark.");
       return;
     }
@@ -48,15 +48,18 @@ protected:
       benchmark::DoNotOptimize(airTree4DxF_root);
     }
 
-    state.counters["Speed"] = benchmark::Counter(
-        state.iterations() * fpharray1.length * getFPHTypeSize(fpharray1.type),
-        benchmark::Counter::kIsRate);
+    state.counters["Speed"] =
+        benchmark::Counter(state.iterations() * fpharray1.length
+                               * getFPHTypeSize(fpharray1.type) * 4,
+                           benchmark::Counter::kIsRate);
+    state.counters["Points_Per_Second"] = benchmark::Counter(
+        state.iterations() * fpharray1.length, benchmark::Counter::kIsRate);
     state.counters["Size of trie in-mem (bytes)"] = curr_trie_size;
   }
 
   template <typename T> void runSerialize(benchmark::State &state) {
     if (BenchmarkData<T>::fpharrays.empty()
-        && BenchmarkData<T>::fpharrays.size() != 4) {
+        || BenchmarkData<T>::fpharrays.size() < 4) {
       state.SkipWithError("Data array is empty. Skipping benchmark.");
       return;
     }
@@ -66,14 +69,14 @@ protected:
     const auto &fpharray3 = BenchmarkData<T>::fpharrays[2];
     const auto &fpharray4 = BenchmarkData<T>::fpharrays[3];
 
-    auto root =
+    airTree4DxF_root =
         execCreateAndInsert_4D_4x8(fpharray1, fpharray2, fpharray3, fpharray4,
                                    curr_trie_size, specialCounts, true);
 
 
     for (auto _ : state) {
-      auto serializedTrie =
-          execSerialize_4D_4x8(root.get(), curr_trie_size, specialCounts, true);
+      auto serializedTrie = execSerialize_4D_4x8(
+          airTree4DxF_root.get(), curr_trie_size, specialCounts, true);
 
       benchmark::DoNotOptimize(serializedTrie.data());
       benchmark::ClobberMemory();
@@ -90,4 +93,4 @@ protected:
 
 } // namespace airtree::bench::generate::trie4D
 
-#endif // AIRTREE_BENCH_GENERATE_TRIE1D_1DXF_HPP
+#endif // AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP

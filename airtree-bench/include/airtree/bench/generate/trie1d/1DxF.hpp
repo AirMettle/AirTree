@@ -46,6 +46,8 @@ protected:
     state.counters["Speed"] = benchmark::Counter(
         state.iterations() * fpharray.length * getFPHTypeSize(fpharray.type),
         benchmark::Counter::kIsRate);
+    state.counters["Points_Per_Second"] = benchmark::Counter(
+        state.iterations() * fpharray.length, benchmark::Counter::kIsRate);
     state.counters["Size of trie in-mem (bytes)"] = curr_trie_size;
   }
 
@@ -57,12 +59,12 @@ protected:
 
     const auto &fpharray = airtree::bench::BenchmarkData<T>::fpharrays[0];
 
-    auto root = execCreateAndInsert_TrieNode16(
+    airTree1DxF_root = execCreateAndInsert_TrieNode16(
         *specialCounts, curr_trie_size, fpharray, true);
 
     for (auto _ : state) {
       auto serializedTrie = execSerialization_TrieNode16(
-          root, *specialCounts, curr_trie_size, true);
+          airTree1DxF_root, *specialCounts, curr_trie_size, true);
 
       benchmark::DoNotOptimize(serializedTrie.data());
       benchmark::ClobberMemory();

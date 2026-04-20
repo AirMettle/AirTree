@@ -1,5 +1,5 @@
-#ifndef AIRTREE_BENCH_BENCHMARKDATA_HPP
-#define AIRTREE_BENCH_BENCHMARKDATA_HPP
+#ifndef AIRTREE_INCLUDE_BENCH_BENCHMARKDATA_HPP
+#define AIRTREE_INCLUDE_BENCH_BENCHMARKDATA_HPP
 
 #include <vector>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -14,4 +14,4 @@ public:
 
 } // namespace airtree::bench
 
-#endif // AIRTREE_BENCH_BENCHMARKDATA_HPP
+#endif // AIRTREE_INCLUDE_BENCH_BENCHMARKDATA_HPP

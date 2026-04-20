@@ -46,6 +46,8 @@ protected:
     state.counters["Speed"] = benchmark::Counter(
         state.iterations() * fpharray.length * getFPHTypeSize(fpharray.type),
         benchmark::Counter::kIsRate);
+    state.counters["Points_Per_Second"] = benchmark::Counter(
+        state.iterations() * fpharray.length, benchmark::Counter::kIsRate);
     state.counters["Size of trie in-mem (bytes)"] = curr_trie_size;
   }
 
