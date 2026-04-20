@@ -141,6 +141,7 @@ add_subdirectory(airtree-export)
 add_subdirectory(airtree-reader)
 add_subdirectory(airtree-merge)
 add_subdirectory(airtree-cli)
+add_subdirectory(airtree-bench)
 
 
 # Package
