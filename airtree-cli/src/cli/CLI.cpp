@@ -16,7 +16,8 @@ auto config_validator = CLI::Validator(
 
 auto config_validator_1D = CLI::Validator(
     [](std::string &input) {
-      if (!AirTree::validate_config_name(input) && input[0] != '1') {
+      if (input.empty() || !AirTree::validate_config_name(input)
+          || input[0] != '1') {
         return "Invalid schema name or not a 1D schema";
       }
       return "";
