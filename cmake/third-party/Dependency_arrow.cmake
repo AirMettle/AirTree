@@ -39,7 +39,7 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
     -DARROW_WITH_ZLIB=OFF
     -DARROW_WITH_ZSTD=ON
     -DARROW_WITH_LZ4=OFF
-    -DARROW_WITH_SNAPPY=OFF
+    -DARROW_WITH_SNAPPY=ON
     -DARROW_WITH_UTF8PROC=OFF
     -DARROW_DATASET=ON
     -DARROW_PARQUET=ON
@@ -87,14 +87,14 @@ function(configure_arrow)
   endif()
 
   set(_DEPS_SHARED "")
-  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift)
+  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift snappy)
   if(NOT AIRTREE_SANITIZER_USES_ASAN)
       list(APPEND _DEPS_SHARED mimalloc::mimalloc)
   endif()
 
   # For static builds, Arrow often requires linking to additional sub-libraries
   set(_DEPS_STATIC "")
-  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift)
+  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift snappy)
   if(NOT AIRTREE_SANITIZER_USES_ASAN)
       list(APPEND _DEPS_STATIC mimalloc::mimalloc)
   endif()

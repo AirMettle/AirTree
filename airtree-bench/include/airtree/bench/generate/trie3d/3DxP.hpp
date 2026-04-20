@@ -24,7 +24,11 @@ protected:
   }
 
   template <typename T> void runCreateAndInsert(::benchmark::State &state) {
-    assert(airtree::bench::BenchmarkData<T>::fpharrays.size() == 3);
+    if (BenchmarkData<T>::fpharrays.empty()
+        && BenchmarkData<T>::fpharrays.size() != 3) {
+      state.SkipWithError("Data array is empty. Skipping benchmark.");
+      return;
+    }
 
     const auto &fpharray1 = BenchmarkData<T>::fpharrays[0];
     const auto &fpharray2 = BenchmarkData<T>::fpharrays[1];
@@ -49,7 +53,11 @@ protected:
   }
 
   template <typename T> void runSerialize(benchmark::State &state) {
-    assert(airtree::bench::BenchmarkData<T>::fpharrays.size() == 3);
+    if (BenchmarkData<T>::fpharrays.empty()
+        && BenchmarkData<T>::fpharrays.size() != 3) {
+      state.SkipWithError("Data array is empty. Skipping benchmark.");
+      return;
+    }
 
     const auto &fpharray1 = BenchmarkData<T>::fpharrays[0];
     const auto &fpharray2 = BenchmarkData<T>::fpharrays[1];

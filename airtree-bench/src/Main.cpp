@@ -1,5 +1,7 @@
+#include <CLI/Validators.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <CLI/CLI.hpp>
+#include <cctype>
 #include <vector>
 #include <airtree/bench/BenchmarkData.hpp>
 #include <airtree/bench/BenchmarkConfigs.hpp>
@@ -12,10 +14,11 @@ using namespace airtree::bench::configs;
 
 void read_input_file(const std::string &file_path,
                      SUPPORTED_FILE_TYPE file_type,
-                     SUPPORTED_DATA_TYPE data_type) {
+                     SUPPORTED_DATA_TYPE data_type,
+                     const std::vector<std::string> &columns = {}) {
   SPDLOG_LOGGER_INFO(logger(), "Reading input data file...");
   InputDataVector input_data_vector =
-      parse_file(file_path, file_type, data_type, {});
+      parse_file(file_path, file_type, data_type, columns);
 
   if (input_data_vector.empty()) {
     SPDLOG_LOGGER_ERROR(logger(), "Error: Failed to parse the file.");
@@ -91,13 +94,6 @@ auto data_type_validator = CLI::Validator(
 
 std::string benchmark_filter_for(const std::string &config_name,
                                  const std::string &data_type) {
-  // if (config_name == "1DxF") {
-  //   if (data_type == "float") {
-  //     return "AirTreeBench1DxF/.*Float";
-  //   }
-  //   return "AirTreeBench1DxF/.*Double";
-  // }
-
   return "AirTreeBench" + config_name + "/.*" + data_type;
 }
 
@@ -157,14 +153,95 @@ int main(int argc, char *argv[]) {
       data_type_enum = SUPPORTED_DATA_TYPE::IGNORE;
     }
 
-    std::vector<FPHArray> data_arrays;
     read_input_file(
         input_data_file, SUPPORTED_FILE_TYPE::BINARY, data_type_enum);
 
-    // TODO: Need to make sure we can pass google bench related CLI args when
-    // running the binary, currently it is being ignored
-    ::benchmark::SetBenchmarkFilter(
-        benchmark_filter_for(config_name, data_type));
+    std::vector<std::string> gb_args;
+    gb_args.push_back(argv[0]);
+    gb_args.push_back("--benchmark_filter="
+                      + benchmark_filter_for(config_name, data_type));
+    std::vector<std::string> remaining_args = app.remaining();
+    for (const auto &arg : remaining_args) {
+      gb_args.push_back(arg);
+    }
+
+    std::vector<char *> gb_argv;
+    for (auto &str : gb_args) {
+      gb_argv.push_back(str.data());
+    }
+
+    int gb_argc = static_cast<int>(gb_argv.size());
+
+    ::benchmark::Initialize(&gb_argc, gb_argv.data());
+    if (::benchmark::ReportUnrecognizedArguments(gb_argc, gb_argv.data()))
+      return;
+    ::benchmark::RunSpecifiedBenchmarks();
+    ::benchmark::Shutdown();
+  });
+
+  auto parquet = generate->add_subcommand("parquet", "Parquet input file");
+  parquet->add_option("-i,--input", input_data_file, "Path to input file")
+      ->required()
+      ->check(CLI::ExistingFile);
+  parquet
+      ->add_option(
+          "-s,--schema", config_name,
+          std::string("Target histogram config. Supported configs are: ")
+              + BenchmarkConfigs::supported_airtree_configs())
+      ->required()
+      ->check(config_validator);
+  std::vector<std::string> column_list;
+  parquet
+      ->add_option("-c,--columns", column_list, "Space separated column names")
+      ->required();
+  parquet->parse_complete_callback([&]() {
+    if (config_name.empty() || !std::isdigit(config_name[0])) {
+      return;
+    }
+
+    size_t expected_columns = config_name[0] - '0';
+    if (column_list.size() != expected_columns) {
+      throw CLI::ValidationError(
+          "--columns",
+          "The " + config_name + " schema requires exactly "
+              + std::to_string(expected_columns) + " column(s), but "
+              + std::to_string(column_list.size()) + " were provided.");
+    }
+  });
+  parquet->callback([&]() {
+    read_input_file(input_data_file, SUPPORTED_FILE_TYPE::PARQUET,
+                    airtree::reader::file::SUPPORTED_DATA_TYPE::IGNORE,
+                    column_list);
+
+    std::string loaded_type = "unknown";
+    if (!airtree::bench::BenchmarkData<double>::raw_data.empty())
+      loaded_type = "double";
+    else if (!airtree::bench::BenchmarkData<float>::raw_data.empty())
+      loaded_type = "float";
+    else if (!airtree::bench::BenchmarkData<int32_t>::raw_data.empty())
+      loaded_type = "int32";
+    else if (!airtree::bench::BenchmarkData<int64_t>::raw_data.empty())
+      loaded_type = "int64";
+
+    std::vector<std::string> gb_args;
+    gb_args.push_back(argv[0]);
+    gb_args.push_back("--benchmark_filter="
+                      + benchmark_filter_for(config_name, loaded_type));
+    std::vector<std::string> remaining_args = app.remaining();
+    for (const auto &arg : remaining_args) {
+      gb_args.push_back(arg);
+    }
+
+    std::vector<char *> gb_argv;
+    for (auto &str : gb_args) {
+      gb_argv.push_back(str.data());
+    }
+
+    int gb_argc = static_cast<int>(gb_argv.size());
+
+    ::benchmark::Initialize(&gb_argc, gb_argv.data());
+    if (::benchmark::ReportUnrecognizedArguments(gb_argc, gb_argv.data()))
+      return;
     ::benchmark::RunSpecifiedBenchmarks();
     ::benchmark::Shutdown();
   });

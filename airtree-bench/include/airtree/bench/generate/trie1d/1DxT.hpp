@@ -24,7 +24,10 @@ protected:
   }
 
   template <typename T> void runCreateAndInsert(::benchmark::State &state) {
-    assert(BenchmarkData<T>::fpharrays.size() == 1);
+    if (BenchmarkData<T>::fpharrays.empty()) {
+      state.SkipWithError("Data array is empty. Skipping benchmark.");
+      return;
+    }
 
     const auto &fpharray = BenchmarkData<T>::fpharrays[0];
 
@@ -47,7 +50,10 @@ protected:
   }
 
   template <typename T> void runSerialize(::benchmark::State &state) {
-    assert(BenchmarkData<T>::fpharrays.size() == 1);
+    if (BenchmarkData<T>::fpharrays.empty()) {
+      state.SkipWithError("Data array is empty. Skipping benchmark.");
+      return;
+    }
 
     const auto &fpharray = BenchmarkData<T>::fpharrays[0];
 
