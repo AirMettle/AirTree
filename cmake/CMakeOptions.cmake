@@ -4,6 +4,7 @@
 #   cmake -DENABLE_TESTING=OFF -S . -B build
 
 option(ENABLE_TESTING            "Enable testing"                             ON)
+option(ENABLE_BENCHMARKS         "Enable benchmarks"                          ON)
 option(PACKAGE_FPH               "Generate the package for the target system" OFF)
 option(BUILD_SHARED_LIBS         "Build shared libraries"                     ON)
 option(AIRMETTLE_AIRTREE_USE_SHARED_LIBS "Use shared libraries for dependencies" OFF)

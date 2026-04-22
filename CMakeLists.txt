@@ -141,8 +141,9 @@ add_subdirectory(airtree-export)
 add_subdirectory(airtree-reader)
 add_subdirectory(airtree-merge)
 add_subdirectory(airtree-cli)
-add_subdirectory(airtree-bench)
-
+if (ENABLE_BENCHMARKS)
+    add_subdirectory(airtree-bench)
+endif ()
 
 # Package
 find_program(LSB_RELEASE_COMMAND lsb_release)
