@@ -13,6 +13,7 @@ message(STATUS "Building version ${PROJECT_VERSION_NUMERIC} of AirTree")
 add_custom_target(am_airtree_dependencies)
 
 include(${CMAKE_SOURCE_DIR}/cmake/CMakeOptions.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/target_dag.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/find_program.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/flatbuffer_compile.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/Settings.cmake)

@@ -55,7 +55,7 @@ set(SOURCE_FILES
 )
 
 # Create the library
-add_library(airtree-util STATIC ${SOURCE_FILES})
+add_airtree_module(airtree-util STATIC ${SOURCE_FILES})
 
 # Set target include directories
 target_include_directories(airtree-util PUBLIC

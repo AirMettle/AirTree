@@ -1,6 +1,6 @@
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-add_library(airtree-export STATIC 
+add_airtree_module(airtree-export STATIC 
     ${SRC_DIR}/Logger.cpp
     ${SRC_DIR}/AirTreeExporter.cpp
 
