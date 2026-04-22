@@ -16,12 +16,18 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+. "$ROOT_DIR/tools/utils/import.sh"
+import utils/common_func.sh
+import utils/build_utils.sh
+
+_CMAKE_SOURCE_DIR="$CMAKE_SOURCE_DIR"
+_CMAKE_BUILD_DIR="$CMAKE_BUILD_DIR"
 
 # Defaults (matched to cmake/Settings.cmake)
 AIRTREE_DEPS_CACHE_S3_BUCKET="${AIRTREE_DEPS_CACHE_S3_BUCKET:-s3://airmettle-airtree}"
 AIRTREE_DEPS_CACHE_S3_REGION="${AIRTREE_DEPS_CACHE_S3_REGION:-us-east-2}"
 AIRTREE_DEPS_CACHE_S3_PREFIX="${AIRTREE_DEPS_CACHE_S3_PREFIX:-deps/v1}"
-AIRMETTLE_AIRTREE_DEPENDENCY_ROOT="${AIRMETTLE_AIRTREE_DEPENDENCY_ROOT:-$HOME/.airmettle/airtree-deps}"
+AIRMETTLE_AIRTREE_DEPENDENCY_ROOT="${AIRMETTLE_AIRTREE_DEPENDENCY_ROOT:-${_CMAKE_BUILD_DIR}/.airmettle/airtree-deps}"
 
 if ! command -v aws &>/dev/null; then
     echo "ERROR: aws CLI not found in PATH." >&2
