@@ -24,7 +24,6 @@ target_link_libraries(airtree-reader
     PUBLIC
     arrow::arrow
     parquet::parquet 
-    snappy 
     openssl::openssl 
     openssl::crypto 
     spdlog::spdlog

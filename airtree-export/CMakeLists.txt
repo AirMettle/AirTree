@@ -12,7 +12,6 @@ target_link_libraries(airtree-export
     PUBLIC
     arrow::arrow_static 
     parquet::parquet 
-    snappy
     PRIVATE
     airtree::airtree-util 
     airtree::airtree-core 
@@ -43,7 +42,6 @@ target_link_libraries(legacyExport
     PUBLIC
     arrow::arrow_static 
     parquet::parquet 
-    snappy
     PRIVATE 
     airtree::airtree-util 
     airtree::airtree-core 
