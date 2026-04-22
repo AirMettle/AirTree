@@ -1,29 +1,5 @@
 # benchmark/CMakeLists.txt
 
-# Platform-specific configurations
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    message(STATUS "Configuring for macOS.")
-    set(OS "DARWIN")
-    set(SNAPPY_INCLUDE_DIRS "/opt/homebrew/opt/snappy/include")
-    set(SNAPPY_LIBRARY_DIRS "/opt/homebrew/opt/snappy/lib")
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set(OS "LINUX")
-    message(STATUS "Configuring for Ubuntu/Linux.")
-    pkg_check_modules(SNAPPY REQUIRED snappy)
-else ()
-    message(FATAL_ERROR "Unsupported OS")
-endif ()
-
-# Include directories
-include_directories(SYSTEM
-        ${SNAPPY_INCLUDE_DIRS}
-)
-
-# Link directories
-link_directories(
-        ${SNAPPY_LIBRARY_DIRS}
-)
-
 set(BENCHMARK_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 
