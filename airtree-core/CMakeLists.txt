@@ -60,7 +60,12 @@ target_include_directories(airtree-core
 )
 
 # Link libraries
-target_link_libraries(airtree-core PUBLIC airtree::airtree-util spdlog::spdlog)
+target_link_libraries(airtree-core 
+    PUBLIC 
+    spdlog::spdlog
+    PRIVATE 
+    airtree::airtree-util 
+)
 
 # Create alias
 add_library(airtree::airtree-core ALIAS airtree-core)
@@ -85,8 +90,6 @@ target_link_libraries(ut_core PRIVATE
     airtree::airtree-core 
     gtest::gtest 
     gtest::gtest_main 
-    openssl::openssl 
-    openssl::crypto
 )
 
 add_test(NAME ut_core COMMAND ut_core)

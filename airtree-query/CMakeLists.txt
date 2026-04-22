@@ -30,7 +30,13 @@ target_include_directories(airtree-query
 )
 
 
-target_link_libraries(airtree-query PUBLIC airtree::airtree-util airtree::airtree-core)
+target_link_libraries(airtree-query 
+    PUBLIC 
+    airtree::airtree-util 
+    airtree::airtree-core
+    PRIVATE
+    # No private dependencies
+)
 
 add_library(airtree::airtree-query ALIAS airtree-query)
 
@@ -50,8 +56,6 @@ target_link_libraries(ut_query_test PRIVATE
     airtree::airtree-query 
     gtest::gtest 
     gtest::gtest_main 
-    openssl::openssl 
-    openssl::crypto
 )
 
 add_test(NAME ut_query_test COMMAND ut_query_test)

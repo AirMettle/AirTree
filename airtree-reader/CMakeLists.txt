@@ -20,16 +20,17 @@ target_include_directories(airtree-reader
 )
 
 # Link libraries
-target_link_libraries(airtree-reader PUBLIC airtree::airtree-util)
-
 target_link_libraries(airtree-reader
-    PRIVATE
+    PUBLIC
     arrow::arrow
     parquet::parquet 
     snappy 
     openssl::openssl 
     openssl::crypto 
-    spdlog::spdlog)
+    spdlog::spdlog
+    PRIVATE 
+    airtree::airtree-util
+)
 
 # Create alias
 add_library(airtree::airtree-reader ALIAS airtree-reader)

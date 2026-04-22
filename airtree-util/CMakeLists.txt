@@ -63,9 +63,16 @@ target_include_directories(airtree-util PUBLIC
     $<BUILD_INTERFACE:${GEN_DIR}>
     $<INSTALL_INTERFACE:include>
 )
-# Link libraries
-target_link_libraries(airtree-util PRIVATE spdlog::spdlog boost_headers)
-target_link_libraries(airtree-util PUBLIC boost_headers)
+
+target_link_libraries(airtree-util 
+    PUBLIC 
+        boost_headers 
+        openssl::crypto 
+        openssl::openssl
+        spdlog::spdlog
+    PRIVATE 
+    # No private dependencies
+)
 
 # Create alias
 add_library(airtree::airtree-util ALIAS airtree-util)

@@ -27,16 +27,22 @@ target_include_directories(airtree-merge
         $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(airtree-merge PUBLIC
+target_link_libraries(airtree-merge 
+    PUBLIC
     airtree::airtree-util 
     airtree::airtree-core
+    PRIVATE
+    # No private dependencies
 )
 
 add_library(airtree::airtree-merge ALIAS airtree-merge)
 
 add_executable(airtree-merge-cli ${SRC_DIR}/main.cpp)
 
-target_link_libraries(airtree-merge-cli PRIVATE
+target_link_libraries(airtree-merge-cli 
+    PUBLIC
+    # Add exported dependencies
+    PRIVATE
     airtree::airtree-merge
 )
 
@@ -51,7 +57,6 @@ target_link_libraries(ut_merge_test PRIVATE
     airtree::airtree-util 
     airtree::airtree-core
     airtree::airtree-merge
-    openssl::crypto
     gtest::gtest
     gtest::gtest_main
 )

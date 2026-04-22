@@ -20,14 +20,12 @@ target_include_directories(airtree-cli
 
 target_link_libraries(airtree-cli
     PUBLIC
+    # Add exported dependencies
+    PRIVATE
     airtree::airtree-util 
     airtree::airtree-core 
     airtree::airtree-query 
     airtree::airtree-reader 
-)
-
-target_link_libraries(airtree-cli
-    PRIVATE
     cli11_headers
     spdlog::spdlog
 )

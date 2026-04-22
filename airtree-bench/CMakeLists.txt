@@ -72,14 +72,9 @@ target_link_libraries(airtree_bench PRIVATE
     airtree::airtree-reader
     airtree::airtree-core 
     spdlog::spdlog
-    arrow::arrow 
-    parquet::parquet 
-    snappy 
     netcdf::netcdf  
     hdf5::hdf5_hl 
     hdf5::hdf5 
-    openssl::openssl 
-    openssl::crypto 
     benchmark::benchmark
     cli11_headers
 )
