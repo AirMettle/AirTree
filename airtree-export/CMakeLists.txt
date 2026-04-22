@@ -8,10 +8,12 @@ add_airtree_module(airtree-export STATIC
     ${SRC_DIR}/writer/ArrowWriter.cpp
     )
 
-target_link_libraries(airtree-export PUBLIC
+target_link_libraries(airtree-export 
+    PUBLIC
     arrow::arrow_static 
     parquet::parquet 
     snappy
+    PRIVATE
     airtree::airtree-util 
     airtree::airtree-core 
     airtree::airtree-query
@@ -26,6 +28,9 @@ add_library(airtree::airtree-export ALIAS airtree-export)
 add_executable(AirTreeExport ${SRC_DIR}/ExportCLI.cpp)
 
 target_link_libraries(AirTreeExport 
+    PUBLIC
+    # No public dependencies
+    PRIVATE
     airtree::airtree-export
 )
 
@@ -34,13 +39,15 @@ target_link_libraries(AirTreeExport
 # REMOVE THIS LEGACY EXPORT ONCE 10 bit COMPACT HAS BEEN IMPLEMENTED
 add_executable(legacyExport ${SRC_DIR}/LegacyExport.cpp)
 target_link_libraries(legacyExport
-           PUBLIC
-           arrow::arrow_static 
-           parquet::parquet 
-           snappy)
-
-target_link_libraries(legacyExport
-           PUBLIC airtree::airtree-util airtree::airtree-core airtree::airtree-query)
+    PUBLIC
+    arrow::arrow_static 
+    parquet::parquet 
+    snappy
+    PRIVATE 
+    airtree::airtree-util 
+    airtree::airtree-core 
+    airtree::airtree-query
+)
 
 
 ### TESTS

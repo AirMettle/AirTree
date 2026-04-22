@@ -6,8 +6,6 @@ target_link_libraries(fn_1D_test PRIVATE
     airtree::airtree-query 
     gtest::gtest 
     gtest::gtest_main 
-    openssl::openssl 
-    openssl::crypto
 )
 add_test(NAME fn_1D_test COMMAND fn_1D_test)
 
@@ -19,8 +17,6 @@ target_link_libraries(fn_2D_test PRIVATE
     airtree::airtree-query 
     gtest::gtest 
     gtest::gtest_main 
-    openssl::openssl 
-    openssl::crypto
 )
 add_test(NAME fn_2D_test COMMAND fn_2D_test)
 
@@ -32,8 +28,6 @@ target_link_libraries(fn_3D_test PRIVATE
     airtree::airtree-query 
     gtest::gtest 
     gtest::gtest_main 
-    openssl::openssl 
-    openssl::crypto
 )
 add_test(NAME fn_3D_test COMMAND fn_3D_test)
 
@@ -45,8 +39,6 @@ target_link_libraries(fn_4D_test PRIVATE
     airtree::airtree-query 
     gtest::gtest 
     gtest::gtest_main 
-    openssl::openssl 
-    openssl::crypto
 )
 add_test(NAME fn_4D_test COMMAND fn_4D_test)
 
