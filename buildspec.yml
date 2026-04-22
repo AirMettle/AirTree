@@ -9,6 +9,7 @@ phases:
     commands:
       - echo Build started on `date`
       - bash "${CODEBUILD_SRC_DIR}/tools/build/build.sh" setup airtree
+      # - bash "${CODEBUILD_SRC_DIR}/tools/build/upload_dep_cache.sh" FIXME: upload cache to s3 - require s3 credentials
   post_build:
     commands:
       - echo Build completed on `date`

@@ -127,11 +127,12 @@ run_step "Configuring CMake project" \
 
 log_info "Current working directory: $(pwd)"
 
+# Disabling this step since we rely on CMake's dependency graph to build prerequisites automatically when building requested targets.
 # Build dependencies
-run_step "Building dependencies target (${NUM_CORES} cores)" \
-    cmake --build "${_CMAKE_BUILD_DIR}" \
-    --target "am_airtree_dependencies" \
-    --parallel "${NUM_CORES}"
+# run_step "Building dependencies target (${NUM_CORES} cores)" \
+#     cmake --build "${_CMAKE_BUILD_DIR}" \
+#     --target "am_airtree_dependencies" \
+#     --parallel "${NUM_CORES}"
 
 # Build requested targets
 for _pb_target in "${_PB_TARGETS[@]}"; do

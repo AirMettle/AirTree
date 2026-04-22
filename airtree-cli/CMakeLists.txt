@@ -8,6 +8,10 @@ set(SOURCE_FILES
 
 add_executable(airtree-cli ${SOURCE_FILES})
 
+if(TARGET am_airtree_dependencies)
+    add_dependencies(airtree-cli am_airtree_dependencies)
+endif()
+
 target_include_directories(airtree-cli 
     PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

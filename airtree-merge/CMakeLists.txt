@@ -1,6 +1,6 @@
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-add_library(airtree-merge STATIC 
+add_airtree_module(airtree-merge STATIC 
     ${SRC_DIR}/Logger.cpp
     # Dim1
     ${SRC_DIR}/trie1d/Merge1DxT.cpp

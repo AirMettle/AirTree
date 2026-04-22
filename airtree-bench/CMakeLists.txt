@@ -57,6 +57,10 @@ add_executable(airtree_bench
     include/airtree/bench/BenchmarkConfigs.hpp
 )
 
+if(TARGET am_airtree_dependencies)
+    add_dependencies(airtree_bench am_airtree_dependencies)
+endif()
+
 target_include_directories(airtree_bench 
     PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
