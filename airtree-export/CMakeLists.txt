@@ -32,6 +32,7 @@ target_link_libraries(AirTreeExport
     # No public dependencies
     PRIVATE
     airtree::airtree-export
+    airtree::airtree-util 
 )
 
 
