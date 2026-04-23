@@ -48,7 +48,7 @@ target_link_libraries(airtree-merge-cli
 )
 endif ()
 
-if(ENABLE_TESTING)
+if(AIRTREE_ENABLE_TESTING)
 # Unit tests
 add_executable(ut_merge_test
     tests/TestMergeFunction.cpp

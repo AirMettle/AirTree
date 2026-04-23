@@ -40,7 +40,7 @@ target_link_libraries(airtree-query
 
 add_library(airtree::airtree-query ALIAS airtree-query)
 
-if(ENABLE_TESTING)
+if(AIRTREE_ENABLE_TESTING)
 # Unit tests
 add_executable(ut_query_test 
     tests/TestBoundingBox.cpp 

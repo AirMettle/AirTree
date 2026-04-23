@@ -127,7 +127,7 @@ endif ()
 message(STATUS "Detected distribution: ${DISTRO}")
 
 # # Enable testing
-if (ENABLE_TESTING)
+if (AIRTREE_ENABLE_TESTING)
     message(STATUS "Testing enabled. Adding tests.")
     enable_testing()
     add_subdirectory(tests)
@@ -144,7 +144,7 @@ add_subdirectory(airtree-merge)
 if (AIRTREE_BUILD_EXECUTABLES)
 add_subdirectory(airtree-cli)
 endif ()
-if (ENABLE_BENCHMARKS)
+if (AIRTREE_ENABLE_BENCHMARKS)
     add_subdirectory(airtree-bench)
 endif ()
 

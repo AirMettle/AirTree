@@ -46,7 +46,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
 # Tests
-if(ENABLE_TESTING)
+if(AIRTREE_ENABLE_TESTING)
     # Binary Reader Tests
     add_executable(ut_binary_reader_test tests/TestBinaryReader.cpp)
     target_link_libraries(ut_binary_reader_test PRIVATE

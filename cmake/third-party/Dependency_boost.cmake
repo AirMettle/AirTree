@@ -13,7 +13,7 @@ function(external_configure_boost _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _BOOST_SYS
     GIT_SHALLOW TRUE
     UPDATE_DISCONNECTED FALSE)
 
-  if (ENABLE_BENCHMARKS OR ENABLE_TESTING OR AIRTREE_BUILD_LEGACY_EXECUTABLES)
+  if (AIRTREE_ENABLE_BENCHMARKS OR AIRTREE_ENABLE_TESTING)
       set(_BOOST_WITH_LIBS "--with-libraries=system,filesystem,program_options")
       set(_BOOST_BUILD_CMD ./b2 headers)
       set(_BOOST_INSTALL_CMD ./b2 install -j${NPROC} --prefix=${_INSTALL_DIR} --layout=system variant=${AIRMETTLE_AIRTREE_BOOST_VARIANT} link=static,shared threading=multi runtime-link=shared,static)
