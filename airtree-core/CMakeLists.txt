@@ -70,6 +70,7 @@ target_link_libraries(airtree-core
 # Create alias
 add_library(airtree::airtree-core ALIAS airtree-core)
 
+if(ENABLE_TESTING)
 # Unit tests
 add_executable(ut_core 
     tests/TestCombineChunks.cpp 
@@ -93,6 +94,7 @@ target_link_libraries(ut_core PRIVATE
 )
 
 add_test(NAME ut_core COMMAND ut_core)
+endif()
 
 # Install targets
 install(TARGETS airtree-core

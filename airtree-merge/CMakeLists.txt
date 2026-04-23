@@ -37,6 +37,7 @@ target_link_libraries(airtree-merge
 
 add_library(airtree::airtree-merge ALIAS airtree-merge)
 
+if (AIRTREE_BUILD_EXECUTABLES)
 add_executable(airtree-merge-cli ${SRC_DIR}/main.cpp)
 
 target_link_libraries(airtree-merge-cli 
@@ -45,7 +46,9 @@ target_link_libraries(airtree-merge-cli
     PRIVATE
     airtree::airtree-merge
 )
+endif ()
 
+if(ENABLE_TESTING)
 # Unit tests
 add_executable(ut_merge_test
     tests/TestMergeFunction.cpp
@@ -62,7 +65,7 @@ target_link_libraries(ut_merge_test PRIVATE
 )
 
 add_test(NAME ut_merge_test COMMAND ut_merge_test)
-
+endif()
 # Install targets
 install(TARGETS airtree-merge
     ARCHIVE DESTINATION lib
@@ -74,6 +77,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
     FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
 )
 
+if (AIRTREE_BUILD_EXECUTABLES)
 install(TARGETS airtree-merge-cli
     RUNTIME DESTINATION bin
 )
+endif ()
