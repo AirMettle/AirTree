@@ -51,7 +51,7 @@ set(SOURCE_FILES
 )
 
 # Create the library
-add_airtree_module(airtree-core STATIC ${SOURCE_FILES})
+add_library(airtree-core STATIC ${SOURCE_FILES})
 
 target_include_directories(airtree-core 
     PUBLIC 

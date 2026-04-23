@@ -11,7 +11,7 @@ set(SOURCE_FILES
 )
 
 # Create the library
-add_airtree_module(airtree-reader STATIC ${SOURCE_FILES})
+add_library(airtree-reader STATIC ${SOURCE_FILES})
     
 target_include_directories(airtree-reader
     PUBLIC

@@ -5,7 +5,7 @@ set(SOURCE_FILES
     ${SRC_DIR}
 )
 
-add_airtree_module(airtree-query STATIC
+add_library(airtree-query STATIC
     ${SOURCE_FILES}/Logger.cpp
     # meta module
     ${SOURCE_FILES}/meta/Histogram.cpp
