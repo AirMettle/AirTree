@@ -51,7 +51,7 @@ set(SOURCE_FILES
 )
 
 # Create the library
-add_airtree_module(airtree-core STATIC ${SOURCE_FILES})
+add_library(airtree-core STATIC ${SOURCE_FILES})
 
 target_include_directories(airtree-core 
     PUBLIC 
@@ -70,6 +70,7 @@ target_link_libraries(airtree-core
 # Create alias
 add_library(airtree::airtree-core ALIAS airtree-core)
 
+if(AIRTREE_ENABLE_TESTING)
 # Unit tests
 add_executable(ut_core 
     tests/TestCombineChunks.cpp 
@@ -93,6 +94,7 @@ target_link_libraries(ut_core PRIVATE
 )
 
 add_test(NAME ut_core COMMAND ut_core)
+endif()
 
 # Install targets
 install(TARGETS airtree-core

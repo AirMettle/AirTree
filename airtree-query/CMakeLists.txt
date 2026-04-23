@@ -5,7 +5,7 @@ set(SOURCE_FILES
     ${SRC_DIR}
 )
 
-add_airtree_module(airtree-query STATIC
+add_library(airtree-query STATIC
     ${SOURCE_FILES}/Logger.cpp
     # meta module
     ${SOURCE_FILES}/meta/Histogram.cpp
@@ -40,6 +40,7 @@ target_link_libraries(airtree-query
 
 add_library(airtree::airtree-query ALIAS airtree-query)
 
+if(AIRTREE_ENABLE_TESTING)
 # Unit tests
 add_executable(ut_query_test 
     tests/TestBoundingBox.cpp 
@@ -59,7 +60,7 @@ target_link_libraries(ut_query_test PRIVATE
 )
 
 add_test(NAME ut_query_test COMMAND ut_query_test)
-
+endif()
 
 # Install targets
 install(TARGETS airtree-query
