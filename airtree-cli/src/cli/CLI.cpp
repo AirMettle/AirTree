@@ -181,8 +181,6 @@ int main(int argc, char *argv[]) {
   parquet
       ->add_option("-c,--columns", column_list, "Space separated column names")
       ->required();
-  parquet->add_flag(
-      "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
   parquet->callback([&]() {
     AirTree airtree_cli(config_name, input_data_file, column_list, result_file,
                         SUPPORTED_FILE_TYPE::PARQUET,
@@ -211,8 +209,6 @@ int main(int argc, char *argv[]) {
                    "int64, float, double.")
       ->required()
       ->check(data_type_validator);
-  binary->add_flag(
-      "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
   binary->callback([&]() {
     SUPPORTED_DATA_TYPE data_type_enum;
     if (data_type == "int32") {
