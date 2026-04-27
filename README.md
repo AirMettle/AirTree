@@ -106,7 +106,8 @@ The generated file (histogram.bin) is a compact binary buffer containing the Air
 
 When AirTree is installed as a library, you can generate histograms programmatically with zero-copy, type-safe convenience functions.
 
-```HeaderC++
+### Header
+```C++
 #include <airtree/core/api/AirTreeGenerator.hpp>
 ```
 
@@ -198,8 +199,6 @@ g++ -std=c++17 your_program.cpp -lairtree -o your_program
 ### Next Steps
 
 The generated .bin file is ready for querying (top-k, percentile, min/max, etc.).
-For visualization, use the -e/--e2e flag or call fph_deserialize on the output file.
-Advanced usage (custom FPHArray construction, streaming data, etc.) is available through the core API.
 
 
 Happy histogram building! 🎯
@@ -468,3 +467,8 @@ print(table)
 Tip: Parquet is usually the best choice for performance and size when working with large multi-dimensional histograms.
 
 Happy exporting! 📤
+
+
+## References
+- AirTree Patent: [US Patent No. TODO: Actual patent number](TODO: link to actual patent)
+- LICENSE: TODO: Link to actual non-commercial license file
