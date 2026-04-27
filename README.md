@@ -1,6 +1,103 @@
-# AirTree Histogram Generator
+# AirTree (Hierarchical Multi-Dimensional Histogram)
 
 **AirTree** is a high-performance C++ library and CLI tool for generating compact, queryable histogram buffers from large datasets. It supports 1D to 4D data using specialized trie-based structures optimized for speed and memory efficiency.
+
+# AirTree Build and Installation Guide from source
+
+AirTree is designed to build cleanly on a small set of modern platforms. The build system is fully automated and handles dependency installation, configuration detection, caching, compilation, testing, and packaging.
+
+## Supported Platforms
+
+| Platform | Architecture | Status | Notes | 
+|---------|--------------|--------|--------|
+| macOS (Darwin) | x86_64 / arm64 | ✅ Fully supported | Requires Homebrew |
+| Ubuntu 22.04 | x86_64 / aarch64 | ✅ Fully supported | Official CI target |
+| CentOS 7 / 8 / 9 | x86_64 | ✅ Fully supported | Uses yum + EPEL |
+
+
+Other Linux distributions may work if you manually satisfy the dependencies, but only the above are officially tested and supported by the automated setup scripts.
+
+### Prerequisites (Platform-Specific)
+#### macOS
+
+- Homebrew must be installed (/opt/homebrew or /usr/local).
+- Xcode Command Line Tools (automatically prompted if missing).
+
+#### Linux (Ubuntu / CentOS)
+
+- sudo access (or run as root).
+- Internet connection (for package downloads).
+- Basic tools: git, curl, wget, unzip.
+
+### Recommended Build Command
+From the root of the repository, run:
+```bash
+./tools/build/build.sh
+```
+
+This single command does everything:
+
+- Setup (build.sh setup) — detects your OS/architecture and installs all system dependencies (GCC, CMake, Python 3.12, Ninja, etc.) using the appropriate package manager.
+- Build (build.sh airtree) — creates a Python virtual environment, configures and builds the project with CMake, runs unit + functional tests, and packages the final artifacts.
+
+## Step-by-Step Options (if you want more control)
+```bash
+# Only install system dependencies
+./tools/build/build.sh setup
+
+# Only build, test, and package (after setup has run)
+./tools/build/build.sh airtree
+
+# Clean everything (build artifacts)
+./tools/build/build.sh clean
+
+# Clean only the cached third-party dependencies
+./tools/build/build.sh clean_deps
+```
+
+## Where Everything Goes
+
+Build directory (isolated per platform/compiler/build-type):
+
+```cmake
+cmake-build-<distro><version>-<arch>-<compiler><version>-<buildtype>
+```
+
+Example: cmake-build-ubuntu22.04-x86_64-gcc11-release
+Third-party C++ dependencies are automatically cached in:
+```
+~/AirTree/<build-directory>/.airmettle/airtree-deps/<dep-name>/
+```
+(This speeds up subsequent builds dramatically.)
+
+Final packages (produced by CPack) are placed in the build directory:
+
+- .deb (Ubuntu/Debian)
+- .rpm (CentOS/RHEL)
+
+## Installing the Built Artifacts
+After a successful ./tools/build/build.sh:
+```bash
+# Ubuntu / Debian
+sudo dpkg -i cmake-build-*/AirMettle-AirTree-*.deb
+
+# CentOS / RHEL / Fedora
+sudo rpm -i cmake-build-*/AirMettle-AirTree-*.rpm
+```
+
+After installation you will have:
+
+- airtree (main CLI)
+- airtree-export (export tool)
+- airtree-merge-cli (histogram merge tool)
+- libairtree.* (shared library)
+- C++ headers in /usr/local/include/airtree/
+
+### Next Steps
+
+Once installed, jump straight to the Generate Guide, Query Guide, Export Guide, or Merge Guide.
+
+# AirTree Histogram Generator
 
 This section focuses **exclusively on histogram generation** (the `generate` flow). Query functionality (top-k, percentiles, min/max, etc.) will be covered in a later section.
 
