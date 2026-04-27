@@ -468,6 +468,137 @@ Tip: Parquet is usually the best choice for performance and size when working wi
 
 Happy exporting! 📤
 
+# AirTree Merge Guide
+
+**AirTree Merge** allows you to combine two compatible AirTree histogram buffers (the `.bin` files produced by `airtree generate`) into a single histogram.  
+
+This is useful for:
+- Merging histograms from different data batches, shards, or runs
+- Incremental histogram construction
+- Combining results from parallel processing
+
+The merge operation is **exact** (no approximation) and produces a valid AirTree histogram that can be queried, exported, or merged again.
+
+---
+
+## Prerequisites
+
+- Two AirTree histogram files (`.bin`) that were generated with the **exact same configuration** (same schema: e.g., both `2DxP`, both `1DxF`, etc.).
+- The `airtree-merge-cli` binary (or the library) installed and available.
+
+**Important**: Merging histograms with different configurations (different dimensions or different trie variants) is **not supported** and will throw a clear error.
+
+---
+
+## CLI Usage
+
+A standalone executable called **`airtree-merge-cli`** is provided for command-line merging.
+
+```bash
+airtree-merge-cli <input_histogram1.bin> <input_histogram2.bin> <output_histogram.bin>
+```
+
+### Example
+```bash
+# Merge two 2D histograms from different data batches
+airtree-merge-cli batch1_2d.bin batch2_2d.bin merged_2d.bin
+```
+
+## Merge two 1D histograms
+```bash
+airtree-merge-cli run1_1d.bin run2_1d.bin final_1d.bin
+```
+
+What happens:
+
+- The tool reads both input files
+- Validates that they have identical configurations
+- Performs the merge
+- Writes the resulting histogram to the output file
+- Logs progress, sizes, and success/failure
+
+The output file is a fully valid AirTree histogram buffer, ready for querying or exporting.
+
+## C++ Library API
+When using AirTree as a library, merging is extremely simple via the public API in the airtree::merge namespace.
+
+### Header
+```C++
+#include <airtree/merge/AirTreeMerge.hpp>
+```
+
+### Public Functions
+```C++
+namespace airtree::merge {
+
+// Returns the merged histogram as a vector<char>
+std::vector<char> mergeAirTree(
+    const std::vector<char>& buffer1,
+    const std::vector<char>& buffer2);
+
+// Merges and writes the result directly to a file
+void mergeAirTree(
+    const std::vector<char>& buffer1,
+    const std::vector<char>& buffer2,
+    const std::string& output_path);
+
+} // namespace airtree::merge
+```
+
+### Simple Library Example
+```C++
+#include <airtree/merge/AirTreeMerge.hpp>
+#include <fstream>
+#include <vector>
+#include <iostream>
+
+int main() {
+  // Helper lambda to read a binary histogram file
+  auto read_file = [](const std::string& path) -> std::vector<char> {
+    std::ifstream f(path, std::ios::binary);
+    return std::vector<char>((std::istreambuf_iterator<char>(f)),
+                             std::istreambuf_iterator<char>());
+  };
+
+  auto buf1 = read_file("histogram1.bin");
+  auto buf2 = read_file("histogram2.bin");
+
+  // Option 1: Get merged buffer in memory
+  std::vector<char> merged = airtree::merge::mergeAirTree(buf1, buf2);
+
+  // Option 2: Merge and write directly to file
+  airtree::merge::mergeAirTree(buf1, buf2, "merged_histogram.bin");
+
+  std::cout << "Merge complete! Output size: " << merged.size() << " bytes\n";
+  return 0;
+}
+```
+
+### Linking
+
+```bash
+g++ -std=c++17 your_program.cpp -lairtree -o your_program
+```
+
+### Quick Workflow
+
+- Generate two histograms with the same schema:
+```bash
+airtree generate ... -o part1.bin -s 2DxP ...
+airtree generate ... -o part2.bin -s 2DxP ...
+```
+
+- Merge them:
+```bash
+airtree-merge-cli part1.bin part2.bin combined.bin
+```
+
+- Use the result:
+  - Query it (airtree query ...)
+  - Export it (airtree-export combined.bin --parquet)
+  - Merge it again with more data
+
+That’s it. The merge API is intentionally minimal and robust — just two valid AirTree histograms of the same configuration, and you get one merged histogram.
 
 ## References
 - AirTree Patent: [US Patent No. TODO: Actual patent number](TODO: link to actual patent)
