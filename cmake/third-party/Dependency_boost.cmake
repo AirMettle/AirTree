@@ -13,25 +13,43 @@ function(external_configure_boost _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _BOOST_SYS
     GIT_SHALLOW TRUE
     UPDATE_DISCONNECTED FALSE)
 
-  set(_BYPRODUCTS "")
-  list(APPEND _BYPRODUCTS "${_BOOST_SYSTEM_SHARED}")
-  list(APPEND _BYPRODUCTS "${_BOOST_SYSTEM_STATIC}")
-  list(APPEND _BYPRODUCTS "${_BOOST_FILESYSTEM_SHARED}")
-  list(APPEND _BYPRODUCTS "${_BOOST_FILESYSTEM_STATIC}")
-  list(APPEND _BYPRODUCTS "${_BOOST_PROGRAM_OPTIONS_SHARED}")
-  list(APPEND _BYPRODUCTS "${_BOOST_PROGRAM_OPTIONS_STATIC}")
-
   if(WIN32)
-    # Generate a Boost user-config to force it to use the active MSVC compiler 
-    # instead of hunting the registry and falling back to 1998!
     file(WRITE "${_EP_BUILD_DIR}/user-config.jam" "using msvc : 14.3 : cl.exe : <setup>\"\" ;\n")
-    set(BOOST_CONFIGURE_CMD bootstrap.bat msvc)    
-    set(BOOST_BUILD_CMD b2.exe headers)    
-    set(BOOST_INSTALL_CMD b2.exe install -j${NPROC} --user-config=${_EP_BUILD_DIR}/user-config.jam --prefix=${_INSTALL_DIR} --with-system --with-filesystem --with-program_options --layout=system variant=${AIRMETTLE_AIRTREE_BOOST_VARIANT} link=static,shared threading=multi runtime-link=shared,static toolset=msvc-14.3 address-model=64 architecture=x86)
+    set(_BOOTSTRAP_CMD bootstrap.bat msvc)
+    set(_B2_EXE b2.exe)
+    set(_B2_OS_ARGS toolset=msvc-14.3 address-model=64 architecture=x86 --user-config=${_EP_BUILD_DIR}/user-config.jam)
   else()
-    set(BOOST_CONFIGURE_CMD ./bootstrap.sh --prefix=${_INSTALL_DIR} --with-libraries=system,filesystem,program_options)
-    set(BOOST_BUILD_CMD ./b2 headers)
-    set(BOOST_INSTALL_CMD ./b2 install -j${NPROC} --prefix=${_INSTALL_DIR} --layout=system variant=${AIRMETTLE_AIRTREE_BOOST_VARIANT} link=static,shared threading=multi runtime-link=shared,static)
+    set(_BOOTSTRAP_CMD ./bootstrap.sh --prefix=${_INSTALL_DIR})
+    set(_B2_EXE ./b2)
+    set(_B2_OS_ARGS "")
+  endif()
+
+  if (AIRTREE_ENABLE_BENCHMARKS OR AIRTREE_ENABLE_TESTING)
+      if(UNIX)
+          list(APPEND _BOOTSTRAP_CMD --with-libraries=system,filesystem,program_options)
+      endif()
+
+      set(BOOST_CONFIGURE_CMD ${_BOOTSTRAP_CMD})
+      set(BOOST_BUILD_CMD ${_B2_EXE} headers)
+      set(BOOST_INSTALL_CMD ${_B2_EXE} install -j${NPROC} --prefix=${_INSTALL_DIR} --with-system --with-filesystem --with-program_options --layout=system variant=${AIRMETTLE_AIRTREE_BOOST_VARIANT} link=static,shared threading=multi runtime-link=shared,static ${_B2_OS_ARGS})
+      
+      set(_BYPRODUCTS "")
+      list(APPEND _BYPRODUCTS "${_BOOST_SYSTEM_SHARED}")
+      list(APPEND _BYPRODUCTS "${_BOOST_SYSTEM_STATIC}")
+      list(APPEND _BYPRODUCTS "${_BOOST_FILESYSTEM_SHARED}")
+      list(APPEND _BYPRODUCTS "${_BOOST_FILESYSTEM_STATIC}")
+      list(APPEND _BYPRODUCTS "${_BOOST_PROGRAM_OPTIONS_SHARED}")
+      list(APPEND _BYPRODUCTS "${_BOOST_PROGRAM_OPTIONS_STATIC}")
+      
+  else()
+      message(STATUS "[Boost] Lean mode detected: Extracting Boost headers only.")
+      
+      set(BOOST_CONFIGURE_CMD ${_BOOTSTRAP_CMD})
+      set(BOOST_BUILD_CMD ${_B2_EXE} headers)
+      
+      set(BOOST_INSTALL_CMD ${CMAKE_COMMAND} -E copy_directory "${_EP_BUILD_DIR}/src/${_EP_BASE}/boost" "${_INSTALL_DIR}/include/boost")
+      
+      set(_BYPRODUCTS "")
   endif()
 
   ExternalProject_Add(
