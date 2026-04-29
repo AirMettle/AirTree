@@ -65,22 +65,22 @@ InputDataVector BinaryFileParser::parse(const std::string &file_path,
                                         const SUPPORTED_DATA_TYPE data_type) {
   InputDataVector input_data_vector;
 
-  if (data_type == SUPPORTED_DATA_TYPE::INT32) {
+  if (data_type == SUPPORTED_DATA_TYPE::AT_INT32) {
     auto vector = readBinaryDataCLI<int32_t>(file_path);
     for (auto &data : vector) {
       input_data_vector.emplace_back(std::move(data));
     }
-  } else if (data_type == SUPPORTED_DATA_TYPE::INT64) {
+  } else if (data_type == SUPPORTED_DATA_TYPE::AT_INT64) {
     auto vector = readBinaryDataCLI<int64_t>(file_path);
     for (auto &data : vector) {
       input_data_vector.emplace_back(std::move(data));
     }
-  } else if (data_type == SUPPORTED_DATA_TYPE::FLOAT) {
+  } else if (data_type == SUPPORTED_DATA_TYPE::AT_FLOAT) {
     auto vector = readBinaryDataCLI<float>(file_path);
     for (auto &data : vector) {
       input_data_vector.emplace_back(std::move(data));
     }
-  } else if (data_type == SUPPORTED_DATA_TYPE::DOUBLE) {
+  } else if (data_type == SUPPORTED_DATA_TYPE::AT_DOUBLE) {
     auto vector = readBinaryDataCLI<double>(file_path);
     for (auto &data : vector) {
       input_data_vector.emplace_back(std::move(data));

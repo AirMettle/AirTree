@@ -64,6 +64,18 @@ if [[ "$OS" == "linux" && "$ARCH" == "x86_64" && "$DISTRO" == "centos" && "$VERS
     PRE_BUILD_SETUP=1
 fi
 
+if [[ "$OS" == *"mingw"* || "$OS" == *"msys"* || "$OS" == *"cygwin"* ]]; then
+    OS="windows"
+    
+    echo "Windows (MinGW/MSYS) environment detected."
+    . "$TOOLS_DIR/setup/windows.sh"
+    if [ $? -ne 0 ]; then
+        echo "Windows setup failed"
+        exit 1
+    fi
+    PRE_BUILD_SETUP=1
+fi
+
 
 if [[ "$PRE_BUILD_SETUP" -eq 0 ]]; then
     echo "No pre-build setup script executed. Platform not supported."

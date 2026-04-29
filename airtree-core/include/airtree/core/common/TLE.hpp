@@ -21,7 +21,7 @@
 ** 8. -ve Inf = 7
 */
 struct TLE {
-  uint8_t TLE : 3;
+  uint8_t encoding : 3;
 };
 
 TLE setTLEComponents(uint64_t fpNumber);

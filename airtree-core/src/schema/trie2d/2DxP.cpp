@@ -152,7 +152,7 @@ std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
         unsigned int internalFPHNumber1 = input_1.second;
         unsigned int internalFPHNumber2 = input_2.second;
 
-        unsigned int combinedTLE = (tle1.TLE << 3) | tle2.TLE;
+        unsigned int combinedTLE = (tle1.encoding << 3) | tle2.encoding;
         // If input is a special case, determine the special case and increment
         // the appropriate special count
         unsigned int isTle1Special = update_special_counts(tle1, specialCounts);

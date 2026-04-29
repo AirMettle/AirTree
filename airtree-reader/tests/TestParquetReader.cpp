@@ -22,8 +22,8 @@ TEST_F(ParquetReaderTest, ReadInt32Column) {
   std::string filepath = testdata_dir + "/test_int32.parquet";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 1) << "Should return 1 column";
 
@@ -51,8 +51,8 @@ TEST_F(ParquetReaderTest, ReadInt64Column) {
   std::string filepath = testdata_dir + "/test_int64.parquet";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT64, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT64, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -80,8 +80,8 @@ TEST_F(ParquetReaderTest, ReadFloatColumn) {
   std::string filepath = testdata_dir + "/test_float.parquet";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::FLOAT, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_FLOAT, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -109,8 +109,8 @@ TEST_F(ParquetReaderTest, ReadDoubleColumn) {
   std::string filepath = testdata_dir + "/test_double.parquet";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::DOUBLE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -139,8 +139,8 @@ TEST_F(ParquetReaderTest, ReadMultipleColumns) {
   std::string filepath = testdata_dir + "/test_multicolumn.parquet";
   std::vector<std::string> columns = {"col_int32", "col_float", "col_double"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 3) << "Should return 3 columns";
 
@@ -172,8 +172,8 @@ TEST_F(ParquetReaderTest, ReadAllColumnsInOrder) {
   std::vector<std::string> columns = {
       "col_int32", "col_int64", "col_float", "col_double"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 4) << "Should return 4 columns";
 
@@ -193,8 +193,8 @@ TEST_F(ParquetReaderTest, ReadSingleColumnFromMulti) {
   std::string filepath = testdata_dir + "/test_multicolumn.parquet";
   std::vector<std::string> columns = {"col_double"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::DOUBLE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
 
   ASSERT_EQ(data.size(), 1) << "Should return 1 column";
 
@@ -208,8 +208,8 @@ TEST_F(ParquetReaderTest, ReadNonExistentColumn) {
   std::string filepath = testdata_dir + "/test_multicolumn.parquet";
   std::vector<std::string> columns = {"nonexistent_column"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   EXPECT_TRUE(data.empty())
       << "Should return empty vector for non-existent column";
@@ -220,8 +220,8 @@ TEST_F(ParquetReaderTest, ReadNonExistentFile) {
   std::string filepath = testdata_dir + "/nonexistent.parquet";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   EXPECT_TRUE(data.empty())
       << "Should return empty vector for non-existent file";
@@ -234,8 +234,8 @@ TEST_F(ParquetReaderTest, EmptyColumnList) {
 
   // When columns is empty, parse_file uses data_type path which is for binary
   // files For parquet files, this should ideally handle gracefully or error
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::PARQUET,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   // Behavior depends on implementation - typically returns empty for parquet
   // without columns This test documents the current behavior

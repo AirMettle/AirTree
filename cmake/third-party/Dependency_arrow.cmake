@@ -3,7 +3,7 @@ include_guard(GLOBAL)
 include(GNUInstallDirs)
 include(ExternalProject)
 
-function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SHARED_LIB _ARROW_STATIC_LIB _PARQUET_SHARED_LIB _PARQUET_STATIC_LIB)
+function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SHARED_LIB _ARROW_STATIC_LIB _PARQUET_SHARED_LIB _PARQUET_STATIC_LIB _ARROW_BUNDLED_SHARED_LIB _ARROW_BUNDLED_STATIC_LIB)
   # Remote
   set(DOWNLOAD_OPTIONS
     GIT_REPOSITORY "https://github.com/apache/arrow.git"
@@ -16,6 +16,8 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
   list(APPEND _BYPRODUCTS "${_ARROW_STATIC_LIB}")
   list(APPEND _BYPRODUCTS "${_PARQUET_SHARED_LIB}")
   list(APPEND _BYPRODUCTS "${_PARQUET_STATIC_LIB}")
+  list(APPEND _BYPRODUCTS "${_ARROW_BUNDLED_SHARED_LIB}")
+  list(APPEND _BYPRODUCTS "${_ARROW_BUNDLED_STATIC_LIB}")
   
   ExternalProject_Add(
     ${_EP_BASE}
@@ -68,13 +70,15 @@ function(configure_arrow)
   set(_ARROW_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}arrow${CMAKE_STATIC_LIBRARY_SUFFIX}")
   set(_PARQUET_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}parquet${CMAKE_SHARED_LIBRARY_SUFFIX}")
   set(_PARQUET_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}parquet${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  set(_ARROW_BUNDLED_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}arrow_bundled_dependencies${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  set(_ARROW_BUNDLED_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}arrow_bundled_dependencies${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
   if(_cache_hit)
     message(STATUS "${_EP_BASE} restored from cache.")
     add_custom_target(${_EP_BASE})
   elseif(NOT EXISTS "${_ARROW_SHARED_LIB}" OR NOT EXISTS "${_ARROW_STATIC_LIB}")
     message(STATUS "${_EP_BASE} not found at ${_INSTALL_DIR}. Will download and build it.")
-    external_configure_arrow(${_EP_BASE} ${_EP_BUILD_DIR} ${_INSTALL_DIR} ${_ARROW_SHARED_LIB} ${_ARROW_STATIC_LIB} ${_PARQUET_SHARED_LIB} ${_PARQUET_STATIC_LIB})
+    external_configure_arrow(${_EP_BASE} ${_EP_BUILD_DIR} ${_INSTALL_DIR} ${_ARROW_SHARED_LIB} ${_ARROW_STATIC_LIB} ${_PARQUET_SHARED_LIB} ${_PARQUET_STATIC_LIB} ${_ARROW_BUNDLED_SHARED_LIB} ${_ARROW_BUNDLED_STATIC_LIB})
     add_custom_target(clean_arrow_build ALL
       COMMAND ${CMAKE_COMMAND} -E remove_directory ${_EP_BUILD_DIR}
       COMMENT "Cleaning up arrow_build directory after installation"
@@ -87,24 +91,38 @@ function(configure_arrow)
   endif()
 
   set(_DEPS_SHARED "")
-  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift snappy)
+  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift)
   if(NOT AIRTREE_SANITIZER_USES_ASAN)
       list(APPEND _DEPS_SHARED mimalloc::mimalloc)
   endif()
 
   # For static builds, Arrow often requires linking to additional sub-libraries
   set(_DEPS_STATIC "")
-  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift snappy)
+  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift)
   if(NOT AIRTREE_SANITIZER_USES_ASAN)
       list(APPEND _DEPS_STATIC mimalloc::mimalloc)
   endif()
   list(APPEND _DEPS_STATIC arrow::arrow_static parquet::parquet_static)
 
+  # IMPORTED TARGET: arrow::bundled_shared
+  add_library(arrow::bundled_shared SHARED IMPORTED GLOBAL)
+  set_target_properties(arrow::bundled_shared PROPERTIES IMPORTED_LOCATION "${_ARROW_BUNDLED_SHARED_LIB}")
+  add_dependencies(arrow::bundled_shared ${_EP_BASE})
+
+  add_dependencies(am_airtree_dependencies arrow::bundled_shared)
+
+  # IMPORTED TARGET: arrow::bundled_static
+  add_library(arrow::bundled_static STATIC IMPORTED GLOBAL)
+  set_target_properties(arrow::bundled_static PROPERTIES IMPORTED_LOCATION "${_ARROW_BUNDLED_STATIC_LIB}")
+  add_dependencies(arrow::bundled_static ${_EP_BASE})
+
+  add_dependencies(am_airtree_dependencies arrow::bundled_static)
+
   # IMPORTED TARGET: arrow::arrow_shared
   add_library(arrow::arrow_shared SHARED IMPORTED GLOBAL)
   set_target_properties(arrow::arrow_shared PROPERTIES IMPORTED_LOCATION "${_ARROW_SHARED_LIB}")
   target_include_directories(arrow::arrow_shared SYSTEM INTERFACE "${_INSTALL_DIR}/include")
-  target_link_libraries(arrow::arrow_shared INTERFACE ${_DEPS_SHARED})
+  target_link_libraries(arrow::arrow_shared INTERFACE ${_DEPS_SHARED} arrow::bundled_shared)
   add_dependencies(arrow::arrow_shared ${_EP_BASE})
 
   add_dependencies(am_airtree_dependencies arrow::arrow_shared)
@@ -113,7 +131,7 @@ function(configure_arrow)
   add_library(arrow::arrow_static STATIC IMPORTED GLOBAL)
   set_target_properties(arrow::arrow_static PROPERTIES IMPORTED_LOCATION "${_ARROW_STATIC_LIB}")
   target_include_directories(arrow::arrow_static SYSTEM INTERFACE "${_INSTALL_DIR}/include")
-  target_link_libraries(arrow::arrow_static INTERFACE ${_DEPS_STATIC})
+  target_link_libraries(arrow::arrow_static INTERFACE ${_DEPS_STATIC} arrow::bundled_static)
   add_dependencies(arrow::arrow_static ${_EP_BASE})
 
   add_dependencies(am_airtree_dependencies arrow::arrow_static)
@@ -122,16 +140,16 @@ function(configure_arrow)
   add_library(parquet::parquet_shared SHARED IMPORTED GLOBAL)
   set_target_properties(parquet::parquet_shared PROPERTIES IMPORTED_LOCATION "${_PARQUET_SHARED_LIB}")
   target_include_directories(parquet::parquet_shared SYSTEM INTERFACE "${_INSTALL_DIR}/include")
-  target_link_libraries(parquet::parquet_shared INTERFACE ${_DEPS_SHARED})
+  target_link_libraries(parquet::parquet_shared INTERFACE ${_DEPS_SHARED} arrow::bundled_shared)
   add_dependencies(parquet::parquet_shared ${_EP_BASE})
 
   add_dependencies(am_airtree_dependencies parquet::parquet_shared)
 
-  # IMPORTED TARGET: arrow::parquet_static
+  # IMPORTED TARGET: parquet::parquet_static
   add_library(parquet::parquet_static STATIC IMPORTED GLOBAL)
   set_target_properties(parquet::parquet_static PROPERTIES IMPORTED_LOCATION "${_PARQUET_STATIC_LIB}")
   target_include_directories(parquet::parquet_static SYSTEM INTERFACE "${_INSTALL_DIR}/include")
-  target_link_libraries(parquet::parquet_static INTERFACE ${_DEPS_STATIC})
+  target_link_libraries(parquet::parquet_static INTERFACE ${_DEPS_STATIC} arrow::bundled_static)
   add_dependencies(parquet::parquet_static ${_EP_BASE})
 
   add_dependencies(am_airtree_dependencies parquet::parquet_static)

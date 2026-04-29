@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <airtree/core/common/FPHArray.hpp>
+#include <stdexcept>
 
 namespace airtree::core::api {
 enum class ConfigType {

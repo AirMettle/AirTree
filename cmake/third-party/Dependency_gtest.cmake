@@ -29,6 +29,7 @@ function(external_configure_gtest _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_LI
     -DCMAKE_BUILD_TYPE=${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=${_INSTALL_DIR}
     -DBUILD_SHARED_LIBS=OFF
+    -Dgtest_force_shared_crt=ON
     INSTALL_BYPRODUCTS ${_BYPRODUCTS}
     BUILD_COMMAND cmake --build . --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE} -- -j${NPROC}
     INSTALL_COMMAND cmake --build . --target install

@@ -58,7 +58,7 @@ bool update_special_counts(const TLE &tle,
     return false; // Return false if counts pointer is null
   }
 
-  switch (tle.TLE) {
+  switch (tle.encoding) {
   case 0: // NaN
     if (counts) {
       counts->nanCount++;

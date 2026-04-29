@@ -41,10 +41,10 @@ private:
 
 std::unordered_map<SUPPORTED_FILE_TYPE, FileParserFactory::ParserCreator>
     FileParserFactory::creators = {
-        {SUPPORTED_FILE_TYPE::BINARY, &FileParserFactory::createBinaryParsers},
-        {SUPPORTED_FILE_TYPE::PARQUET,
+        {SUPPORTED_FILE_TYPE::AT_BINARY, &FileParserFactory::createBinaryParsers},
+        {SUPPORTED_FILE_TYPE::AT_PARQUET,
          &FileParserFactory::createParquetParsers},
-        {SUPPORTED_FILE_TYPE::CSV, &FileParserFactory::createCSVParsers}};
+        {SUPPORTED_FILE_TYPE::AT_CSV, &FileParserFactory::createCSVParsers}};
 
 InputDataVector airtree::reader::file::parse_file(
     const std::string &file_path,

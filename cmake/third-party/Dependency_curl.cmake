@@ -49,8 +49,13 @@ function(configure_curl)
 
   airtree_dep_try_cache(DEP_NAME curl EP_DIR "${_DEPS_DIR}/${_EP_BASE}" CACHE_HIT _cache_hit INSTALL_DIR _INSTALL_DIR)
 
-  set(_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}curl${CMAKE_SHARED_LIBRARY_SUFFIX}")
-  set(_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  if(WIN32)
+    set(_SHARED_LIB "${_INSTALL_DIR}/lib/libcurl${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_STATIC_LIB "${_INSTALL_DIR}/lib/libcurl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  else()
+    set(_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}curl${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  endif()
 
   if(_cache_hit)
     message(STATUS "${_EP_BASE} restored from cache.")

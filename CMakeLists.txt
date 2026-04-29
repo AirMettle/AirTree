@@ -110,6 +110,14 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(OS "WINDOWS")
     message(STATUS "Configuring for Windows.")
+    # Ensure UTF-8 encoding for MSVC
+    add_compile_options(/utf-8 /fp:strict)
+    # Link against necessary Windows libraries - right now we need it for crypt32 and ws2_32 for OpenSSL on Windows
+    # shlwapi is needed to get accurate cpu clock speed for benchmarking on Windows
+    link_libraries(crypt32 ws2_32 shlwapi)
+    # The <windows.h> header defines min and max macros which can interfere with std::min and std::max. Since we are 
+    # using it a lot in out codebase I had to add this definition to prevent those macros from being defined.
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
 else ()
     message(FATAL_ERROR "Unsupported OS")
 endif ()

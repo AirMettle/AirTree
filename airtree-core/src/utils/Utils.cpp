@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 
 
 std::vector<double> readBinaryFile(const std::string &filename) {

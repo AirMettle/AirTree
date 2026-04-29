@@ -29,15 +29,15 @@ auto data_type_validator = CLI::Validator(
     [](std::string &input) {
       airtree::reader::file::SUPPORTED_DATA_TYPE data_type_enum;
       if (input == "int32") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::INT32;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT32;
       } else if (input == "int64") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::INT64;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT64;
       } else if (input == "float") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::FLOAT;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_FLOAT;
       } else if (input == "double") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::DOUBLE;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_DOUBLE;
       } else {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::IGNORE;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE;
       }
       if (!AirTree::validate_data_type(data_type_enum)) {
         return "Invalid data type";
@@ -185,8 +185,8 @@ int main(int argc, char *argv[]) {
       "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
   parquet->callback([&]() {
     AirTree airtree_cli(config_name, input_data_file, column_list, result_file,
-                        SUPPORTED_FILE_TYPE::PARQUET,
-                        SUPPORTED_DATA_TYPE::IGNORE, e2e);
+                        SUPPORTED_FILE_TYPE::AT_PARQUET,
+                        SUPPORTED_DATA_TYPE::AT_IGNORE, e2e);
     airtree_cli.parquet_handler();
   });
 
@@ -216,18 +216,18 @@ int main(int argc, char *argv[]) {
   binary->callback([&]() {
     SUPPORTED_DATA_TYPE data_type_enum;
     if (data_type == "int32") {
-      data_type_enum = SUPPORTED_DATA_TYPE::INT32;
+      data_type_enum = SUPPORTED_DATA_TYPE::AT_INT32;
     } else if (data_type == "int64") {
-      data_type_enum = SUPPORTED_DATA_TYPE::INT64;
+      data_type_enum = SUPPORTED_DATA_TYPE::AT_INT64;
     } else if (data_type == "float") {
-      data_type_enum = SUPPORTED_DATA_TYPE::FLOAT;
+      data_type_enum = SUPPORTED_DATA_TYPE::AT_FLOAT;
     } else if (data_type == "double") {
-      data_type_enum = SUPPORTED_DATA_TYPE::DOUBLE;
+      data_type_enum = SUPPORTED_DATA_TYPE::AT_DOUBLE;
     } else {
-      data_type_enum = SUPPORTED_DATA_TYPE::IGNORE;
+      data_type_enum = SUPPORTED_DATA_TYPE::AT_IGNORE;
     }
     AirTree airtree_cli(config_name, input_data_file, {}, result_file,
-                        SUPPORTED_FILE_TYPE::BINARY, data_type_enum, e2e);
+                        SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum, e2e);
     airtree_cli.binary_handler();
   });
 

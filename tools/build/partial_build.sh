@@ -112,6 +112,20 @@ log_debug "Using $NUM_CORES cores for parallel build"
 log_info "Using PROJECT_ROOT=$PROJECT_ROOT"
 log_info "Configuring and building in root directory"
 
+# OS Detection to override the toolchain on Windows
+OS_NAME="$(uname | awk '{ print tolower($0) }')"
+if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
+    log_info "Windows environment detected. Forcing MSVC toolchain."
+    TOOLCHAIN="msvc"
+    export GENERATOR="Ninja"
+
+    if command -v cl.exe >/dev/null 2>&1; then
+        MSVC_BIN_DIR="$(dirname "$(which cl.exe)")"
+        export PATH="$MSVC_BIN_DIR:$PATH"
+        log_info "Forced MSVC tools to the front of PATH"
+    fi
+fi
+
 CMAKE_TOOLCHAIN_FILE="${_CMAKE_SOURCE_DIR}/cmake/Toolchain_${TOOLCHAIN//-/_}.cmake"
 
 # Configure cmake

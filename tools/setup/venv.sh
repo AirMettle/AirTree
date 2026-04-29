@@ -32,9 +32,15 @@ export DEBIAN_FRONTEND=noninteractive
 
 log_info "Setting up Python environment..."
 
+OS_NAME="$(uname | awk '{ print tolower($0) }')"
+
 # Find system Python
-find_system_python() {
-    find /bin /usr/bin /usr/local/bin -executable -name python3.12 | head -1 || true
+find_system_python() {    
+    if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
+        command -v python || command -v python3 || true
+    else
+        find /bin /usr/bin /usr/local/bin -executable -name python3.12 2>/dev/null | head -1 || true
+    fi
 }
 
 SYSTEM_PYTHON=$(find_system_python)
@@ -98,7 +104,17 @@ create_venv_with_virtualenv() {
 
 # Activate venv
 log_info "Activating virtual environment..."
-source "${PYTHON_VENV_DIR}/bin/activate"
+if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
+    source "${PYTHON_VENV_DIR}/Scripts/activate" || {
+        log_error "Failed to activate virtual environment at ${PYTHON_VENV_DIR}"
+        exit 1
+    }
+else
+    source "${PYTHON_VENV_DIR}/bin/activate" || {
+        log_error "Failed to activate virtual environment at ${PYTHON_VENV_DIR}"
+        exit 1
+    }
+fi
 
 VENV_PYTHON="$(python -c 'import sys; print(sys.executable)')"
 log_info "Using venv Python: ${VENV_PYTHON}"

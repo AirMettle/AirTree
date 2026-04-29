@@ -216,7 +216,7 @@ static unsigned int encode_12bit(double val) {
 
   // Map TLE to 2-bit prefix (same as getprependbits)
   unsigned int prefix;
-  switch (tle.TLE) {
+  switch (tle.encoding) {
   case 2:
     prefix = 0b00;
     break; // +sign, +exp

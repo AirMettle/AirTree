@@ -23,19 +23,41 @@ function(external_configure_openssl _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_
     set(_OPENSSL_DEBUG_FLAG "")
   endif()
 
+  if(WIN32)
+    find_program(WINDOWS_PERL_EXE 
+      NAMES perl 
+      PATHS "C:/Strawberry/perl/bin" 
+      NO_DEFAULT_PATH
+    )
+
+    if(NOT WINDOWS_PERL_EXE)
+      find_program(WINDOWS_PERL_EXE NAMES perl)
+    endif()
+      
+    message(STATUS "Using Windows Perl for OpenSSL: ${WINDOWS_PERL_EXE}")
+    
+    set(OPENSSL_CONFIGURE_CMD ${WINDOWS_PERL_EXE} Configure VC-WIN64A no-asm no-shared no-tests --prefix=${_INSTALL_DIR} --openssldir=${_INSTALL_DIR}/ssl)      
+    set(OPENSSL_BUILD_CMD nmake)
+    set(OPENSSL_INSTALL_CMD nmake install)
+  else()
+    set(OPENSSL_CONFIGURE_CMD ./Configure ${_OPENSSL_DEBUG_FLAG} --prefix=${_INSTALL_DIR} --openssldir=${_INSTALL_DIR}/ssl --libdir=lib no-tests)
+    set(OPENSSL_BUILD_CMD make)
+    set(OPENSSL_INSTALL_CMD make install)
+  endif()
+
   ExternalProject_Add(
     ${_EP_BASE}
     PREFIX ${_EP_BUILD_DIR}
     ${DOWNLOAD_OPTIONS}
     EXCLUDE_FROM_ALL ON
     INSTALL_DIR ${_INSTALL_DIR}
-    CONFIGURE_COMMAND ./Configure ${_OPENSSL_DEBUG_FLAG} --prefix=${_INSTALL_DIR} --openssldir=${_INSTALL_DIR}/ssl --libdir=lib no-tests
+    CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_CMD}
     CMAKE_ARGS
     -DCMAKE_INSTALL_LIBDIR=lib
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     INSTALL_BYPRODUCTS ${_BYPRODUCTS}
-    BUILD_COMMAND make -j${NPROC}
-    INSTALL_COMMAND make install_sw
+    BUILD_COMMAND ${OPENSSL_BUILD_CMD}
+    INSTALL_COMMAND ${OPENSSL_INSTALL_CMD}
     BUILD_IN_SOURCE 1
     BUILD_ENV OPENSSL_LIBDIR=lib
   )
@@ -50,10 +72,17 @@ function(configure_openssl)
 
   airtree_dep_try_cache(DEP_NAME openssl EP_DIR "${_DEPS_DIR}/${_EP_BASE}" CACHE_HIT _cache_hit INSTALL_DIR _INSTALL_DIR)
 
-  set(_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}ssl${CMAKE_SHARED_LIBRARY_SUFFIX}")
-  set(_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ssl${CMAKE_STATIC_LIBRARY_SUFFIX}")
-  set(_SHARED_CRYPTO_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}crypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
-  set(_STATIC_CRYPTO_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}crypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  if(WIN32)
+    set(_SHARED_LIB "${_INSTALL_DIR}/lib/libssl${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_STATIC_LIB "${_INSTALL_DIR}/lib/libssl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set(_SHARED_CRYPTO_LIB "${_INSTALL_DIR}/lib/libcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_STATIC_CRYPTO_LIB "${_INSTALL_DIR}/lib/libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  else()
+    set(_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}ssl${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ssl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set(_SHARED_CRYPTO_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}crypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_STATIC_CRYPTO_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}crypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  endif()
 
   if(_cache_hit)
     message(STATUS "${_EP_BASE} restored from cache.")

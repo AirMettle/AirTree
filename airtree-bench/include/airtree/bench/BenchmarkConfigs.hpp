@@ -30,16 +30,16 @@ public:
 
   static bool
   validate_file_type(airtree::reader::file::SUPPORTED_FILE_TYPE type) {
-    return (type == airtree::reader::file::SUPPORTED_FILE_TYPE::BINARY
-            || type == airtree::reader::file::SUPPORTED_FILE_TYPE::PARQUET);
+    return (type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY
+            || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET);
   }
 
   static bool
   validate_data_type(airtree::reader::file::SUPPORTED_DATA_TYPE data_type) {
-    return (data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::INT32
-            || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::INT64
-            || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::FLOAT
-            || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::DOUBLE);
+    return (data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT32
+            || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT64
+            || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_FLOAT
+            || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_DOUBLE);
   }
 
   static bool validate_config_name(const std::string &config_name) {

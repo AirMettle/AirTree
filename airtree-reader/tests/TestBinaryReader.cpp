@@ -23,8 +23,8 @@ TEST_F(BinaryReaderTest, ReadInt32File) {
   std::string filepath = testdata_dir + "/test_int32.bin";
   std::vector<std::string> columns; // Empty for binary files
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 1) << "Binary file should return 1 column";
 
@@ -52,8 +52,8 @@ TEST_F(BinaryReaderTest, ReadInt64File) {
   std::string filepath = testdata_dir + "/test_int64.bin";
   std::vector<std::string> columns;
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::INT64, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_INT64, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -81,8 +81,8 @@ TEST_F(BinaryReaderTest, ReadFloatFile) {
   std::string filepath = testdata_dir + "/test_float.bin";
   std::vector<std::string> columns;
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::FLOAT, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_FLOAT, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -110,8 +110,8 @@ TEST_F(BinaryReaderTest, ReadDoubleFile) {
   std::string filepath = testdata_dir + "/test_double.bin";
   std::vector<std::string> columns;
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::DOUBLE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -140,8 +140,8 @@ TEST_F(BinaryReaderTest, ReadNonExistentFile) {
   std::string filepath = testdata_dir + "/nonexistent.bin";
   std::vector<std::string> columns;
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   EXPECT_TRUE(data.empty())
       << "Should return empty vector for non-existent file";
@@ -152,8 +152,8 @@ TEST_F(BinaryReaderTest, UnsupportedDataType) {
   std::string filepath = testdata_dir + "/test_int32.bin";
   std::vector<std::string> columns;
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::IGNORE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_IGNORE, columns);
 
   EXPECT_TRUE(data.empty())
       << "Should return empty vector for IGNORE data type";
@@ -168,8 +168,8 @@ TEST_F(BinaryReaderTest, EmptyFile) {
   std::ofstream empty_file(filepath);
   empty_file.close();
 
-  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::BINARY,
-                                    SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_BINARY,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 1);
   auto *vec_ptr = std::get_if<std::vector<int32_t>>(&data[0]);

@@ -12,13 +12,13 @@ TLE setTLEComponents_32(uint32_t fpNumber) {
 
   // Early return for Zero check
   if (!(fpNumber & ~(1U << 31))) {
-    tle.TLE = 4;
+    tle.encoding = 4;
     return tle;
   }
 
   // Early return for Inf or Nan
   if ((fpNumber & expMask) == expMask) {
-    tle.TLE = mantissa ? 0 : (signBit ? 7 : 1);
+    tle.encoding = mantissa ? 0 : (signBit ? 7 : 1);
     return tle;
   }
 
@@ -26,7 +26,7 @@ TLE setTLEComponents_32(uint32_t fpNumber) {
   bool isExponentLessThan127 = exponent < 127;
   int index = (signBit << 1) | isExponentLessThan127;
   static const int results[] = {2, 3, 6, 5};
-  tle.TLE = results[index];
+  tle.encoding = results[index];
   return tle;
 }
 
@@ -40,13 +40,13 @@ TLE setTLEComponents(uint64_t fpNumber) {
 
   // Early return for Zero check
   if (!(fpNumber & ~(1ULL << 63))) {
-    tle.TLE = 4;
+    tle.encoding = 4;
     return tle;
   }
 
   // Early return for Inf or Nan
   if ((fpNumber & expMask) == expMask) {
-    tle.TLE = mantissa ? 0 : (signBit ? 7 : 1);
+    tle.encoding = mantissa ? 0 : (signBit ? 7 : 1);
     return tle;
   }
 
@@ -54,7 +54,7 @@ TLE setTLEComponents(uint64_t fpNumber) {
   bool isExponentLessThan1023 = exponent < 1023;
   int index = (signBit << 1) | isExponentLessThan1023;
   static const int results[] = {2, 3, 6, 5};
-  tle.TLE = results[index];
+  tle.encoding = results[index];
   return tle;
 }
 

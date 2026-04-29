@@ -84,6 +84,17 @@ run_ctest_tests() {
     log_info "Running ${test_type,,} tests..."
     echo
 
+    if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
+        echo "Windows detected: Injecting dependency DLLs into PATH..."
+        
+        export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"
+        
+        DEPS_BIN_DIRS=$(find ${CMAKE_BUILD_DIR}/.airmettle/airtree-deps -type d -name "bin" | paste -sd ":" -)
+        if [ -n "$DEPS_BIN_DIRS" ]; then
+            export PATH="$DEPS_BIN_DIRS:$PATH"
+        fi
+    fi
+
     # Run tests with formatted output
     if ctest --output-on-failure --progress -R "$test_pattern" -j "$num_cores" 2>&1 | \
         format_ctest_output "$build_dir"; then
