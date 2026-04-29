@@ -37,11 +37,11 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_BoxQueryHasPerfectAlignment) {
 
   TrieManager trie_manager;
   // Populate the histogram with values
-  for (size_t x = 0; x <= histogram->getBinCount(); ++x) {
+  for (size_t x = 0; x < histogram->getBinCount(); ++x) {
     uint32_t internal_rep_x = histogram->getInternalRepresentation(x);
     uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
     uint32_t x_10 = internal_rep_x & 0x3FF; // Get the last 10 bits
-    for (size_t y = 0; y <= histogram->getBinCount(); ++y) {
+    for (size_t y = 0; y < histogram->getBinCount(); ++y) {
       uint32_t internal_rep_y = histogram->getInternalRepresentation(y);
       uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
       uint32_t combined_tle = (x_tle << 3) | y_tle;
@@ -100,11 +100,11 @@ TEST_F(TestBoundingBox,
   //           << std::endl;
 
   TrieManager trie_manager;
-  for (size_t x = 0; x <= histogram->getBinCount(); ++x) {
+  for (size_t x = 0; x < histogram->getBinCount(); ++x) {
     uint32_t internal_rep_x = histogram->getInternalRepresentation(x);
     uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
     uint32_t x_10 = internal_rep_x & 0x3FF; // Get the last 10 bits
-    for (size_t y = 0; y <= histogram->getBinCount(); ++y) {
+    for (size_t y = 0; y < histogram->getBinCount(); ++y) {
       uint32_t internal_rep_y = histogram->getInternalRepresentation(y);
       uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
       uint32_t combined_tle = (x_tle << 3) | y_tle;
@@ -268,11 +268,11 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_BoxQueryHasExtremeInputs) {
 
   TrieManager trie_manager;
   // Populate the histogram with values
-  for (size_t x = 0; x <= histogram->getBinCount(); ++x) {
+  for (size_t x = 0; x < histogram->getBinCount(); ++x) {
     uint32_t internal_rep_x = histogram->getInternalRepresentation(x);
     uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
     uint32_t x_10 = internal_rep_x & 0x3FF; // Get the last 10 bits
-    for (size_t y = 0; y <= histogram->getBinCount(); ++y) {
+    for (size_t y = 0; y < histogram->getBinCount(); ++y) {
       uint32_t internal_rep_y = histogram->getInternalRepresentation(y);
       uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
       uint32_t combined_tle = (x_tle << 3) | y_tle;
