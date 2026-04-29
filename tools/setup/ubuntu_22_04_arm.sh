@@ -113,7 +113,8 @@ install_package ccache
 install_package ninja-build
 install_package pkg-config
 install_package git
-install_package libsnappy-dev
+# No longer needed since we are using arrow's bundled version of snappy
+# install_package libsnappy-dev
 install_package bison
 install_package flex
 

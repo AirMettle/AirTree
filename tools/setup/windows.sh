@@ -76,7 +76,9 @@ fi
 # Note: 'x64-windows' builds dynamically (.dll). Use 'x64-windows-static' for static versions of libs.
 # Snappy is required by arrow and parquet and vcpkg will try to look for the dynamic version of snappy. I'm
 # leaving this as dynamic for now to unblock but ideally the arrow built dependencies should be used.
-run_step "[ airtree-setup ] Install snappy via vcpkg" "$VCPKG_DIR/vcpkg.exe" install snappy:x64-windows
+# NOTE: No longer need to install snappy since we are using arrow's bundled version of snappy. 
+# If we do end up needing it, we should also add it to the ubuntu setup scripts for consistency.
+# run_step "[ airtree-setup ] Install snappy via vcpkg" "$VCPKG_DIR/vcpkg.exe" install snappy:x64-windows
 
 export CMAKE_TOOLCHAIN_FILE="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"
 echo "export CMAKE_TOOLCHAIN_FILE=\"$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake\"" >> /tmp/env.sh

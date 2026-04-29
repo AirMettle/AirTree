@@ -104,7 +104,8 @@ run_step "[ airtree-setup ] Install pkg-config" install_package pkg-config
 run_step "[ airtree-setup ] Install git" install_package git
 # install_package python3-dev # We don't need both - we should instead specify a default (which is 3.12 in our case)
 # install_package python3.12-dev
-run_step "[ airtree-setup ] Install libsnappy-dev" install_package libsnappy-dev
+# No longer needed since we are using arrow's bundled version of snappy
+# run_step "[ airtree-setup ] Install libsnappy-dev" install_package libsnappy-dev
 run_step "[ airtree-setup ] Install bison" install_package bison
 run_step "[ airtree-setup ] Install flex" install_package flex
 
