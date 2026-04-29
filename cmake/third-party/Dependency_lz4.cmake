@@ -19,7 +19,8 @@ function(external_configure_lz4 _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_LIB 
     set(LZ4_BUILD_CMD ${CMAKE_COMMAND} --build <BINARY_DIR> --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE})
     set(LZ4_INSTALL_CMD ${CMAKE_COMMAND} --install <BINARY_DIR> --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE})
   else()
-    set(LZ4_CONFIGURE_CMD "") 
+    # Adding this no-op command to ensure ExternalProject_Add doesn't try to run a configure step, since lz4 uses a simple Makefile
+    set(LZ4_CONFIGURE_CMD ${CMAKE_COMMAND} -E true)
     set(LZ4_BUILD_CMD make -C lib)
     set(LZ4_INSTALL_CMD make -C lib PREFIX=${_INSTALL_DIR} install)
   endif()
