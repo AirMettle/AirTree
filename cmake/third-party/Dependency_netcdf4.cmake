@@ -18,6 +18,12 @@ function(external_configure_netcdf4 _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _SHARED_
   list(APPEND _BYPRODUCTS "${_STATIC_LIB}")
 
 
+  if(WIN32)
+    set(_ZLIB_STATIC_LIB "${_ZLIB_INSTALL_DIR}/lib/zlibstatic.lib")
+  else()
+    set(_ZLIB_STATIC_LIB "${_ZLIB_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}z${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  endif()
+
   ExternalProject_Add(
     ${_EP_BASE}
     DEPENDS hdf5_ep                         
@@ -34,7 +40,7 @@ function(external_configure_netcdf4 _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _SHARED_
     -DBUILD_SHARED_LIBS=OFF
     -DHDF5_ROOT=${_HDF5_INSTALL_DIR}
     -DHDF5_DIR=${_HDF5_INSTALL_DIR}/cmake/hdf5
-    -DZLIB_LIBRARY=${_ZLIB_INSTALL_DIR}/lib/libz.a
+    -DZLIB_LIBRARY=${_ZLIB_STATIC_LIB}
     -DZLIB_INCLUDE_DIR=${_ZLIB_INSTALL_DIR}/include
     -DENABLE_BYTERANGE=OFF
     -DENABLE_DAP=OFF

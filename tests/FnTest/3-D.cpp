@@ -135,7 +135,7 @@ static unsigned int encode_12bit(double val) {
   TLE tle = setTLEComponents(fp);
   unsigned int internal10 = createInternal10Bit(fp, true);
   unsigned int prefix;
-  switch (tle.TLE) {
+  switch (tle.encoding) {
   case 2:
     prefix = 0b00;
     break;

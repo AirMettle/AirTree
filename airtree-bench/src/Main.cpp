@@ -74,15 +74,15 @@ auto data_type_validator = CLI::Validator(
     [](std::string &input) {
       airtree::reader::file::SUPPORTED_DATA_TYPE data_type_enum;
       if (input == "int32") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::INT32;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT32;
       } else if (input == "int64") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::INT64;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT64;
       } else if (input == "float") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::FLOAT;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_FLOAT;
       } else if (input == "double") {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::DOUBLE;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_DOUBLE;
       } else {
-        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::IGNORE;
+        data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE;
       }
       if (!BenchmarkConfigs::validate_data_type(data_type_enum)) {
         return "Invalid data type";
@@ -140,21 +140,21 @@ int main(int argc, char *argv[]) {
       ->check(data_type_validator);
 
   binary->callback([&]() {
-    SUPPORTED_DATA_TYPE data_type_enum;
+    airtree::reader::file::SUPPORTED_DATA_TYPE data_type_enum;
     if (data_type == "int32") {
-      data_type_enum = SUPPORTED_DATA_TYPE::INT32;
+      data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT32;
     } else if (data_type == "int64") {
-      data_type_enum = SUPPORTED_DATA_TYPE::INT64;
+      data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT64;
     } else if (data_type == "float") {
-      data_type_enum = SUPPORTED_DATA_TYPE::FLOAT;
+      data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_FLOAT;
     } else if (data_type == "double") {
-      data_type_enum = SUPPORTED_DATA_TYPE::DOUBLE;
+      data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_DOUBLE;
     } else {
-      data_type_enum = SUPPORTED_DATA_TYPE::IGNORE;
+      data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE;
     }
 
     read_input_file(
-        input_data_file, SUPPORTED_FILE_TYPE::BINARY, data_type_enum);
+        input_data_file, airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum);
 
     std::vector<std::string> gb_args;
     gb_args.push_back(argv[0]);
@@ -209,8 +209,8 @@ int main(int argc, char *argv[]) {
     }
   });
   parquet->callback([&]() {
-    read_input_file(input_data_file, SUPPORTED_FILE_TYPE::PARQUET,
-                    airtree::reader::file::SUPPORTED_DATA_TYPE::IGNORE,
+    read_input_file(input_data_file, airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET,
+                    airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE,
                     column_list);
 
     std::string loaded_type = "unknown";

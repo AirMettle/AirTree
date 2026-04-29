@@ -23,8 +23,8 @@ TEST_F(CSVReaderTest, ReadInt32Column) {
   std::string filepath = testdata_dir + "/test_int32.csv";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 1) << "Should return 1 column";
 
@@ -52,8 +52,8 @@ TEST_F(CSVReaderTest, ReadInt64Column) {
   std::string filepath = testdata_dir + "/test_int64.csv";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT64, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT64, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -81,8 +81,8 @@ TEST_F(CSVReaderTest, ReadFloatColumn) {
   std::string filepath = testdata_dir + "/test_float.csv";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::FLOAT, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_FLOAT, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -110,8 +110,8 @@ TEST_F(CSVReaderTest, ReadDoubleColumn) {
   std::string filepath = testdata_dir + "/test_double.csv";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::DOUBLE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
 
   ASSERT_EQ(data.size(), 1);
 
@@ -140,8 +140,8 @@ TEST_F(CSVReaderTest, ReadMultipleColumns) {
   std::string filepath = testdata_dir + "/test_multicolumn.csv";
   std::vector<std::string> columns = {"col_int32", "col_float", "col_double"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 3) << "Should return 3 columns";
 
@@ -173,8 +173,8 @@ TEST_F(CSVReaderTest, ReadAllColumnsInOrder) {
   std::vector<std::string> columns = {
       "col_int32", "col_int64", "col_float", "col_double"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 4) << "Should return 4 columns";
 
@@ -194,8 +194,8 @@ TEST_F(CSVReaderTest, ReadSingleColumnFromMulti) {
   std::string filepath = testdata_dir + "/test_multicolumn.csv";
   std::vector<std::string> columns = {"col_double"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::DOUBLE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
 
   ASSERT_EQ(data.size(), 1) << "Should return 1 column";
 
@@ -209,8 +209,8 @@ TEST_F(CSVReaderTest, ReadColumnsOutOfOrder) {
   std::string filepath = testdata_dir + "/test_multicolumn.csv";
   std::vector<std::string> columns = {"col_double", "col_int32"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   ASSERT_EQ(data.size(), 2) << "Should return 2 columns in requested order";
 
@@ -230,8 +230,8 @@ TEST_F(CSVReaderTest, ReadNonExistentColumn) {
   std::string filepath = testdata_dir + "/test_multicolumn.csv";
   std::vector<std::string> columns = {"nonexistent_column"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   EXPECT_TRUE(data.empty())
       << "Should return empty vector for non-existent column";
@@ -242,8 +242,8 @@ TEST_F(CSVReaderTest, ReadNonExistentFile) {
   std::string filepath = testdata_dir + "/nonexistent.csv";
   std::vector<std::string> columns = {"value"};
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   EXPECT_TRUE(data.empty())
       << "Should return empty vector for non-existent file";
@@ -259,8 +259,8 @@ TEST_F(CSVReaderTest, EmptyCSVWithHeader) {
   csv_file << "value\n";
   csv_file.close();
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::INT32, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_INT32, columns);
 
   if (!data.empty()) {
     // If implementation returns a column, it should be empty
@@ -289,8 +289,8 @@ TEST_F(CSVReaderTest, MixedNumericTypes) {
   csv_file << "4.7\n";
   csv_file.close();
 
-  InputDataVector data = parse_file(
-      filepath, SUPPORTED_FILE_TYPE::CSV, SUPPORTED_DATA_TYPE::DOUBLE, columns);
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
 
   // Arrow CSV reader should infer as double
   if (!data.empty()) {

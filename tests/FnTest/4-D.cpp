@@ -317,7 +317,7 @@ static double encAndRecon(double v) {
   TLE tle = setTLEComponents(fp);
   unsigned int i10 = createInternal10Bit(fp, true);
   unsigned int prefix;
-  switch (tle.TLE) {
+  switch (tle.encoding) {
   case 2:
     prefix = 0b00;
     break;

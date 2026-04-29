@@ -201,7 +201,7 @@ execCreateAndInsert_3D_888(const FPHArray &array1, const FPHArray &array2,
           unsigned int internalFPHNumber3 = input_3.second;
 
           unsigned int combinedTLE =
-              (tle1.TLE << 6) | (tle2.TLE << 3) | tle3.TLE;
+              (tle1.encoding << 6) | (tle2.encoding << 3) | tle3.encoding;
 
           // Check special conditions and set ndims accordingly
           unsigned int isTle1Special =

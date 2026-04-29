@@ -13,19 +13,23 @@ using InputDataVector = std::vector<InputDataVariant>;
 
 namespace airtree::reader::file {
 
-enum SUPPORTED_FILE_TYPE { BINARY, PARQUET, CSV };
-enum SUPPORTED_DATA_TYPE { INT32, INT64, FLOAT, DOUBLE, IGNORE };
+// FIXME: Prefixing these enums with AT_ because of name collision when adding windows support. Frustrating but
+// can simplify this later.
+enum SUPPORTED_FILE_TYPE { AT_BINARY, AT_PARQUET, AT_CSV };
+enum SUPPORTED_DATA_TYPE { AT_INT32, AT_INT64, AT_FLOAT, AT_DOUBLE, AT_IGNORE };
 
 inline std::string to_string(SUPPORTED_DATA_TYPE t) {
   switch (t) {
-  case SUPPORTED_DATA_TYPE::INT32:
+  case SUPPORTED_DATA_TYPE::AT_INT32:
     return "INT32";
-  case SUPPORTED_DATA_TYPE::INT64:
+  case SUPPORTED_DATA_TYPE::AT_INT64:
     return "INT64";
-  case SUPPORTED_DATA_TYPE::FLOAT:
+  case SUPPORTED_DATA_TYPE::AT_FLOAT:
     return "FLOAT";
-  case SUPPORTED_DATA_TYPE::DOUBLE:
+  case SUPPORTED_DATA_TYPE::AT_DOUBLE:
     return "DOUBLE";
+  case SUPPORTED_DATA_TYPE::AT_IGNORE:
+    return "IGNORE";
   }
   return "UNKNOWN";
 }

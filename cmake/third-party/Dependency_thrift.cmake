@@ -16,6 +16,8 @@ function(external_configure_thrift _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _THRIFT_S
   list(APPEND _BYPRODUCTS "${_THRIFT_SHARED_LIB}")
   list(APPEND _BYPRODUCTS "${_THRIFT_STATIC_LIB}")
 
+  list(REMOVE_DUPLICATES _BYPRODUCTS)
+
   # find_package(ZLIB REQUIRED)
 
   ExternalProject_Add(
@@ -60,8 +62,13 @@ function(configure_thrift)
 
   airtree_dep_try_cache(DEP_NAME thrift EP_DIR "${_DEPS_DIR}/${_EP_BASE}" CACHE_HIT _cache_hit INSTALL_DIR _INSTALL_DIR)
 
-  set(_THRIFT_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}thrift${CMAKE_SHARED_LIBRARY_SUFFIX}")
-  set(_THRIFT_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}thrift${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  if(WIN32)
+    set(_THRIFT_SHARED_LIB "${_INSTALL_DIR}/lib/thriftmd${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_THRIFT_STATIC_LIB "${_INSTALL_DIR}/lib/thriftmd${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  else()
+    set(_THRIFT_SHARED_LIB "${_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}thrift${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(_THRIFT_STATIC_LIB "${_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}thrift${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  endif()
 
   if(_cache_hit)
     message(STATUS "${_EP_BASE} restored from cache.")

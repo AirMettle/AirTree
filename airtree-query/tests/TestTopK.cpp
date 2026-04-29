@@ -34,8 +34,8 @@ TEST_F(TestTopK, TopK_1DxT_POS_POS) {
   auto &root_13_ref = trieManager.getRoot1DxT();
 
   // lets populate the +ve sign +ve exponent quadrant
-  u_int16_t sign_bit = 0; // +ve sign
-  u_int16_t exponent = 0; // +ve exponent
+  uint16_t sign_bit = 0; // +ve sign
+  uint16_t exponent = 0; // +ve exponent
   uint32_t bit_length = 13;
 
   // Histogram for reference
@@ -86,8 +86,8 @@ TEST_F(TestTopK, TopK_1DxT_POS_NEG) {
   auto &root_13_ref = trieManager.getRoot1DxT();
 
   // lets populate the +ve sign +ve exponent quadrant
-  u_int16_t sign_bit = 0; // +ve sign
-  u_int16_t exponent = 0; // +ve exponent
+  uint16_t sign_bit = 0; // +ve sign
+  uint16_t exponent = 0; // +ve exponent
   uint32_t bit_length = 13;
 
   // Histogram for reference

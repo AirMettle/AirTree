@@ -271,7 +271,7 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
 
             // Combine four 3-bit TLE values into a 12-bit number
             unsigned int combinedTLE =
-                (tle1.TLE << 9) | (tle2.TLE << 6) | (tle3.TLE << 3) | tle4.TLE;
+                (tle1.encoding << 9) | (tle2.encoding << 6) | (tle3.encoding << 3) | tle4.encoding;
 
             // Check special conditions and set ndims accordingly
             bool isTle1Special = update_special_counts(tle1, specialCounts);

@@ -897,15 +897,15 @@ BoundingBox::getCountsUnbounded(BoundingBoxCoordinate2D box) const {
   }
 
   bool first_safe_update = true;
-  for (uint32_t curr_x_bin = histogram_->getBinIndex(safe.getMinX());
-       curr_x_bin < histogram_->getBinCount(); ++curr_x_bin) {
+  for (uint32_t curr_x_bin = bin_x_min; curr_x_bin < histogram_->getBinCount();
+       ++curr_x_bin) {
     // Get the 12 bit internal representations
     uint32_t x_12 = histogram_->getInternalRepresentation(curr_x_bin);
     // capture tle
     uint32_t x_tle = getTLEEncoding((x_12 >> 10) & 0x3); // Get the TLE for x
     uint32_t x_10 = x_12 & 0x3FF;                        // Get the last 10 bits
 
-    for (uint32_t curr_y_bin = histogram_->getBinIndex(safe.getMinY());
+    for (uint32_t curr_y_bin = bin_y_min;
          curr_y_bin < histogram_->getBinCount(); ++curr_y_bin) {
       // Get the 12 bit internal representations
       uint32_t y_12 = histogram_->getInternalRepresentation(curr_y_bin);

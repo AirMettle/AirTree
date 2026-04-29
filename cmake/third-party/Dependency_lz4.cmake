@@ -14,15 +14,26 @@ function(external_configure_lz4 _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_LIB 
   list(APPEND _BYPRODUCTS "${_SHARED_LIB}")
   list(APPEND _BYPRODUCTS "${_STATIC_LIB}")
 
+  if(WIN32)
+    set(LZ4_CONFIGURE_CMD ${CMAKE_COMMAND} -G Ninja -S <SOURCE_DIR>/build/cmake -B <BINARY_DIR> -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DBUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
+    set(LZ4_BUILD_CMD ${CMAKE_COMMAND} --build <BINARY_DIR> --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE})
+    set(LZ4_INSTALL_CMD ${CMAKE_COMMAND} --install <BINARY_DIR> --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE})
+  else()
+    # Adding this no-op command to ensure ExternalProject_Add doesn't try to run a configure step, since lz4 uses a simple Makefile
+    set(LZ4_CONFIGURE_CMD ${CMAKE_COMMAND} -E true)
+    set(LZ4_BUILD_CMD make -C lib)
+    set(LZ4_INSTALL_CMD make -C lib PREFIX=${_INSTALL_DIR} install)
+  endif()
+
   ExternalProject_Add(
     ${_EP_BASE}
     PREFIX ${_EP_BUILD_DIR}
     ${DOWNLOAD_OPTIONS}
     EXCLUDE_FROM_ALL ON
     INSTALL_DIR ${_INSTALL_DIR}
-    CONFIGURE_COMMAND ""  # LZ4 does not use CMake for configuration
-    BUILD_COMMAND make -C lib
-    INSTALL_COMMAND make -C lib PREFIX=${_INSTALL_DIR} install
+    CONFIGURE_COMMAND ${LZ4_CONFIGURE_CMD}
+    BUILD_COMMAND ${LZ4_BUILD_CMD}
+    INSTALL_COMMAND ${LZ4_INSTALL_CMD}
     INSTALL_BYPRODUCTS ${_BYPRODUCTS}
     BUILD_IN_SOURCE 1
   )

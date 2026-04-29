@@ -1,8 +1,9 @@
 #include <airtree/util/logging/Logging.hpp>
 
 #include <spdlog/spdlog.h>                   // for SPDLOG_LOGGER_DEBUG
-#include <spdlog/sinks/ansicolor_sink-inl.h> // for ansicolor_sink::to_string_
-#include <spdlog/sinks/ansicolor_sink.h>     // for ansicolor_stdout_sink
+// #include <spdlog/sinks/ansicolor_sink-inl.h> // for ansicolor_sink::to_string_
+#include <spdlog/sinks/stdout_color_sinks.h>
+// #include <spdlog/sinks/ansicolor_sink.h>     // for ansicolor_stdout_sink
 #include <spdlog/sinks/sink-inl.h>           // for sink::set_level
 #include <spdlog/sinks/stdout_color_sinks.h> // for stdout_color_sink_mt
 #include <spdlog/spdlog-inl.h>               // for flush_every, register_l...

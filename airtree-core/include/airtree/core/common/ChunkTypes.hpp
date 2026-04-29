@@ -1,6 +1,7 @@
 #ifndef AIRTREE_CORE_COMMON_CHUNK_TYPES_HPP
 #define AIRTREE_CORE_COMMON_CHUNK_TYPES_HPP
 
+#include <cstdint>
 
 typedef struct {
   unsigned int x;

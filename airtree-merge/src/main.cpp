@@ -31,10 +31,10 @@ long monitorMemoryUsage() {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     return maxMemory;
+  }
 #else
   return -1;
 #endif
-  }
 }
 
 int main(int argc, char *argv[]) {

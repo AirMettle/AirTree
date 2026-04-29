@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <cstring>
-
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 using namespace airtree::core;
 
@@ -30,9 +32,13 @@ unsigned int createInternal8Bit_32(uint32_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0;
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif
@@ -74,9 +80,13 @@ unsigned int createInternal8Bit(uint64_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 63 - firstOnePos;
 #endif
@@ -119,9 +129,13 @@ unsigned int createInternal10Bit(uint64_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 63 - firstOnePos;
 #endif
@@ -161,9 +175,13 @@ unsigned int createInternal10Bit_32(uint32_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif
@@ -215,9 +233,13 @@ unsigned int createInternal16Bit(uint64_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 63 - firstOnePos;
 #endif
@@ -274,9 +296,13 @@ unsigned int createInternal16Bit_32(uint32_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %w0, %w1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif
@@ -337,9 +363,13 @@ unsigned int createInternal13Bit(uint64_t fpNumber, bool default_mode) {
     firstOnePos = 0; // Not used, but set for logging
   } else {
     // Normal case: calculate the position of the first significant bit
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 63 - firstOnePos;
 #endif
@@ -398,9 +428,13 @@ unsigned int createInternal13Bit_32(uint32_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %w0, %w1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif
@@ -459,9 +493,13 @@ unsigned int createInternal20Bit(uint64_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 63 - firstOnePos;
 #endif
@@ -522,9 +560,13 @@ unsigned int createInternal20Bit_32(uint32_t fpNumber, bool default_mode) {
     precisionBits = 0;
     firstOnePos = 0; // Not used, but set for consistency
   } else {
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanReverse(&index, maskedNumber);
+    firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %w0, %w1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif

@@ -1,6 +1,11 @@
 #include <airtree/core/common/BooleanArray.hpp>
 #include <iostream>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#define __builtin_popcountll(x) __popcnt64(x)
+#endif
+
 BooleanArray::BooleanArray(int size) {
   array_ = std::vector<uint64_t>(size);
 }

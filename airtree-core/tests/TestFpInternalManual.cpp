@@ -41,9 +41,14 @@ protected:
 
     // Calculate the position of the first significant bit using assembly or
     // intrinsic
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+#include <intrin.h>
+  unsigned long index;
+  _BitScanReverse64(&index, maskedNumber);
+  firstOnePos = index;
+#elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
     __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 63 - firstOnePos;
 #endif

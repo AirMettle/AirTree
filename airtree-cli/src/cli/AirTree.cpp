@@ -53,13 +53,19 @@ std::string AirTree::get_valid_config_names() {
   return config_list;
 }
 
-bool AirTree::validate_file_type(SUPPORTED_FILE_TYPE type) {
-  return (type == BINARY || type == PARQUET);
+bool AirTree::validate_file_type(
+    airtree::reader::file::SUPPORTED_FILE_TYPE type) {
+  return (type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY
+          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET);
 }
 
-bool AirTree::validate_data_type(SUPPORTED_DATA_TYPE data_type) {
-  return (data_type == INT32 || data_type == INT64 || data_type == FLOAT
-          || data_type == DOUBLE);
+bool AirTree::validate_data_type(
+    airtree::reader::file::SUPPORTED_DATA_TYPE data_type) {
+  return (data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT32
+          || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_INT64
+          || data_type == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_FLOAT
+          || data_type
+                 == airtree::reader::file::SUPPORTED_DATA_TYPE::AT_DOUBLE);
 }
 
 bool AirTree::validate_config_name(const std::string &config_name) {
@@ -294,7 +300,7 @@ void AirTree::plot_histogram() {
   // arguments, it should start the server and take you to the
   // buffer upload form.
   char command[4096];
-  std::string pwd = std::filesystem::current_path();
+  std::string pwd = std::filesystem::current_path().string();
   snprintf(command, sizeof(command), "fph_deserialize --buffer \"%s/%s\"",
            pwd.c_str(), result_file_.c_str());
   std::cout << "Running command: " << command << std::endl;
@@ -306,7 +312,7 @@ void AirTree::binary_handler() {
   SPDLOG_LOGGER_INFO(
       logger(), "Generating histogram using given binary file...");
   if (!read_input_file(input_file_,
-                       airtree::reader::file::SUPPORTED_FILE_TYPE::BINARY,
+                       airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY,
                        data_type_, {}, data_arrays_)) {
     return;
   }
@@ -327,8 +333,8 @@ void AirTree::parquet_handler() {
   SPDLOG_LOGGER_INFO(
       logger(), "Generating histogram using given parquet file...");
   if (!read_input_file(input_file_,
-                       airtree::reader::file::SUPPORTED_FILE_TYPE::PARQUET,
-                       airtree::reader::file::SUPPORTED_DATA_TYPE::IGNORE,
+                       airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET,
+                       airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE,
                        columns_, data_arrays_)) {
     return;
   }
