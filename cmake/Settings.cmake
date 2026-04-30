@@ -66,7 +66,7 @@ else()
 endif()
 
 # Architecture
-string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _ARCH)
+string(TOLOWER "${CMAKE_HOST_SYSTEM_PROCESSOR}" _ARCH)
 
 # Compiler ID + major version (available after toolchain is loaded)
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" _COMPILER_ID)
