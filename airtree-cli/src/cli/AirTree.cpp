@@ -271,6 +271,12 @@ bool AirTree::read_histogram_file() {
 
 bool AirTree::write_histogram_file() {
   SPDLOG_LOGGER_INFO(logger(), "Writing histogram to file: {}", result_file_);
+  if (histogram_buffer_.empty()) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Refusing to write empty histogram to {}",
+        result_file_);
+    return false;
+  }
   std::ofstream output_file(result_file_, std::ios::binary);
   if (!output_file) {
     SPDLOG_LOGGER_ERROR(
@@ -278,6 +284,11 @@ bool AirTree::write_histogram_file() {
     return false;
   }
   output_file.write(histogram_buffer_.data(), histogram_buffer_.size());
+  if (!output_file.good()) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write histogram to {}", result_file_);
+    return false;
+  }
   output_file.close();
   SPDLOG_LOGGER_INFO(logger(), "Histogram written to file successfully.");
   return true;
@@ -332,8 +343,8 @@ void AirTree::parquet_handler() {
                        columns_, data_arrays_)) {
     return;
   }
-  std::vector<char> histogram = generate_buffer();
-  if (histogram.empty()) {
+  histogram_buffer_ = generate_buffer();
+  if (histogram_buffer_.empty()) {
     SPDLOG_LOGGER_ERROR(logger(), "Error: Histogram is empty.");
     return;
   }

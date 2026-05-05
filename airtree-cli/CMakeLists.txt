@@ -40,3 +40,10 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
     DESTINATION include
     FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
 )
+
+if(AIRTREE_ENABLE_TESTING)
+    add_test(NAME ut_cli_parquet_generate
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_parquet_generate.sh
+            $<TARGET_FILE:airtree-cli>
+            ${CMAKE_SOURCE_DIR}/airtree-reader/tests/testdata/test_double.parquet)
+endif()
