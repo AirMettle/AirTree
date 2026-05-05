@@ -9,6 +9,8 @@ import utils/logger.sh
 import utils/color_codes.sh
 import utils/display_utils.sh
 
+OS_NAME="$(uname | awk '{ print tolower($0) }')"
+
 # Generic test runner function - supports both ctest and pytest
 # Generic test runner function - supports both ctest and pytest
 run_tests() {
