@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <stdexcept>
 #include <airtree/core/common/FPHArray.hpp>
 
 namespace airtree::core::api {
