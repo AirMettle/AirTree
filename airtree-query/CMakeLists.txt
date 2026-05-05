@@ -42,13 +42,14 @@ add_library(airtree::airtree-query ALIAS airtree-query)
 
 if(AIRTREE_ENABLE_TESTING)
 # Unit tests
-add_executable(ut_query_test 
-    tests/TestBoundingBox.cpp 
-    tests/TestBinBoundaries.cpp 
+add_executable(ut_query_test
+    tests/TestBoundingBox.cpp
+    tests/TestBinBoundaries.cpp
     tests/TestCDF.cpp
     tests/TestFuzzEncoding.cpp
-    tests/TestMinMax.cpp 
-    tests/TestPercentile.cpp 
+    tests/TestHistogramBoundary.cpp
+    tests/TestMinMax.cpp
+    tests/TestPercentile.cpp
     tests/TestTopK.cpp)
 
 target_link_libraries(ut_query_test PRIVATE 

@@ -69,10 +69,25 @@ double Histogram::getFPNumber(size_t index) const {
 }
 
 double Histogram::getBinLowerBound(size_t index) const {
+  // The trie's reConstruct rounds magnitude down (zeroes truncated low
+  // bits). For positive bin centres that lands on the lower edge of the
+  // input range; for negative bin centres it lands on the upper edge
+  // (closer to zero). Sorting by value puts negative bins to the left,
+  // so the true lower edge for a negative bin is the previous bin's
+  // reconstructed value.
+  if (index < bins_.size() && bins_[index].first < 0.0) {
+    if (index == 0) {
+      return -std::numeric_limits<double>::infinity();
+    }
+    return bins_[index - 1].first;
+  }
   return getFPNumber(index);
 }
 
 double Histogram::getBinUpperBound(size_t index) const {
+  if (index < bins_.size() && bins_[index].first < 0.0) {
+    return bins_[index].first;
+  }
   return getFPNumber(index + 1);
 }
 

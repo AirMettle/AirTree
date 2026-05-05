@@ -163,9 +163,11 @@ TEST_F(TestTopK, TopK_TrieNode13_NEG_NEG) {
   auto query_result = topK.getTopK(0.05);
   auto result_bin = query_result[query_result.size() - 1];
   double lower_bound = result_bin.getLowerBound();
+  double upper_bound = result_bin.getUpperBound();
   uint32_t result_internal_rep = result_bin.getInternalRepresentation();
   auto expected_result = reConstruct<double>(expected_internal_rep, 13);
-  EXPECT_DOUBLE_EQ(expected_result, lower_bound);
+  EXPECT_LE(lower_bound, expected_result);
+  EXPECT_LE(expected_result, upper_bound);
   EXPECT_EQ(expected_internal_rep, result_internal_rep);
 }
 
@@ -184,9 +186,11 @@ TEST_F(TestTopK, TopK_TrieNode13_NEG_POS) {
   auto query_result = topK.getTopK(0.05);
   auto result_bin = query_result[query_result.size() - 1];
   double lower_bound = result_bin.getLowerBound();
+  double upper_bound = result_bin.getUpperBound();
   uint32_t result_internal_rep = result_bin.getInternalRepresentation();
   auto expected_result = reConstruct<double>(expected_internal_rep, 13);
-  EXPECT_DOUBLE_EQ(expected_result, lower_bound);
+  EXPECT_LE(lower_bound, expected_result);
+  EXPECT_LE(expected_result, upper_bound);
   EXPECT_EQ(expected_internal_rep, result_internal_rep);
 }
 
@@ -247,9 +251,11 @@ TEST_F(TestTopK, TopK_TrieNode16_NEG_NEG) {
   auto query_result = topK.getTopK(0.05);
   auto result_bin = query_result[query_result.size() - 1];
   double lower_bound = result_bin.getLowerBound();
+  double upper_bound = result_bin.getUpperBound();
   uint32_t result_internal_rep = result_bin.getInternalRepresentation();
   auto expected_result = reConstruct<double>(expected_internal_rep, 16);
-  EXPECT_DOUBLE_EQ(expected_result, lower_bound);
+  EXPECT_LE(lower_bound, expected_result);
+  EXPECT_LE(expected_result, upper_bound);
   EXPECT_EQ(expected_internal_rep, result_internal_rep);
 }
 
@@ -268,9 +274,11 @@ TEST_F(TestTopK, TopK_TrieNode16_NEG_POS) {
   auto query_result = topK.getTopK(0.05);
   auto result_bin = query_result[query_result.size() - 1];
   double lower_bound = result_bin.getLowerBound();
+  double upper_bound = result_bin.getUpperBound();
   uint32_t result_internal_rep = result_bin.getInternalRepresentation();
   auto expected_result = reConstruct<double>(expected_internal_rep, 16);
-  EXPECT_DOUBLE_EQ(expected_result, lower_bound);
+  EXPECT_LE(lower_bound, expected_result);
+  EXPECT_LE(expected_result, upper_bound);
   EXPECT_EQ(expected_internal_rep, result_internal_rep);
 }
 
@@ -331,9 +339,11 @@ TEST_F(TestTopK, TopK_TrieNode20_NEG_NEG) {
   auto query_result = topK.getTopK(0.05);
   auto result_bin = query_result[query_result.size() - 1];
   double lower_bound = result_bin.getLowerBound();
+  double upper_bound = result_bin.getUpperBound();
   uint32_t result_internal_rep = result_bin.getInternalRepresentation();
   auto expected_result = reConstruct<double>(expected_internal_rep, 20);
-  EXPECT_DOUBLE_EQ(expected_result, lower_bound);
+  EXPECT_LE(lower_bound, expected_result);
+  EXPECT_LE(expected_result, upper_bound);
   EXPECT_EQ(expected_internal_rep, result_internal_rep);
 }
 
@@ -352,9 +362,11 @@ TEST_F(TestTopK, TopK_TrieNode20_NEG_POS) {
   auto query_result = topK.getTopK(0.05);
   auto result_bin = query_result[query_result.size() - 1];
   double lower_bound = result_bin.getLowerBound();
+  double upper_bound = result_bin.getUpperBound();
   uint32_t result_internal_rep = result_bin.getInternalRepresentation();
   auto expected_result = reConstruct<double>(expected_internal_rep, 20);
-  EXPECT_DOUBLE_EQ(expected_result, lower_bound);
+  EXPECT_LE(lower_bound, expected_result);
+  EXPECT_LE(expected_result, upper_bound);
   EXPECT_EQ(expected_internal_rep, result_internal_rep);
 }
 

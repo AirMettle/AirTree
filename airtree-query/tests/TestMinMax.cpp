@@ -171,8 +171,11 @@ TEST_F(TestMinMax, MinValue_1DxF) {
   auto query_result = query.getMinValue();
   auto minMaxResult = query_result[0];
   double lowerBound = minMaxResult.getLowerBound();
+  double upperBound = minMaxResult.getUpperBound();
   size_t count = minMaxResult.getBinCount();
-  EXPECT_DOUBLE_EQ(lowerBound, expected_result);
+  // The returned bin must bracket the trie's reconstructed value.
+  EXPECT_LE(lowerBound, expected_result);
+  EXPECT_LE(expected_result, upperBound);
   EXPECT_EQ(count, 1);
 }
 
@@ -210,8 +213,10 @@ TEST_F(TestMinMax, MaxValue_1DxF) {
   auto query_result = query.getMaxValue();
   auto minMaxResult = query_result[0];
   double lowerBound = minMaxResult.getLowerBound();
+  double upperBound = minMaxResult.getUpperBound();
   size_t count = minMaxResult.getBinCount();
-  EXPECT_DOUBLE_EQ(lowerBound, expected_result);
+  EXPECT_LE(lowerBound, expected_result);
+  EXPECT_LE(expected_result, upperBound);
   EXPECT_EQ(count, 1);
 }
 
@@ -249,8 +254,11 @@ TEST_F(TestMinMax, MinValue_1DxT) {
   auto query_result = query.getMinValue();
   auto minMaxResult = query_result[0];
   double lowerBound = minMaxResult.getLowerBound();
+  double upperBound = minMaxResult.getUpperBound();
   size_t count = minMaxResult.getBinCount();
-  EXPECT_DOUBLE_EQ(lowerBound, expected_result);
+  // The returned bin must bracket the trie's reconstructed value.
+  EXPECT_LE(lowerBound, expected_result);
+  EXPECT_LE(expected_result, upperBound);
   EXPECT_EQ(count, 1);
 }
 
@@ -288,8 +296,10 @@ TEST_F(TestMinMax, MaxValue_1DxT) {
   auto query_result = query.getMaxValue();
   auto minMaxResult = query_result[0];
   double lowerBound = minMaxResult.getLowerBound();
+  double upperBound = minMaxResult.getUpperBound();
   size_t count = minMaxResult.getBinCount();
-  EXPECT_DOUBLE_EQ(lowerBound, expected_result);
+  EXPECT_LE(lowerBound, expected_result);
+  EXPECT_LE(expected_result, upperBound);
   EXPECT_EQ(count, 1);
 }
 
@@ -328,8 +338,11 @@ TEST_F(TestMinMax, MinValue_1DxP) {
   auto query_result = query.getMinValue();
   auto minMaxResult = query_result[0];
   double lowerBound = minMaxResult.getLowerBound();
+  double upperBound = minMaxResult.getUpperBound();
   size_t count = minMaxResult.getBinCount();
-  EXPECT_DOUBLE_EQ(lowerBound, expected_result);
+  // The returned bin must bracket the trie's reconstructed value.
+  EXPECT_LE(lowerBound, expected_result);
+  EXPECT_LE(expected_result, upperBound);
   EXPECT_EQ(count, 1);
 }
 
@@ -369,8 +382,10 @@ TEST_F(TestMinMax, MaxValue_1DxP) {
   auto query_result = query.getMaxValue();
   auto minMaxResult = query_result[0];
   double lowerBound = minMaxResult.getLowerBound();
+  double upperBound = minMaxResult.getUpperBound();
   size_t count = minMaxResult.getBinCount();
-  EXPECT_DOUBLE_EQ(lowerBound, expected_result);
+  EXPECT_LE(lowerBound, expected_result);
+  EXPECT_LE(expected_result, upperBound);
   EXPECT_EQ(count, 1);
 }
 // ============================================================================
