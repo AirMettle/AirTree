@@ -5,7 +5,7 @@ file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" PROJECT_VERSION)
 # Extract numeric version for CMake (remove any suffix like -SNAPSHOT)
 string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" PROJECT_VERSION_NUMERIC "${PROJECT_VERSION}")
 
-project(FloatingPointHistogram VERSION ${PROJECT_VERSION_NUMERIC} LANGUAGES CXX)
+project(AirTree VERSION ${PROJECT_VERSION_NUMERIC} LANGUAGES CXX)
 add_compile_definitions(VERSION_NUMBER="${PROJECT_VERSION}")
 message(STATUS "Building version ${PROJECT_VERSION_NUMERIC} of AirTree")
 
