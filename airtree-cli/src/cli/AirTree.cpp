@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -132,6 +133,32 @@ std::vector<char> AirTree::generate_buffer() {
   return buffer;
 }
 
+namespace {
+
+void write_query_results(const std::string &path,
+                         const std::vector<std::string> &lines) {
+  if (path.empty()) {
+    return;
+  }
+  std::ofstream out(path);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        airtree::cli::logger(), "Error: Could not open results file: {}", path);
+    return;
+  }
+  for (const auto &line : lines) {
+    out << line << '\n';
+  }
+}
+
+std::string format_bin(double lower, double upper, uint64_t count) {
+  std::ostringstream os;
+  os << "Bin: (" << lower << ", " << upper << "), Count: " << count;
+  return os.str();
+}
+
+} // namespace
+
 void AirTree::min_count_handler() {
   auto min_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto query_result = min_query.getMin();
@@ -139,11 +166,15 @@ void AirTree::min_count_handler() {
     SPDLOG_LOGGER_INFO(logger(), "No results found for minCount query.");
     return;
   }
+  std::vector<std::string> lines;
+  lines.reserve(query_result.size());
   for (const auto &result : query_result) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    auto line = format_bin(result.getLowerBound(), result.getUpperBound(),
+                           result.getBinCount());
+    SPDLOG_LOGGER_INFO(logger(), "{}", line);
+    lines.push_back(std::move(line));
   }
+  write_query_results(result_file_, lines);
 }
 
 void AirTree::max_count_handler() {
@@ -153,11 +184,15 @@ void AirTree::max_count_handler() {
     SPDLOG_LOGGER_INFO(logger(), "No results found for maxCount query.");
     return;
   }
+  std::vector<std::string> lines;
+  lines.reserve(max_query_res.size());
   for (const auto &result : max_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    auto line = format_bin(result.getLowerBound(), result.getUpperBound(),
+                           result.getBinCount());
+    SPDLOG_LOGGER_INFO(logger(), "{}", line);
+    lines.push_back(std::move(line));
   }
+  write_query_results(result_file_, lines);
 }
 
 void AirTree::min_value_handler() {
@@ -167,11 +202,15 @@ void AirTree::min_value_handler() {
     SPDLOG_LOGGER_INFO(logger(), "No results found for minValue query.");
     return;
   }
+  std::vector<std::string> lines;
+  lines.reserve(min_query_res.size());
   for (const auto &result : min_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    auto line = format_bin(result.getLowerBound(), result.getUpperBound(),
+                           result.getBinCount());
+    SPDLOG_LOGGER_INFO(logger(), "{}", line);
+    lines.push_back(std::move(line));
   }
+  write_query_results(result_file_, lines);
 }
 
 void AirTree::max_value_handler() {
@@ -181,11 +220,15 @@ void AirTree::max_value_handler() {
     SPDLOG_LOGGER_INFO(logger(), "No results found for maxValue query.");
     return;
   }
+  std::vector<std::string> lines;
+  lines.reserve(max_query_res.size());
   for (const auto &result : max_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    auto line = format_bin(result.getLowerBound(), result.getUpperBound(),
+                           result.getBinCount());
+    SPDLOG_LOGGER_INFO(logger(), "{}", line);
+    lines.push_back(std::move(line));
   }
+  write_query_results(result_file_, lines);
 }
 
 void AirTree::topk_handler(float topk_value) {
@@ -195,11 +238,15 @@ void AirTree::topk_handler(float topk_value) {
     SPDLOG_LOGGER_INFO(logger(), "No results found for topK query.");
     return;
   }
+  std::vector<std::string> lines;
+  lines.reserve(query_result.size());
   for (const auto &result : query_result) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getCount());
+    auto line = format_bin(result.getLowerBound(), result.getUpperBound(),
+                           result.getCount());
+    SPDLOG_LOGGER_INFO(logger(), "{}", line);
+    lines.push_back(std::move(line));
   }
+  write_query_results(result_file_, lines);
 }
 
 bool AirTree::read_input_file(const std::string &file_path,
@@ -363,5 +410,9 @@ void AirTree::percentile_handler(float percentile_value) {
     SPDLOG_LOGGER_INFO(logger(), "No results found for percentile query.");
     return;
   }
-  SPDLOG_LOGGER_INFO(logger(), "Percentile: ({})", percentile_result);
+  std::ostringstream os;
+  os << "Percentile: (" << percentile_result << ")";
+  auto line = os.str();
+  SPDLOG_LOGGER_INFO(logger(), "{}", line);
+  write_query_results(result_file_, {line});
 }
