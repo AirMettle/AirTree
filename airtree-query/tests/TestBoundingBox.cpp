@@ -161,10 +161,12 @@ TEST_F(TestBoundingBox,
             histogram->getFPNumber(histogram->getBinIndex(input_y_max)));
 }
 
-// This test checks if the bounding box query works correctly when the subset
-// region is populated with data points that are not perfectly aligned with the
-// histogram bins. It ensures the safe/edge boxes returned are shrunk to just
-// the populated region.
+// This test checks if the bounding box query works correctly when only a
+// subset of the input region is populated with data points. The safe box's
+// reported coordinates track the populated data extent, while the edge box's
+// coordinates are anchored to the input query box ± 1 bin (so that the count
+// invariant safe <= truth <= total holds even when the input box extends past
+// the actual data).
 TEST_F(TestBoundingBox, TestBoundingBox2DxP_SubsetRegionIsPopulated) {
 
   auto histogram = std::make_shared<airtree::query::meta::Histogram>(12);
@@ -228,7 +230,8 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_SubsetRegionIsPopulated) {
 
   EXPECT_EQ(safe_count, 441);
   EXPECT_EQ(edge_count, 441);
-  // verify the safe bounding box
+  EXPECT_LE(safe_count, edge_count);
+  // The safe box reports the data extent (data lies in [20, 40]).
   EXPECT_EQ(safe.getMinX(), histogram->getFPNumber(
                                 histogram->getBinIndex(populate_region_x_min)));
   EXPECT_EQ(safe.getMinY(), histogram->getFPNumber(
@@ -237,19 +240,15 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_SubsetRegionIsPopulated) {
                                 histogram->getBinIndex(populate_region_x_max)));
   EXPECT_EQ(safe.getMaxY(), histogram->getFPNumber(
                                 histogram->getBinIndex(populate_region_y_max)));
-  // verify the edge bounding box
+  // The edge box reports the input query box ± 1 bin.
   EXPECT_EQ(edge.getMinX(),
-            histogram->getFPNumber(histogram->getBinIndex(populate_region_x_min)
-                                   - 1));
+            histogram->getFPNumber(histogram->getBinIndex(query_x_min) - 1));
   EXPECT_EQ(edge.getMinY(),
-            histogram->getFPNumber(histogram->getBinIndex(populate_region_y_min)
-                                   - 1));
+            histogram->getFPNumber(histogram->getBinIndex(query_y_min) - 1));
   EXPECT_EQ(edge.getMaxX(),
-            histogram->getFPNumber(histogram->getBinIndex(populate_region_x_max)
-                                   + 1));
+            histogram->getFPNumber(histogram->getBinIndex(query_x_max)));
   EXPECT_EQ(edge.getMaxY(),
-            histogram->getFPNumber(histogram->getBinIndex(populate_region_y_max)
-                                   + 1));
+            histogram->getFPNumber(histogram->getBinIndex(query_y_max)));
 }
 
 TEST_F(TestBoundingBox, TestBoundingBox2DxP_BoxQueryHasExtremeInputs) {
@@ -1045,7 +1044,10 @@ TEST_F(TestBoundingBox,
   EXPECT_GE(edge_count, safe_count);
 
   EXPECT_EQ(safe_count, 54872);
-  EXPECT_EQ(edge_count, 64000);
+  // Edge counts the input query box ± 1 bin (41 populated integers per
+  // axis: 10..50 inclusive); 41^3 == 68921.
+  EXPECT_EQ(edge_count, 68921);
+  EXPECT_LE(safe_count, edge_count);
 
   // The safe box should contain the actual populated data within the query
   // range We populated at integers, so first bin in query range is at 11.0
@@ -1090,12 +1092,12 @@ TEST_F(TestBoundingBox,
   std::cout << histogram->getFPNumber(histogram->getBinIndex(input_z_max) - 1);
 
 
-  // Since we populated sparsely at integers, the safe box shrinks to actual
-  // data First populated values within query range
+  // The safe box's reported coordinates track the populated data extent
+  // within the query range; we populated at integers, so first/last bins in
+  // the query range correspond to 11.0 and 48.0.
   double first_populated_x = 11.0;
   double first_populated_y = 11.0;
   double first_populated_z = 11.0;
-  // Last populated values within query range
   double last_populated_x = 48.0;
   double last_populated_y = 48.0;
   double last_populated_z = 48.0;
@@ -1113,29 +1115,20 @@ TEST_F(TestBoundingBox,
   EXPECT_EQ(safe.getMaxZ(),
             histogram->getFPNumber(histogram->getBinIndex(last_populated_z)));
 
-  // Verify edge box expands by 1 bin from safe box
-  uint32_t safe_min_x_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(first_populated_x));
-  uint32_t safe_min_y_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(first_populated_y));
-  uint32_t safe_min_z_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(first_populated_z));
-  uint32_t safe_max_x_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(last_populated_x));
-  uint32_t safe_max_y_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(last_populated_y));
-  uint32_t safe_max_z_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(last_populated_z));
-
-  EXPECT_EQ(edge.getMinX(), histogram->getFPNumber(
-                                safe_min_x_bin > 0 ? safe_min_x_bin - 1 : 0));
-  EXPECT_EQ(edge.getMinY(), histogram->getFPNumber(
-                                safe_min_y_bin > 0 ? safe_min_y_bin - 1 : 0));
-  EXPECT_EQ(edge.getMinZ(), histogram->getFPNumber(
-                                safe_min_z_bin > 0 ? safe_min_z_bin - 1 : 0));
-  EXPECT_EQ(edge.getMaxX(), histogram->getFPNumber(safe_max_x_bin + 1));
-  EXPECT_EQ(edge.getMaxY(), histogram->getFPNumber(safe_max_y_bin + 1));
-  EXPECT_EQ(edge.getMaxZ(), histogram->getFPNumber(safe_max_z_bin + 1));
+  // The edge box reports the input query box ± 1 bin (anchored to the input
+  // box, not the data extent — see calculateBoundingBox3D).
+  EXPECT_EQ(edge.getMinX(),
+            histogram->getFPNumber(histogram->getBinIndex(input_x_min) - 1));
+  EXPECT_EQ(edge.getMinY(),
+            histogram->getFPNumber(histogram->getBinIndex(input_y_min) - 1));
+  EXPECT_EQ(edge.getMinZ(),
+            histogram->getFPNumber(histogram->getBinIndex(input_z_min) - 1));
+  EXPECT_EQ(edge.getMaxX(),
+            histogram->getFPNumber(histogram->getBinIndex(input_x_max)));
+  EXPECT_EQ(edge.getMaxY(),
+            histogram->getFPNumber(histogram->getBinIndex(input_y_max)));
+  EXPECT_EQ(edge.getMaxZ(),
+            histogram->getFPNumber(histogram->getBinIndex(input_z_max)));
 }
 
 TEST_F(TestBoundingBox, TestBoundingBox3DxP_SubsetRegionIsPopulated) {
@@ -1196,7 +1189,8 @@ TEST_F(TestBoundingBox, TestBoundingBox3DxP_SubsetRegionIsPopulated) {
 
   EXPECT_EQ(safe_count, 9261); // 21 * 21 * 21
   EXPECT_EQ(edge_count, 9261);
-  // verify the safe bounding box
+  EXPECT_LE(safe_count, edge_count);
+  // The safe box's reported coordinates track the data extent.
   EXPECT_EQ(safe.getMinX(), histogram->getFPNumber(
                                 histogram->getBinIndex(populate_region_x_min)));
   EXPECT_EQ(safe.getMinY(), histogram->getFPNumber(
@@ -1210,29 +1204,19 @@ TEST_F(TestBoundingBox, TestBoundingBox3DxP_SubsetRegionIsPopulated) {
   EXPECT_EQ(safe.getMaxZ(), histogram->getFPNumber(
                                 histogram->getBinIndex(populate_region_z_max)));
 
-  // verify the edge bounding box - it expands by 1 bin from the safe box
-  uint32_t safe_min_x_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(populate_region_x_min));
-  uint32_t safe_min_y_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(populate_region_y_min));
-  uint32_t safe_min_z_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(populate_region_z_min));
-  uint32_t safe_max_x_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(populate_region_x_max));
-  uint32_t safe_max_y_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(populate_region_y_max));
-  uint32_t safe_max_z_bin =
-      static_cast<uint32_t>(histogram->getBinIndex(populate_region_z_max));
-
-  EXPECT_EQ(edge.getMinX(), histogram->getFPNumber(
-                                safe_min_x_bin > 0 ? safe_min_x_bin - 1 : 0));
-  EXPECT_EQ(edge.getMinY(), histogram->getFPNumber(
-                                safe_min_y_bin > 0 ? safe_min_y_bin - 1 : 0));
-  EXPECT_EQ(edge.getMinZ(), histogram->getFPNumber(
-                                safe_min_z_bin > 0 ? safe_min_z_bin - 1 : 0));
-  EXPECT_EQ(edge.getMaxX(), histogram->getFPNumber(safe_max_x_bin + 1));
-  EXPECT_EQ(edge.getMaxY(), histogram->getFPNumber(safe_max_y_bin + 1));
-  EXPECT_EQ(edge.getMaxZ(), histogram->getFPNumber(safe_max_z_bin + 1));
+  // The edge box reports the input query box ± 1 bin.
+  EXPECT_EQ(edge.getMinX(),
+            histogram->getFPNumber(histogram->getBinIndex(query_x_min) - 1));
+  EXPECT_EQ(edge.getMinY(),
+            histogram->getFPNumber(histogram->getBinIndex(query_y_min) - 1));
+  EXPECT_EQ(edge.getMinZ(),
+            histogram->getFPNumber(histogram->getBinIndex(query_z_min) - 1));
+  EXPECT_EQ(edge.getMaxX(),
+            histogram->getFPNumber(histogram->getBinIndex(query_x_max)));
+  EXPECT_EQ(edge.getMaxY(),
+            histogram->getFPNumber(histogram->getBinIndex(query_y_max)));
+  EXPECT_EQ(edge.getMaxZ(),
+            histogram->getFPNumber(histogram->getBinIndex(query_z_max)));
 }
 
 TEST_F(TestBoundingBox, TestBoundingBox2DxP_BatchQuerySimple) {
@@ -1309,8 +1293,11 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_BatchQuerySimple) {
 
     EXPECT_EQ(safe_count, 441);
     EXPECT_EQ(edge_count, 441);
+    EXPECT_LE(safe_count, edge_count);
 
-    // verify the safe bounding box
+    // The safe box reports the data extent; the edge box reports the input
+    // query box ± 1 bin (so safe <= truth <= total holds when the input
+    // extends past the data).
     EXPECT_EQ(
         safe.getMinX(),
         histogram->getFPNumber(histogram->getBinIndex(populate_region_x_min)));
@@ -1324,19 +1311,14 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_BatchQuerySimple) {
         safe.getMaxY(),
         histogram->getFPNumber(histogram->getBinIndex(populate_region_y_max)));
 
-    // verify the edge bounding box
-    EXPECT_EQ(
-        edge.getMinX(), histogram->getFPNumber(
-                            histogram->getBinIndex(populate_region_x_min) - 1));
-    EXPECT_EQ(
-        edge.getMinY(), histogram->getFPNumber(
-                            histogram->getBinIndex(populate_region_y_min) - 1));
-    EXPECT_EQ(
-        edge.getMaxX(), histogram->getFPNumber(
-                            histogram->getBinIndex(populate_region_x_max) + 1));
-    EXPECT_EQ(
-        edge.getMaxY(), histogram->getFPNumber(
-                            histogram->getBinIndex(populate_region_y_max) + 1));
+    EXPECT_EQ(edge.getMinX(),
+              histogram->getFPNumber(histogram->getBinIndex(query_x_min) - 1));
+    EXPECT_EQ(edge.getMinY(),
+              histogram->getFPNumber(histogram->getBinIndex(query_y_min) - 1));
+    EXPECT_EQ(edge.getMaxX(),
+              histogram->getFPNumber(histogram->getBinIndex(query_x_max)));
+    EXPECT_EQ(edge.getMaxY(),
+              histogram->getFPNumber(histogram->getBinIndex(query_y_max)));
   }
 
   // Test Query 2: Smaller query that encompasses all data
@@ -1400,5 +1382,53 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_BatchQuerySimple) {
     EXPECT_EQ(std::get<1>(batch_results[i].second),
               std::get<1>(individual_result.second))
         << "Mismatch in edge count for query " << i;
+  }
+}
+
+// Regression for the safe <= truth <= total contract from cpp-api.md.
+// Pre-fix, calculateBoundingBox2D shrunk safe_bin_coords to the data extent
+// before walking the total range, which caused total < safe whenever the
+// input box extended past the actual data. Six representative query boxes
+// over a small payload exercise the invariant.
+TEST_F(TestBoundingBox, TestBoundingBox2DxP_SafeLeqTotalInvariant) {
+  auto histogram = std::make_shared<airtree::query::meta::Histogram>(12);
+
+  TrieManager trie_manager;
+  for (double x = -3.0; x <= 3.0; x += 1.0) {
+    uint32_t bin_idx_x = histogram->getBinIndex(x);
+    uint32_t internal_rep_x = histogram->getInternalRepresentation(bin_idx_x);
+    uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
+    uint32_t x_10 = internal_rep_x & 0x3FF;
+    for (double y = -3.0; y <= 3.0; y += 1.0) {
+      uint32_t bin_idx_y = histogram->getBinIndex(y);
+      uint32_t internal_rep_y = histogram->getInternalRepresentation(bin_idx_y);
+      uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
+      uint32_t combined_tle = (x_tle << 3) | y_tle;
+      uint32_t y_10 = internal_rep_y & 0x3FF;
+      uint64_t internal_rep = combine_chunks_10b(x_10, y_10);
+      trie_manager.insert2DxP(combined_tle, internal_rep, 1);
+    }
+  }
+
+  std::vector<char> serialized_trie = trie_manager.MockTrieHeader2D(6);
+  trie_manager.serializeTrie<TLEoption3_2D>(serialized_trie);
+
+  BoundingBox bounding_box(serialized_trie);
+
+  const double inf = std::numeric_limits<double>::infinity();
+  std::vector<BoundingBoxCoordinate2D> queries = {
+      BoundingBoxCoordinate2D(-inf, inf, -inf, inf),     // unbounded
+      BoundingBoxCoordinate2D(-1.0, 1.0, -1.0, 1.0),     // centre
+      BoundingBoxCoordinate2D(-2.0, 2.0, -2.0, 2.0),     // wider centre
+      BoundingBoxCoordinate2D(0.0, inf, 0.0, inf),       // upper-right quadrant
+      BoundingBoxCoordinate2D(-inf, 0.0, -inf, 0.0),     // lower-left quadrant
+      BoundingBoxCoordinate2D(-0.1, 0.1, -inf, inf),     // thin strip
+  };
+
+  for (size_t i = 0; i < queries.size(); ++i) {
+    auto result = bounding_box.getCounts(queries[i]);
+    uint32_t safe_count = std::get<1>(result.first);
+    uint32_t total_count = std::get<1>(result.second);
+    EXPECT_LE(safe_count, total_count) << "query " << i;
   }
 }

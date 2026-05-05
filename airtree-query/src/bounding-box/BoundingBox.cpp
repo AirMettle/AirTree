@@ -1,4 +1,5 @@
 #include <airtree/query/bounding-box/BoundingBox.hpp>
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -461,15 +462,11 @@ BoundingBox::calculateBoundingBox2D(const BoundingBoxCoordinate2D &box) const {
     }
   }
 
-  if (!first_safe_update) {
-    // safe was updated, so we need to set safe indices again
-    safe_bin_coords.setMinX(histogram_->getBinIndex(safe.getMinX()));
-    safe_bin_coords.setMinY(histogram_->getBinIndex(safe.getMinY()));
-    safe_bin_coords.setMaxX(histogram_->getBinIndex(safe.getMaxX()));
-    safe_bin_coords.setMaxY(histogram_->getBinIndex(safe.getMaxY()));
-  }
-
-  // Calculate total box based on refined safe box
+  // Compute the total range as the input-derived safe range expanded by
+  // one bin per side that is not flush with the input edges. Walking the
+  // shrunken data-extent range (which the previous version did) under-
+  // counted total when the input box extended past the actual data, which
+  // broke the safe <= total invariant.
   initEdgeBox(total_bin_coords, safe_bin_coords);
   total.setMinX(histogram_->getFPNumber(total_bin_coords.getMinX()));
   total.setMinY(histogram_->getFPNumber(total_bin_coords.getMinY()));
@@ -506,6 +503,7 @@ BoundingBox::calculateBoundingBox2D(const BoundingBoxCoordinate2D &box) const {
     }
   }
 
+  assert(safe_count <= total_count);
   auto safe_box = BoxCoordinate2DResult{safe, safe_count};
   auto total_box = BoxCoordinate2DResult{total, total_count};
   return BoxCoordinate2DResultPair{safe_box, total_box};
@@ -602,15 +600,10 @@ BoundingBox::calculateBoundingBox3D(const BoundingBoxCoordinate3D &box) const {
     }
   }
 
-  if (!first_safe_update) {
-    // safe was updated, so we need to set safe indices again
-    safe_bin_coords.setMinX(histogram_->getBinIndex(safe.getMinX()));
-    safe_bin_coords.setMinY(histogram_->getBinIndex(safe.getMinY()));
-    safe_bin_coords.setMinZ(histogram_->getBinIndex(safe.getMinZ()));
-    safe_bin_coords.setMaxX(histogram_->getBinIndex(safe.getMaxX()));
-    safe_bin_coords.setMaxY(histogram_->getBinIndex(safe.getMaxY()));
-    safe_bin_coords.setMaxZ(histogram_->getBinIndex(safe.getMaxZ()));
-  }
+  // Keep safe_bin_coords as the input-derived range so the total walk
+  // stays a strict superset (see the 2D analogue). Shrinking to the data
+  // extent here under-counted total when the input box extended past the
+  // actual data, breaking safe <= total.
 
   // Check if this is a perfect match before calculating edge box
   if (safe_bin_coords.isPerfectMatch()) {
@@ -664,6 +657,7 @@ BoundingBox::calculateBoundingBox3D(const BoundingBoxCoordinate3D &box) const {
     }
   }
 
+  assert(safe_count <= total_count);
   auto safe_box = BoxCoordinate3DResult{safe, safe_count};
   auto total_box = BoxCoordinate3DResult{total, total_count};
   return BoxCoordinate3DResultPair{safe_box, total_box};
