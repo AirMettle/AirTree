@@ -86,7 +86,7 @@ run_ctest_tests() {
     log_info "Running ${test_type,,} tests..."
     echo
 
-    if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
+    if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
         echo "Windows detected: Injecting dependency DLLs into PATH..."
         
         export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"

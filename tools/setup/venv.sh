@@ -7,8 +7,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/
 import utils/common_func.sh
 import utils/build_utils.sh
 
+OS_NAME="$(uname | awk '{ print tolower($0) }')"
+
 # Determine whether to use sudo (CodeBuild containers typically run as root)
 determine_sudo() {
+    if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
+        echo ""
+        return
+    fi
+
     if command -v sudo >/dev/null 2>&1; then
         echo "sudo"
     else
@@ -26,6 +33,13 @@ SUDO=$(determine_sudo)
 log_debug "Using sudo command: '${SUDO}'"
 
 PYTHON_VENV_DIR="${CMAKE_BUILD_DIR}/venv"
+# To handle cases where we don't want our CMake build directory but still want to use this script for venv setup
+# we will create an empty CMake build directory if it doesn't exist, to serve as the root for the venv. 
+# This is a bit hacky but allows us to reuse the same venv setup logic without needing to parameterize the venv location everywhere.
+if [[ ! -d "${CMAKE_BUILD_DIR}" ]]; then
+    log_info "Python venv root does not exist at ${PYTHON_VENV_DIR}. Creating..."
+    mkdir -p "${CMAKE_BUILD_DIR}"
+fi
 
 # Avoid interactive prompts during apt operations
 export DEBIAN_FRONTEND=noninteractive
@@ -37,7 +51,13 @@ OS_NAME="$(uname | awk '{ print tolower($0) }')"
 # Find system Python
 find_system_python() {    
     if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
-        command -v python || command -v python3 || true
+        if command -v python >/dev/null 2>&1; then
+            command -v python
+        elif command -v python3 >/dev/null 2>&1; then
+            command -v python3
+        else
+            find /c/Python31* /c/tools/python31* "/c/Program Files/Python31*" -maxdepth 1 -name "python.exe" 2>/dev/null | head -1 || true
+        fi
     else
         find /bin /usr/bin /usr/local/bin -executable -name python3.12 2>/dev/null | head -1 || true
     fi

@@ -19,6 +19,9 @@ ProcessorCount(NPROC)
 if(NOT NPROC)
     set(NPROC 1)  # Default to 1 if ProcessorCount fails
 endif()
+if(WIN32)
+    set(NPROC 4) # Override to 4 for Windows due to observed issues with high parallelism
+endif()
 
 set(DEPS_PREFIX "_deps" CACHE INTERNAL "")
 set(WORKING_PREFIX "_working" CACHE INTERNAL "")
