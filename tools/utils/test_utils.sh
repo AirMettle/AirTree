@@ -9,6 +9,8 @@ import utils/logger.sh
 import utils/color_codes.sh
 import utils/display_utils.sh
 
+OS_NAME="$(uname | awk '{ print tolower($0) }')"
+
 # Generic test runner function - supports both ctest and pytest
 # Generic test runner function - supports both ctest and pytest
 run_tests() {
@@ -84,7 +86,7 @@ run_ctest_tests() {
     log_info "Running ${test_type,,} tests..."
     echo
 
-    if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
+    if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
         echo "Windows detected: Injecting dependency DLLs into PATH..."
         
         export PATH="/c/vcpkg/installed/x64-windows/bin:$PATH"

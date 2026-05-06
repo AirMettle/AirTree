@@ -18,7 +18,12 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
   list(APPEND _BYPRODUCTS "${_PARQUET_STATIC_LIB}")
   list(APPEND _BYPRODUCTS "${_ARROW_BUNDLED_SHARED_LIB}")
   list(APPEND _BYPRODUCTS "${_ARROW_BUNDLED_STATIC_LIB}")
-  
+
+  set(ARROW_EXTRA_ARGS "")
+  if(WIN32)
+      list(APPEND ARROW_EXTRA_ARGS "-DCMAKE_SYSTEM_PROCESSOR=AMD64")
+  endif()
+
   ExternalProject_Add(
     ${_EP_BASE}
     PREFIX ${_EP_BUILD_DIR}
@@ -29,6 +34,7 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
     SOURCE_DIR ${_EP_BUILD_DIR}/build/src/${_EP_BASE}  # Root directory of Arrow repo
     SOURCE_SUBDIR "cpp"  # Specify the 'cpp' subdirectory
     CMAKE_ARGS
+    ${ARROW_EXTRA_ARGS}
     -DCMAKE_INSTALL_LIBDIR=lib
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     -DCMAKE_BUILD_TYPE=${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE}

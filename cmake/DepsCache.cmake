@@ -221,6 +221,15 @@ function(airtree_dep_cache_download)
     # Write marker file into staging dir before the atomic rename
     file(WRITE "${_staging_dir}/.dep_cache_hash" "${ARG_DEP_NAME} ${ARG_HASH}")
 
+    file(REMOVE_RECURSE "${ARG_INSTALL_DIR}")
+
+    # On Windows, renaming a directory that was just extracted can fail with "Access Denied". Seen it happen consistently in CI, 
+    # likely due to antivirus or indexing services locking files. 
+    # Trying a short sleep here to mitigate it (probably by allowing those processes to release their locks).
+    if(WIN32)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1)
+    endif()
+
     # Atomic rename (same filesystem = same parent dir)
     file(RENAME "${_staging_dir}" "${ARG_INSTALL_DIR}")
 

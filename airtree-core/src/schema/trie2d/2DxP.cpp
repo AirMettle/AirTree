@@ -48,6 +48,8 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2,
       "values for dim2 using "
       "default_mode {} into 2DxP Trie.",
       uuid, array1.length, array2.length, default_mode);
+  std::unique_ptr<TLEoption3_2D> root = execCreateAndInsert_2D_2x10(
+      array1, array2, curr_trie_size, specialCounts, default_mode);
   SPDLOG_LOGGER_INFO(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 2DxP Trie. "
@@ -57,9 +59,6 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2,
       logger(),
       "[serialization] [traceID: {}] Serializing 2DxP trie of size {}.", uuid,
       curr_trie_size);
-  std::unique_ptr<TLEoption3_2D> root = execCreateAndInsert_2D_2x10(
-      array1, array2, curr_trie_size, specialCounts, default_mode);
-
   std::vector<char> buffer = execSerialize_2D_2x10(
       root.get(), curr_trie_size, specialCounts, default_mode);
   SPDLOG_LOGGER_INFO(
@@ -205,10 +204,9 @@ execSerialize_2D_2x10(TLEoption3_2D *root, uint64_t &curr_trie_size,
                       std::unique_ptr<SpecialCounts> &specialCounts,
                       bool default_mode) {
   auto header = airtree::core::common::makeHeader(
-      ConfigWire::Config_2D_Precise, {}, 0,
-      specialCounts->posInfCount, specialCounts->negInfCount,
-      specialCounts->posZeroCount, specialCounts->negZeroCount,
-      specialCounts->nanCount);
+      ConfigWire::Config_2D_Precise, {}, 0, specialCounts->posInfCount,
+      specialCounts->negInfCount, specialCounts->posZeroCount,
+      specialCounts->negZeroCount, specialCounts->nanCount);
 
   std::vector<char> buffer;
   buffer.reserve(kHeaderLength + curr_trie_size);
