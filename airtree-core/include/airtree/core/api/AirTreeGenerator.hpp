@@ -3,7 +3,10 @@
 
 #include <vector>
 #include <memory>
+#include <functional>
+#include <unordered_map>
 #include <airtree/core/common/FPHArray.hpp>
+#include <airtree/core/common/ConfigWire.hpp>
 #include <stdexcept>
 
 namespace airtree::core::api {
@@ -28,10 +31,38 @@ public:
            bool default_mode) const = 0;
 };
 
+class AirTreeGeneratorRegistry {
+public:
+  using Factory = std::function<std::unique_ptr<AirTreeGenerator>()>;
+
+  static AirTreeGeneratorRegistry &instance();
+
+  // Register a generator + its params for a given wire byte. Idempotent: a
+  // second registration for the same wire silently overwrites.
+  void registerGenerator(airtree::core::common::ConfigWire wire,
+                         airtree::core::common::ConfigParams params,
+                         Factory factory);
+
+  [[nodiscard]] std::unique_ptr<AirTreeGenerator>
+  create(airtree::core::common::ConfigWire wire) const;
+
+  [[nodiscard]] std::optional<airtree::core::common::ConfigParams>
+  lookupParams(uint8_t wire) const;
+
+private:
+  AirTreeGeneratorRegistry() = default;
+  std::unordered_map<uint8_t, airtree::core::common::ConfigParams> params_;
+  std::unordered_map<uint8_t, Factory> factories_;
+};
+
 class AirTreeGeneratorFactory {
 public:
   static std::unique_ptr<AirTreeGenerator>
   create(const AirTreeOptions &options);
+
+
+  static std::unique_ptr<AirTreeGenerator>
+  create(airtree::core::common::ConfigWire wire);
 };
 
 [[nodiscard]] inline std::vector<char>

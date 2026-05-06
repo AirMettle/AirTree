@@ -1,6 +1,6 @@
 #include <airtree/core/io/AirTreeReader.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
-#include <airtree/core/common/ConfigRegistry.hpp>
+#include <airtree/core/common/ConfigWire.hpp>
 #include <airtree/core/serdes/trie1d/1DxF.hpp>
 #include <airtree/core/serdes/trie1d/1DxP.hpp>
 #include <airtree/core/serdes/trie1d/1DxT.hpp>

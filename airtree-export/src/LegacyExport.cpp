@@ -21,7 +21,7 @@
 
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
-#include <airtree/core/common/ConfigRegistry.hpp>
+#include <airtree/core/common/ConfigWire.hpp>
 #include <airtree/query/AirTreeQuery_internal.hpp>
 
 

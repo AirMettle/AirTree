@@ -46,7 +46,7 @@ set(SOURCE_FILES
 
     ${SRC_DIR}/api/AirTreeGenerator.cpp
 
-    ${SRC_DIR}/common/ConfigRegistry.cpp
+    ${SRC_DIR}/common/ConfigWire.cpp
     ${SRC_DIR}/common/AirTreeHeader.cpp
 )
 
