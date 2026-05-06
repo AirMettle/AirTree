@@ -1,5 +1,5 @@
-#ifndef AIRTREE_CORE_CONFIG_REGISTRY_HPP
-#define AIRTREE_CORE_CONFIG_REGISTRY_HPP
+#ifndef AIRTREE_CORE_CONFIG_WIRE_HPP
+#define AIRTREE_CORE_CONFIG_WIRE_HPP
 
 #include <cstdint>
 #include <optional>
@@ -40,4 +40,4 @@ inline uint8_t configDims(uint8_t wire) {
 
 } // namespace airtree::core::common
 
-#endif // AIRTREE_CORE_CONFIG_REGISTRY_HPP
+#endif // AIRTREE_CORE_CONFIG_WIRE_HPP
