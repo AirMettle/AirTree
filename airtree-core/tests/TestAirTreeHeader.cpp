@@ -1,11 +1,11 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
-#include <airtree/core/common/ConfigRegistry.hpp>
+#include <airtree/core/common/ConfigWire.hpp>
 
 #include <gtest/gtest.h>
 
 using namespace airtree::core::common;
 
-TEST(ConfigRegistry, LookupAllValidConfigs) {
+TEST(ConfigWire, LookupAllValidConfigs) {
   struct Expected {
     ConfigWire wire;
     uint8_t dims;
@@ -36,13 +36,13 @@ TEST(ConfigRegistry, LookupAllValidConfigs) {
   }
 }
 
-TEST(ConfigRegistry, RejectUnknownWire) {
+TEST(ConfigWire, RejectUnknownWire) {
   EXPECT_FALSE(lookupConfig(static_cast<uint8_t>(0xFF)).has_value());
   EXPECT_FALSE(lookupConfig(static_cast<uint8_t>(0x03)).has_value());
   EXPECT_FALSE(lookupConfig(static_cast<uint8_t>(0x40)).has_value());
 }
 
-TEST(ConfigRegistry, DimsFromWireByte) {
+TEST(ConfigWire, DimsFromWireByte) {
   EXPECT_EQ(configDims(0x00), 1);
   EXPECT_EQ(configDims(0x02), 1);
   EXPECT_EQ(configDims(0x10), 2);
