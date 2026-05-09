@@ -49,6 +49,7 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
     -DARROW_WITH_LZ4=OFF
     -DARROW_WITH_SNAPPY=ON
     -DSnappy_SOURCE=BUNDLED
+    -DThrift_SOURCE=BUNDLED
     -DARROW_WITH_UTF8PROC=OFF
     -DARROW_DATASET=ON
     -DARROW_PARQUET=ON
@@ -98,11 +99,11 @@ function(configure_arrow)
   endif()
 
   set(_DEPS_SHARED "")
-  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift)
+  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib)
 
   # For static builds, Arrow often requires linking to additional sub-libraries
   set(_DEPS_STATIC "")
-  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift)
+  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib)
   list(APPEND _DEPS_STATIC arrow::arrow_static parquet::parquet_static)
 
   # IMPORTED TARGET: arrow::bundled_shared
