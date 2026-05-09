@@ -99,16 +99,10 @@ function(configure_arrow)
 
   set(_DEPS_SHARED "")
   list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift)
-  if(NOT AIRTREE_SANITIZER_USES_ASAN)
-      list(APPEND _DEPS_SHARED mimalloc::mimalloc)
-  endif()
 
   # For static builds, Arrow often requires linking to additional sub-libraries
   set(_DEPS_STATIC "")
   list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift)
-  if(NOT AIRTREE_SANITIZER_USES_ASAN)
-      list(APPEND _DEPS_STATIC mimalloc::mimalloc)
-  endif()
   list(APPEND _DEPS_STATIC arrow::arrow_static parquet::parquet_static)
 
   # IMPORTED TARGET: arrow::bundled_shared
