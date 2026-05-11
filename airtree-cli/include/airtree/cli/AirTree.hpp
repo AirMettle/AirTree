@@ -10,8 +10,8 @@
 namespace airtree::cli {
 
 const static std::vector<std::string> valid_configs = {
-    "1DxT", "1DxF", "1DxP", "2DxP",  "2DxF",
-    "3DxF", "3DxP", "4DxF", "4DxPc", "4DxP"};
+    "1DxT", "1DxF", "1DxP", "2DxP", "2DxF",
+    "3DxF", "3DxP", "4DxF", "4DxP"};
 
 class AirTree {
 public:

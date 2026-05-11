@@ -98,8 +98,7 @@ AirTreeHeader makeHeader(ConfigWire config,
                          uint32_t trie_count, uint32_t pos_inf_count,
                          uint32_t neg_inf_count, uint32_t pos_zero_count,
                          uint32_t neg_zero_count, uint32_t nan_count) {
-  auto params = lookupConfig(config);
-  if (!params)
+  if (!lookupConfig(config))
     throw std::runtime_error("makeHeader: unknown config wire value");
 
   AirTreeHeader h;
@@ -186,10 +185,8 @@ AirTreeHeader deserializeHeader(const std::vector<char> &buffer) {
   if (stored_crc != computed_crc)
     throw std::runtime_error("Header CRC-32 mismatch");
 
-  // Read config and validate
   auto wire = static_cast<uint8_t>(buffer[kOffConfig]);
-  auto params = lookupConfig(wire);
-  if (!params)
+  if (!lookupConfig(wire))
     throw std::runtime_error(
         "Unknown config wire value: 0x" +
         std::to_string(static_cast<unsigned>(wire)));
