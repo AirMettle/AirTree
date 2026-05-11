@@ -21,8 +21,8 @@ using namespace airtree::reader::file;
 using namespace airtree::cli;
 
 const static std::vector<std::string> valid_configs = {
-    "1DxT", "1DxF", "1DxP", "2DxP",  "2DxF",
-    "3DxF", "3DxP", "4DxF", "4DxPc", "4DxP"};
+    "1DxT", "1DxF", "1DxP", "2DxP", "2DxF",
+    "3DxF", "3DxP", "4DxF", "4DxP"};
 
 AirTree::AirTree(const std::string &histogram_file,
                  const std::string &result_file)
@@ -338,8 +338,8 @@ void AirTree::parquet_handler() {
                        columns_, data_arrays_)) {
     return;
   }
-  std::vector<char> histogram = generate_buffer();
-  if (histogram.empty()) {
+  histogram_buffer_ = generate_buffer();
+  if (histogram_buffer_.empty()) {
     SPDLOG_LOGGER_ERROR(logger(), "Error: Histogram is empty.");
     return;
   }
