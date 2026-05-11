@@ -1,7 +1,7 @@
 #ifndef AIRTREE_CORE_AIRTREE_HEADER_HPP
 #define AIRTREE_CORE_AIRTREE_HEADER_HPP
 
-#include <airtree/core/common/ConfigRegistry.hpp>
+#include <airtree/core/common/ConfigWire.hpp>
 
 #include <array>
 #include <cstdint>
