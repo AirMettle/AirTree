@@ -48,6 +48,8 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
     -DARROW_WITH_ZSTD=ON
     -DARROW_WITH_LZ4=OFF
     -DARROW_WITH_SNAPPY=ON
+    -DSnappy_SOURCE=BUNDLED
+    -DThrift_SOURCE=BUNDLED
     -DARROW_WITH_UTF8PROC=OFF
     -DARROW_DATASET=ON
     -DARROW_PARQUET=ON
@@ -83,13 +85,24 @@ function(configure_arrow)
     message(STATUS "${_EP_BASE} restored from cache.")
     add_custom_target(${_EP_BASE})
   elseif(NOT EXISTS "${_ARROW_SHARED_LIB}" OR NOT EXISTS "${_ARROW_STATIC_LIB}")
+  # I've noticed that any aggressive writes on a windows system can cause file locks that prevent
+  # CMake from properly cleaning up the build directory, which can lead to failed builds. To mitigate this,
+  # we check for the existence of the build directory and remove it before starting a new build, ensuring a 
+  # clean slate for the build process but we will not try to clean up the build directory after the build 
+  # because of the same reason. Instead, we will just leave it there and let the next build clean it up if necessary.
+    if(EXISTS "${_EP_BUILD_DIR}")
+      message(STATUS "Previous build directory for ${_EP_BASE} found at ${_EP_BUILD_DIR}. Removing it to ensure a clean build.")
+      file(REMOVE_RECURSE "${_EP_BUILD_DIR}")
+    endif()
     message(STATUS "${_EP_BASE} not found at ${_INSTALL_DIR}. Will download and build it.")
     external_configure_arrow(${_EP_BASE} ${_EP_BUILD_DIR} ${_INSTALL_DIR} ${_ARROW_SHARED_LIB} ${_ARROW_STATIC_LIB} ${_PARQUET_SHARED_LIB} ${_PARQUET_STATIC_LIB} ${_ARROW_BUNDLED_SHARED_LIB} ${_ARROW_BUNDLED_STATIC_LIB})
-    add_custom_target(clean_arrow_build ALL
-      COMMAND ${CMAKE_COMMAND} -E remove_directory ${_EP_BUILD_DIR}
-      COMMENT "Cleaning up arrow_build directory after installation"
-    )
-    add_dependencies(clean_arrow_build ${_EP_BASE})
+    if (NOT WIN32)
+      add_custom_target(clean_arrow_build ALL
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${_EP_BUILD_DIR}
+        COMMENT "Cleaning up arrow_build directory after installation"
+      )
+      add_dependencies(clean_arrow_build ${_EP_BASE})
+    endif()
     airtree_dep_mark_built(EP_TARGET ${_EP_BASE} INSTALL_DIR "${_INSTALL_DIR}")
   else()
     message(STATUS "${_EP_BASE} found at ${_INSTALL_DIR}. Skipping download and build.")
@@ -97,17 +110,11 @@ function(configure_arrow)
   endif()
 
   set(_DEPS_SHARED "")
-  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib thrift::thrift)
-  if(NOT AIRTREE_SANITIZER_USES_ASAN)
-      list(APPEND _DEPS_SHARED mimalloc::mimalloc)
-  endif()
+  list(APPEND _DEPS_SHARED zstd::zstd zlib::zlib)
 
   # For static builds, Arrow often requires linking to additional sub-libraries
   set(_DEPS_STATIC "")
-  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib thrift::thrift)
-  if(NOT AIRTREE_SANITIZER_USES_ASAN)
-      list(APPEND _DEPS_STATIC mimalloc::mimalloc)
-  endif()
+  list(APPEND _DEPS_STATIC zstd::zstd zlib::zlib)
   list(APPEND _DEPS_STATIC arrow::arrow_static parquet::parquet_static)
 
   # IMPORTED TARGET: arrow::bundled_shared

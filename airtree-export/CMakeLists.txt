@@ -28,7 +28,8 @@ add_executable(AirTreeExport ${SRC_DIR}/ExportCLI.cpp)
 
 target_link_libraries(AirTreeExport 
     PUBLIC
-    # No public dependencies
+    arrow::arrow_static 
+    parquet::parquet 
     PRIVATE
     airtree::airtree-export
     airtree::airtree-util 
@@ -50,10 +51,18 @@ target_link_libraries(legacyExport
 
 
 ### TESTS
-
+if(AIRTREE_ENABLE_TESTING)
 add_executable(ut_testexport tests/TestExport.cpp)
-target_link_libraries(ut_testexport PRIVATE airtree::airtree-util airtree::airtree-core airtree::airtree-query airtree::airtree-export gtest::gtest gtest::gtest_main)
+target_link_libraries(ut_testexport 
+    PRIVATE 
+    airtree::airtree-util 
+    airtree::airtree-core 
+    airtree::airtree-query 
+    airtree::airtree-export 
+    gtest::gtest 
+    gtest::gtest_main)
 add_test(NAME ut_testexport COMMAND ut_testexport)
+endif()
 
 # Install targets
 install(TARGETS airtree-export
