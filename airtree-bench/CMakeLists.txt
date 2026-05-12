@@ -48,9 +48,9 @@ target_link_libraries(airtree_bench PRIVATE
     airtree::airtree-reader
     airtree::airtree-core 
     spdlog::spdlog
-    netcdf::netcdf  
-    hdf5::hdf5_hl 
-    hdf5::hdf5 
+    # netcdf::netcdf  
+    # hdf5::hdf5_hl 
+    # hdf5::hdf5 
     benchmark::benchmark
     cli11_headers
 )

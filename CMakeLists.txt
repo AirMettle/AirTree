@@ -38,8 +38,8 @@ include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_gbenchmark.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_cli11.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_nlohmann_json.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_arrow.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_hdf5.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_netcdf4.cmake)
+# include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_hdf5.cmake)
+# include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_netcdf4.cmake)
 
 if (APPLE)
     # For macOS, ensure that GCC-14 is used
