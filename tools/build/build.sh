@@ -167,7 +167,9 @@ if [[ "$_BS_RUN_AIRTREE" -eq 1 ]]; then
     fi
 
     # Trigger CPack
-    if ! . "$TOOLS_DIR/build/package.sh"; then
+    if [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* || "$OSTYPE" == "darwin"* ]]; then
+        log_warn "Packaging is not supported on Windows/macOS. Please use WSL or a Linux environment."
+    elif ! . "$TOOLS_DIR/build/package.sh"; then
         error_exit "CPack packaging failed"
     fi
 fi
