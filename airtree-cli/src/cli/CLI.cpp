@@ -270,10 +270,10 @@ int main(int argc, char *argv[]) {
       auto buffer1 = read_binary_file(merge_input1);
       auto buffer2 = read_binary_file(merge_input2);
       airtree::merge::mergeAirTree(buffer1, buffer2, merge_output);
-      SPDLOG_LOGGER_INFO(
-          logger(), "Merge complete. Output written to: {}", merge_output);
+      SPDLOG_LOGGER_INFO(airtree::cli::logger(),
+                         "Merge complete. Output written to: {}", merge_output);
     } catch (const std::exception &ex) {
-      SPDLOG_LOGGER_ERROR(logger(), "Merge failed: {}", ex.what());
+      SPDLOG_LOGGER_ERROR(airtree::cli::logger(), "Merge failed: {}", ex.what());
     }
   });
 
@@ -318,10 +318,11 @@ int main(int argc, char *argv[]) {
     try {
       auto buffer = read_binary_file(export_input);
       airtree::xport::exportAirTree(buffer, out_path.string(), format);
-      SPDLOG_LOGGER_INFO(
-          logger(), "Export complete. Output written to: {}", out_path.string());
+      SPDLOG_LOGGER_INFO(airtree::cli::logger(),
+                         "Export complete. Output written to: {}",
+                         out_path.string());
     } catch (const std::exception &ex) {
-      SPDLOG_LOGGER_ERROR(logger(), "Export failed: {}", ex.what());
+      SPDLOG_LOGGER_ERROR(airtree::cli::logger(), "Export failed: {}", ex.what());
     }
   });
 
