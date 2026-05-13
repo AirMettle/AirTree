@@ -20,6 +20,7 @@ see [Installation](install.md) for how to put them on your `$PATH`.
 - [Histogram Schemas](#histogram-schemas)
 - [`airtree generate`](#airtree-generate)
   - [Generate from Parquet](#generate-from-parquet)
+  - [Generate from CSV](#generate-from-csv)
   - [Generate from Binary File](#generate-from-binary-file-1d-only)
 - [`airtree query`](#airtree-query)
   - [Top-K](#top-k)
@@ -36,17 +37,17 @@ see [Installation](install.md) for how to put them on your `$PATH`.
 A schema selects the dimensionality and the trie variant. Variants trade
 precision for size / speed:
 
-| Schema | Dimensions | Variant     | Input Types        |
-| ------ | ---------- | ----------- | ------------------ |
-| `1DxT` | 1D         | Tiny        | Binary             |
-| `1DxF` | 1D         | Fast        | Binary, Parquet    |
-| `1DxP` | 1D         | Precise     | Binary, Parquet    |
-| `2DxF` \* | 2D      | Fast        | Parquet            |
-| `2DxP` | 2D         | Precise     | Parquet            |
-| `3DxF` \* | 3D      | Fast        | Parquet            |
-| `3DxP` | 3D         | Precise     | Parquet            |
-| `4DxF` \* | 4D      | Fast        | Parquet            |
-| `4DxP` | 4D         | Precise     | Parquet            |
+| Schema | Dimensions | Variant     | Input Types          |
+| ------ | ---------- | ----------- | -------------------- |
+| `1DxT` | 1D         | Tiny        | Binary, Parquet, CSV |
+| `1DxF` | 1D         | Fast        | Binary, Parquet, CSV |
+| `1DxP` | 1D         | Precise     | Binary, Parquet, CSV |
+| `2DxF` \* | 2D      | Fast        | Parquet, CSV         |
+| `2DxP` | 2D         | Precise     | Parquet, CSV         |
+| `3DxF` \* | 3D      | Fast        | Parquet, CSV         |
+| `3DxP` | 3D         | Precise     | Parquet, CSV         |
+| `4DxF` \* | 4D      | Fast        | Parquet, CSV         |
+| `4DxP` | 4D         | Precise     | Parquet, CSV         |
 
 \* `2DxF`, `3DxF`, `4DxF` currently support **generate** and **merge** only.
 [Export](#airtree-export) and queries — both CLI and the C++
@@ -65,8 +66,9 @@ analysis paths.
 
 ## `airtree generate`
 
-Generate a histogram buffer (`.airtree`) from an input file. Two input modes are
-supported: **Parquet** (1D – 4D) and **raw binary** (1D only).
+Generate a histogram buffer (`.airtree`) from an input file. Three input modes
+are supported: **Parquet** (1D – 4D), **CSV** (1D – 4D), and **raw binary**
+(1D only).
 
 ### Generate from Parquet
 
@@ -90,21 +92,44 @@ Arrow types (`string`, `decimal`, `timestamp`, etc.) are rejected. Nullable
 columns are accepted but null values are skipped — the histogram counts
 non-null entries only.
 
-**CSV / TSV input is not accepted.** If your data is in CSV, convert it to
-Parquet first:
-
-```python
-import pyarrow.csv as csv
-import pyarrow.parquet as pq
-
-pq.write_table(csv.read_csv("data.csv"), "data.parquet")
-```
+**TSV input is not accepted.** Convert TSV to CSV (or Parquet) first.
 
 **Example — 2D histogram over `price` and `quantity`:**
 
 ```bash
 airtree generate parquet \
   -i data/sales.parquet \
+  -o results/sales_2d.airtree \
+  -s 2DxP \
+  -c price quantity
+```
+
+### Generate from CSV
+
+```bash
+airtree generate csv \
+  -i /path/to/input.csv \
+  -o /path/to/histogram.airtree \
+  -s 2DxP \
+  -c column_name_1 column_name_2
+```
+
+| Flag                | Required | Description                                                   |
+| ------------------- | :------: | ------------------------------------------------------------- |
+| `-i, --input`       | Yes      | Path to the CSV file (header row required)                    |
+| `-o, --output`      | Yes      | Output histogram buffer file                                  |
+| `-s, --schema`      | Yes      | One of the schemas listed [above](#histogram-schemas)         |
+| `-c, --columns`     | Yes      | Space-separated column names; count must match schema dims    |
+
+**Accepted column types** — same as Parquet: `int32`, `int64`, `float`,
+`double`. The CSV reader uses Arrow's type inference; if a column doesn't
+auto-detect to one of these numeric types it will be rejected.
+
+**Example — 2D histogram over `price` and `quantity` from a CSV:**
+
+```bash
+airtree generate csv \
+  -i data/sales.csv \
   -o results/sales_2d.airtree \
   -s 2DxP \
   -c price quantity

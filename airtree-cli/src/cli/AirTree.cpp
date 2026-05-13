@@ -56,7 +56,8 @@ std::string AirTree::get_valid_config_names() {
 bool AirTree::validate_file_type(
     airtree::reader::file::SUPPORTED_FILE_TYPE type) {
   return (type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY
-          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET);
+          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET
+          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_CSV);
 }
 
 bool AirTree::validate_data_type(
@@ -334,6 +335,28 @@ void AirTree::parquet_handler() {
       logger(), "Generating histogram using given parquet file...");
   if (!read_input_file(input_file_,
                        airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET,
+                       airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE,
+                       columns_, data_arrays_)) {
+    return;
+  }
+  histogram_buffer_ = generate_buffer();
+  if (histogram_buffer_.empty()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Error: Histogram is empty.");
+    return;
+  }
+  if (!write_histogram_file()) {
+    return;
+  }
+  if (run_e2e_) {
+    plot_histogram();
+  }
+}
+
+void AirTree::csv_handler() {
+  SPDLOG_LOGGER_INFO(
+      logger(), "Generating histogram using given CSV file...");
+  if (!read_input_file(input_file_,
+                       airtree::reader::file::SUPPORTED_FILE_TYPE::AT_CSV,
                        airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE,
                        columns_, data_arrays_)) {
     return;

@@ -44,6 +44,7 @@ public:
 
   void binary_handler();
   void parquet_handler();
+  void csv_handler();
   void percentile_handler(float percentile_value);
 
 private:

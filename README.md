@@ -32,14 +32,14 @@ See [Installation](docs/install.md) for paths and packaging details.
 
 ## Supported Schemas
 
-| Schema | Dimensions | Variant | Input            |
-| ------ | ---------- | ------- | ---------------- |
-| `1DxT` | 1D         | Tiny    | Binary           |
-| `1DxF` | 1D         | Fast    | Binary, Parquet  |
-| `1DxP` | 1D         | Precise | Binary, Parquet  |
-| `2DxF` \* / `2DxP` | 2D | Fast / Precise | Parquet  |
-| `3DxF` \* / `3DxP` | 3D | Fast / Precise | Parquet  |
-| `4DxF` \* / `4DxP` | 4D | Fast / Precise | Parquet  |
+| Schema | Dimensions | Variant | Input                  |
+| ------ | ---------- | ------- | ---------------------- |
+| `1DxT` | 1D         | Tiny    | Binary, Parquet, CSV   |
+| `1DxF` | 1D         | Fast    | Binary, Parquet, CSV   |
+| `1DxP` | 1D         | Precise | Binary, Parquet, CSV   |
+| `2DxF` \* / `2DxP` | 2D | Fast / Precise | Parquet, CSV |
+| `3DxF` \* / `3DxP` | 3D | Fast / Precise | Parquet, CSV |
+| `4DxF` \* / `4DxP` | 4D | Fast / Precise | Parquet, CSV |
 
 \* Multi-dim `Fast` variants currently support **generate** and **merge** only.
 The export pipeline and CLI / library queries do not yet handle them.
