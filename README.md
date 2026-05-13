@@ -60,21 +60,21 @@ Generate, query, and export a 2D histogram:
 # Build a 2D histogram from a Parquet file
 airtree generate parquet \
   -i data/sales.parquet \
-  -o sales.bin \
+  -o sales.airtree \
   -s 2DxP \
   -c price quantity
 
 # Top-10% bins by count
-airtree query topk -i sales.bin -o topk.txt -k 10.0
+airtree query topk -i sales.airtree -o topk.txt -k 10.0
 
 # Export to Parquet for downstream analysis
-airtree export sales.bin --parquet --output ./out/
+airtree export sales.airtree --parquet --output ./out/
 ```
 
 Merge histograms from parallel batches:
 
 ```bash
-airtree merge batch1.bin batch2.bin merged.bin
+airtree merge batch1.airtree batch2.airtree merged.airtree
 ```
 
 > `airtree merge` / `airtree export` are equivalent to the standalone

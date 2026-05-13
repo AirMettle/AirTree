@@ -168,7 +168,7 @@ int main() {
 
   std::cout << "Histogram buffer: " << histogram.size() << " bytes\n";
 
-  std::ofstream out("histogram.bin", std::ios::binary);
+  std::ofstream out("histogram.airtree", std::ios::binary);
   out.write(histogram.data(), histogram.size());
 }
 ```
@@ -431,14 +431,14 @@ int main() {
     return std::vector<char>(std::istreambuf_iterator<char>(f), {});
   };
 
-  auto buf1 = read_file("histogram1.bin");
-  auto buf2 = read_file("histogram2.bin");
+  auto buf1 = read_file("histogram1.airtree");
+  auto buf2 = read_file("histogram2.airtree");
 
   // Option 1 — get the merged buffer in memory
   auto merged = airtree::merge::mergeAirTree(buf1, buf2);
 
   // Option 2 — merge directly to a file
-  airtree::merge::mergeAirTree(buf1, buf2, "merged_histogram.bin");
+  airtree::merge::mergeAirTree(buf1, buf2, "merged_histogram.airtree");
 
   std::cout << "Merge complete: " << merged.size() << " bytes\n";
 }

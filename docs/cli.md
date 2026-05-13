@@ -59,7 +59,7 @@ precision for size / speed:
 
 ## `airtree generate`
 
-Generate a histogram buffer (`.bin`) from an input file. Two input modes are
+Generate a histogram buffer (`.airtree`) from an input file. Two input modes are
 supported: **Parquet** (1D – 4D) and **raw binary** (1D only).
 
 ### Generate from Parquet
@@ -67,7 +67,7 @@ supported: **Parquet** (1D – 4D) and **raw binary** (1D only).
 ```bash
 airtree generate parquet \
   -i /path/to/input.parquet \
-  -o /path/to/histogram.bin \
+  -o /path/to/histogram.airtree \
   -s 2DxP \
   -c column_name_1 column_name_2
 ```
@@ -99,7 +99,7 @@ pq.write_table(csv.read_csv("data.csv"), "data.parquet")
 ```bash
 airtree generate parquet \
   -i data/sales.parquet \
-  -o results/sales_2d.bin \
+  -o results/sales_2d.airtree \
   -s 2DxP \
   -c price quantity
 ```
@@ -109,7 +109,7 @@ airtree generate parquet \
 ```bash
 airtree generate binary \
   -i /path/to/data.bin \
-  -o /path/to/histogram.bin \
+  -o /path/to/histogram.airtree \
   -s 1DxP \
   -d double
 ```
@@ -129,7 +129,7 @@ given type — no header, no metadata.
 ```bash
 airtree generate binary \
   -i data/temperatures.bin \
-  -o results/temp_1d.bin \
+  -o results/temp_1d.airtree \
   -s 1DxF \
   -d float
 ```
@@ -138,7 +138,7 @@ airtree generate binary \
 
 ## `airtree query`
 
-All queries operate directly on a generated `.bin` histogram. They are extremely
+All queries operate directly on a generated `.airtree` histogram. They are extremely
 fast — the trie is parsed in place.
 
 ```bash
@@ -156,7 +156,7 @@ airtree query <subcommand> [options]
 
 **Common flags**
 
-- `-i, --input` — path to the generated `.bin` file
+- `-i, --input` — path to the generated `.airtree` file
 - `-o, --output` — path to write human-readable results
 
 > Currently only the queries listed above are exposed via the CLI. **CDF** and
@@ -166,7 +166,7 @@ airtree query <subcommand> [options]
 
 ```bash
 airtree query topk \
-  -i results/sales_2d.bin \
+  -i results/sales_2d.airtree \
   -o results/topk.txt \
   -k 10.0
 ```
@@ -196,7 +196,7 @@ prefer the coarser `xF` variant or post-process exported bin counts.
 
 ```bash
 airtree query percentile \
-  -i results/temp_1d.bin \
+  -i results/temp_1d.airtree \
   -o results/median.txt \
   -p 50.0
 ```
@@ -206,22 +206,22 @@ airtree query percentile \
 ### Min / Max Count
 
 ```bash
-airtree query min_count -i histogram.bin -o min_count.txt
-airtree query max_count -i histogram.bin -o max_count.txt
+airtree query min_count -i histogram.airtree -o min_count.txt
+airtree query max_count -i histogram.airtree -o max_count.txt
 ```
 
 ### Min / Max Value
 
 ```bash
-airtree query min_value -i histogram.bin -o min_value.txt
-airtree query max_value -i histogram.bin -o max_value.txt
+airtree query min_value -i histogram.airtree -o min_value.txt
+airtree query max_value -i histogram.airtree -o max_value.txt
 ```
 
 ---
 
 ## `airtree-export`
 
-Convert an AirTree histogram buffer (`.bin`) into an analysis-ready tabular
+Convert an AirTree histogram buffer (`.airtree`) into an analysis-ready tabular
 format:
 
 - **Apache Arrow** (default, `.arrow` IPC)
@@ -229,7 +229,7 @@ format:
 - **CSV** (human-readable, with metadata in `#` comment header)
 
 ```bash
-airtree-export <input_histogram.bin> [OPTIONS]
+airtree-export <input_histogram.airtree> [OPTIONS]
 ```
 
 | Option              | Description                                  | Default                                   |
@@ -269,18 +269,18 @@ get the full statistical picture.
 
 ```bash
 # Default Arrow export (fastest, most compact)
-airtree-export results/sales_2d.bin
+airtree-export results/sales_2d.airtree
 # → results/sales_2d.arrow
 
 # Parquet
-airtree-export results/temp_1d.bin --parquet
+airtree-export results/temp_1d.airtree --parquet
 # → results/temp_1d.parquet
 
 # CSV with explicit filename
-airtree-export results/histogram.bin --csv --output ./exports/my_histogram.csv
+airtree-export results/histogram.airtree --csv --output ./exports/my_histogram.csv
 
 # Export to a directory (auto-named)
-airtree-export data/4d_histogram.bin --parquet --output ./exports/
+airtree-export data/4d_histogram.airtree --parquet --output ./exports/
 # → exports/4d_histogram.parquet
 ```
 
@@ -291,16 +291,16 @@ behavior:
 
 ```bash
 # Default Arrow export
-airtree export results/sales_2d.bin
+airtree export results/sales_2d.airtree
 
 # Parquet
-airtree export results/temp_1d.bin --parquet
+airtree export results/temp_1d.airtree --parquet
 
 # CSV with explicit filename
-airtree export results/histogram.bin --csv --output ./exports/my_histogram.csv
+airtree export results/histogram.airtree --csv --output ./exports/my_histogram.csv
 
 # Export to a directory (auto-named)
-airtree export data/4d_histogram.bin --parquet --output ./exports/
+airtree export data/4d_histogram.airtree --parquet --output ./exports/
 ```
 
 ### Loading the Output in Python
@@ -320,7 +320,7 @@ is **exact** — no approximation — and produces a valid histogram that can be
 queried, exported, or merged again.
 
 ```bash
-airtree-merge <input1.bin> <input2.bin> <output.bin>
+airtree-merge <input1.airtree> <input2.airtree> <output.airtree>
 ```
 
 The two inputs must have **identical configuration** (same schema, same
@@ -330,10 +330,10 @@ dimensionality, same trie variant). Mixing schemas raises a clear error.
 
 ```bash
 # Two 2D histograms from different data batches
-airtree-merge batch1_2d.bin batch2_2d.bin merged_2d.bin
+airtree-merge batch1_2d.airtree batch2_2d.airtree merged_2d.airtree
 
 # Two 1D histograms from parallel runs
-airtree-merge run1_1d.bin run2_1d.bin final_1d.bin
+airtree-merge run1_1d.airtree run2_1d.airtree final_1d.airtree
 ```
 
 #### Via `airtree`
@@ -341,22 +341,22 @@ airtree-merge run1_1d.bin run2_1d.bin final_1d.bin
 Equivalent invocations through `airtree`:
 
 ```bash
-airtree merge batch1_2d.bin batch2_2d.bin merged_2d.bin
-airtree merge run1_1d.bin run2_1d.bin final_1d.bin
+airtree merge batch1_2d.airtree batch2_2d.airtree merged_2d.airtree
+airtree merge run1_1d.airtree run2_1d.airtree final_1d.airtree
 ```
 
 **Workflow:**
 
 1. Generate one histogram per shard / batch with the same schema:
    ```bash
-   airtree generate parquet -i shard1.parquet -o part1.bin -s 2DxP -c price quantity
-   airtree generate parquet -i shard2.parquet -o part2.bin -s 2DxP -c price quantity
+   airtree generate parquet -i shard1.parquet -o part1.airtree -s 2DxP -c price quantity
+   airtree generate parquet -i shard2.parquet -o part2.airtree -s 2DxP -c price quantity
    ```
 2. Merge them (either form works):
    ```bash
-   airtree-merge part1.bin part2.bin combined.bin
+   airtree-merge part1.airtree part2.airtree combined.airtree
    # or
-   airtree merge part1.bin part2.bin combined.bin
+   airtree merge part1.airtree part2.airtree combined.airtree
    ```
 3. Use the result like any other histogram — query it, export it, or merge it
    again with more data.

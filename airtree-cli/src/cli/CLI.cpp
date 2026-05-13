@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
   auto export_cmd = app.add_subcommand(
       "export", "Export a histogram buffer to Arrow / Parquet / CSV");
   export_cmd
-      ->add_option("input", export_input, "Input histogram buffer (.bin)")
+      ->add_option("input", export_input, "Input histogram buffer (.airtree)")
       ->required()
       ->check(CLI::ExistingFile);
   auto parquet_flag = export_cmd->add_flag(
