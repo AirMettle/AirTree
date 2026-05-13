@@ -22,7 +22,7 @@ query speed, and provides exact merging across shards or batches.
 
 | Component             | Type         | Purpose                                            |
 | --------------------- | ------------ | -------------------------------------------------- |
-| `airtree`             | CLI          | Generate and query histograms                      |
+| `airtree`             | CLI          | Generate, query, merge, and export histograms      |
 | `airtree-export`      | CLI          | Export histograms to Arrow / Parquet / CSV         |
 | `airtree-merge`       | CLI          | Merge two compatible histograms                    |
 | `libairtree-*.a`      | Static libs  | C++ libraries — core, query, merge, export, reader |
@@ -68,14 +68,18 @@ airtree generate parquet \
 airtree query topk -i sales.bin -o topk.txt -k 10.0
 
 # Export to Parquet for downstream analysis
-airtree-export sales.bin --parquet --output ./out/
+airtree export sales.bin --parquet --output ./out/
 ```
 
 Merge histograms from parallel batches:
 
 ```bash
-airtree-merge batch1.bin batch2.bin merged.bin
+airtree merge batch1.bin batch2.bin merged.bin
 ```
+
+> `airtree merge` / `airtree export` are equivalent to the standalone
+> `airtree-merge` / `airtree-export` binaries — same flags, same behavior.
+> Pick whichever fits your scripts.
 
 Use it from C++:
 

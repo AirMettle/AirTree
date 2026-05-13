@@ -6,9 +6,9 @@ AirTree ships three command-line tools:
 
 | Binary               | Purpose                                                            |
 | -------------------- | ------------------------------------------------------------------ |
-| `airtree`            | [Generate](#airtree-generate) and [query](#airtree-query) histograms |
-| `airtree-export`     | [Export](#airtree-export) histograms to Arrow / Parquet / CSV      |
-| `airtree-merge`      | [Merge](#airtree-merge) two compatible histograms                  |
+| `airtree`            | [Generate](#airtree-generate), [query](#airtree-query), [merge](#airtree-merge), and [export](#airtree-export) histograms |
+| `airtree-export`     | [Export](#airtree-export) histograms to Arrow / Parquet / CSV (standalone) |
+| `airtree-merge`      | [Merge](#airtree-merge) two compatible histograms (standalone)     |
 
 All three are installed under `/opt/airmettle/airtree/<version>/bin/` —
 see [Installation](install.md) for how to put them on your `$PATH`.
@@ -284,6 +284,25 @@ airtree-export data/4d_histogram.bin --parquet --output ./exports/
 # → exports/4d_histogram.parquet
 ```
 
+#### Via `airtree`
+
+The same operations are exposed as `airtree export` — identical flags, identical
+behavior:
+
+```bash
+# Default Arrow export
+airtree export results/sales_2d.bin
+
+# Parquet
+airtree export results/temp_1d.bin --parquet
+
+# CSV with explicit filename
+airtree export results/histogram.bin --csv --output ./exports/my_histogram.csv
+
+# Export to a directory (auto-named)
+airtree export data/4d_histogram.bin --parquet --output ./exports/
+```
+
 ### Loading the Output in Python
 
 ```python
@@ -317,6 +336,15 @@ airtree-merge batch1_2d.bin batch2_2d.bin merged_2d.bin
 airtree-merge run1_1d.bin run2_1d.bin final_1d.bin
 ```
 
+#### Via `airtree`
+
+Equivalent invocations through `airtree`:
+
+```bash
+airtree merge batch1_2d.bin batch2_2d.bin merged_2d.bin
+airtree merge run1_1d.bin run2_1d.bin final_1d.bin
+```
+
 **Workflow:**
 
 1. Generate one histogram per shard / batch with the same schema:
@@ -324,9 +352,11 @@ airtree-merge run1_1d.bin run2_1d.bin final_1d.bin
    airtree generate parquet -i shard1.parquet -o part1.bin -s 2DxP -c price quantity
    airtree generate parquet -i shard2.parquet -o part2.bin -s 2DxP -c price quantity
    ```
-2. Merge them:
+2. Merge them (either form works):
    ```bash
    airtree-merge part1.bin part2.bin combined.bin
+   # or
+   airtree merge part1.bin part2.bin combined.bin
    ```
 3. Use the result like any other histogram — query it, export it, or merge it
    again with more data.

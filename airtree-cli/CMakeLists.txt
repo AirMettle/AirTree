@@ -26,6 +26,8 @@ target_link_libraries(airtree
     airtree::airtree-core
     airtree::airtree-query
     airtree::airtree-reader
+    airtree::libairtree-merge
+    airtree::libairtree-export
     cli11_headers
     spdlog::spdlog
 )

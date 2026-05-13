@@ -1,9 +1,30 @@
 #include <airtree/cli/AirTree.hpp>
+#include <airtree/cli/Logger.hpp>
+#include <airtree/export/AirTreeExporter.hpp>
+#include <airtree/merge/AirTreeMerge.hpp>
 #include <airtree/reader/file/Reader.hpp>
 #include <CLI/CLI.hpp> // for App, Option
 
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <stdexcept>
+#include <vector>
+
 using namespace airtree::cli;
 using namespace airtree::reader::file;
+
+namespace {
+
+std::vector<char> read_binary_file(const std::string &path) {
+  std::ifstream in(path, std::ios::binary);
+  if (!in) {
+    throw std::runtime_error("Failed to open file: " + path);
+  }
+  return std::vector<char>(std::istreambuf_iterator<char>(in), {});
+}
+
+} // namespace
 
 auto config_validator = CLI::Validator(
     [](std::string &input) {
@@ -229,6 +250,79 @@ int main(int argc, char *argv[]) {
     AirTree airtree_cli(config_name, input_data_file, {}, result_file,
                         SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum, e2e);
     airtree_cli.binary_handler();
+  });
+
+  std::string merge_input1;
+  std::string merge_input2;
+  std::string merge_output;
+  auto merge = app.add_subcommand(
+      "merge", "Merge two compatible histogram buffers into one");
+  merge->add_option("input1", merge_input1, "First input histogram buffer")
+      ->required()
+      ->check(CLI::ExistingFile);
+  merge->add_option("input2", merge_input2, "Second input histogram buffer")
+      ->required()
+      ->check(CLI::ExistingFile);
+  merge->add_option("output", merge_output, "Output histogram buffer path")
+      ->required();
+  merge->callback([&]() {
+    try {
+      auto buffer1 = read_binary_file(merge_input1);
+      auto buffer2 = read_binary_file(merge_input2);
+      airtree::merge::mergeAirTree(buffer1, buffer2, merge_output);
+      SPDLOG_LOGGER_INFO(
+          logger(), "Merge complete. Output written to: {}", merge_output);
+    } catch (const std::exception &ex) {
+      SPDLOG_LOGGER_ERROR(logger(), "Merge failed: {}", ex.what());
+    }
+  });
+
+  std::string export_input;
+  std::string export_output;
+  bool export_parquet = false;
+  bool export_csv = false;
+  auto export_cmd = app.add_subcommand(
+      "export", "Export a histogram buffer to Arrow / Parquet / CSV");
+  export_cmd
+      ->add_option("input", export_input, "Input histogram buffer (.bin)")
+      ->required()
+      ->check(CLI::ExistingFile);
+  auto parquet_flag = export_cmd->add_flag(
+      "--parquet", export_parquet, "Export to Parquet (.parquet)");
+  auto csv_flag =
+      export_cmd->add_flag("--csv", export_csv, "Export to CSV (.csv)");
+  parquet_flag->excludes(csv_flag);
+  export_cmd->add_option("--output", export_output,
+                         "Output file or directory (default: same dir as input "
+                         "with matching extension)");
+  export_cmd->callback([&]() {
+    using airtree::xport::ExportFormat;
+    ExportFormat format = ExportFormat::ARROW;
+    std::string extension = ".arrow";
+    if (export_parquet) {
+      format = ExportFormat::PARQUET;
+      extension = ".parquet";
+    } else if (export_csv) {
+      format = ExportFormat::CSV;
+      extension = ".csv";
+    }
+
+    std::filesystem::path out_path = export_output;
+    if (export_output.empty() || std::filesystem::is_directory(out_path)) {
+      std::filesystem::path in(export_input);
+      std::string out_filename = in.stem().string() + extension;
+      out_path = export_output.empty() ? in.parent_path() / out_filename
+                                       : out_path / out_filename;
+    }
+
+    try {
+      auto buffer = read_binary_file(export_input);
+      airtree::xport::exportAirTree(buffer, out_path.string(), format);
+      SPDLOG_LOGGER_INFO(
+          logger(), "Export complete. Output written to: {}", out_path.string());
+    } catch (const std::exception &ex) {
+      SPDLOG_LOGGER_ERROR(logger(), "Export failed: {}", ex.what());
+    }
   });
 
   CLI11_PARSE(app, argc, argv);
