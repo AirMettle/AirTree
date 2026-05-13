@@ -61,8 +61,8 @@ of public headers under `<airtree/...>`.
 The generator produces an in-memory histogram buffer (`std::vector<char>`)
 that can be:
 
-- Written to disk and consumed by the CLI tools (`airtree-cli query …`,
-  `AirTreeExport`, `airtree-merge-cli`)
+- Written to disk and consumed by the CLI tools (`airtree query …`,
+  `airtree-export`, `airtree-merge`)
 - Passed straight into the [Query](#query-apis), [Merge](#merge-api), or
   [Export](#export-api) APIs without ever touching the filesystem
 
@@ -168,7 +168,7 @@ int main() {
 
   std::cout << "Histogram buffer: " << histogram.size() << " bytes\n";
 
-  std::ofstream out("histogram.bin", std::ios::binary);
+  std::ofstream out("histogram.airtree", std::ios::binary);
   out.write(histogram.data(), histogram.size());
 }
 ```
@@ -389,7 +389,7 @@ airtree::xport::exportAirTree(buf, "histogram.parquet",
 ```
 
 The output schema, dimensions, and special-value handling are identical to
-the [`AirTreeExport` CLI](cli.md#airtreeexport).
+the [`airtree-export` CLI](cli.md#airtree-export).
 
 ---
 
@@ -431,14 +431,14 @@ int main() {
     return std::vector<char>(std::istreambuf_iterator<char>(f), {});
   };
 
-  auto buf1 = read_file("histogram1.bin");
-  auto buf2 = read_file("histogram2.bin");
+  auto buf1 = read_file("histogram1.airtree");
+  auto buf2 = read_file("histogram2.airtree");
 
   // Option 1 — get the merged buffer in memory
   auto merged = airtree::merge::mergeAirTree(buf1, buf2);
 
   // Option 2 — merge directly to a file
-  airtree::merge::mergeAirTree(buf1, buf2, "merged_histogram.bin");
+  airtree::merge::mergeAirTree(buf1, buf2, "merged_histogram.airtree");
 
   std::cout << "Merge complete: " << merged.size() << " bytes\n";
 }

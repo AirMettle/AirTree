@@ -6,7 +6,7 @@ using namespace airtree::util;
 namespace airtree::cli {
 
 std::shared_ptr<spdlog::logger> logger() {
-  static auto logger = logging::make_logger("airtree-cli");
+  static auto logger = logging::make_logger("airtree");
   return logger;
 }
 

@@ -14,7 +14,7 @@ query speed, and provides exact merging across shards or batches.
 | Doc | What's in it |
 | --- | --- |
 | [📦 Installation & Build](docs/install.md) | Supported platforms, prerequisites, build script, install layout |
-| [⌨️  CLI Reference](docs/cli.md) | `airtree-cli`, `AirTreeExport`, `airtree-merge-cli` — every flag and example |
+| [⌨️  CLI Reference](docs/cli.md) | `airtree`, `airtree-export`, `airtree-merge` — every flag and example |
 | [📚 C++ Library API](docs/cpp-api.md) | Generate, query, merge, export, and reader headers |
 | [🐍 Python Bindings](docs/python.md) | *Coming soon* |
 
@@ -22,9 +22,9 @@ query speed, and provides exact merging across shards or batches.
 
 | Component             | Type         | Purpose                                            |
 | --------------------- | ------------ | -------------------------------------------------- |
-| `airtree-cli`         | CLI          | Generate and query histograms                      |
-| `AirTreeExport`       | CLI          | Export histograms to Arrow / Parquet / CSV         |
-| `airtree-merge-cli`   | CLI          | Merge two compatible histograms                    |
+| `airtree`             | CLI          | Generate, query, merge, and export histograms      |
+| `airtree-export`      | CLI          | Export histograms to Arrow / Parquet / CSV         |
+| `airtree-merge`       | CLI          | Merge two compatible histograms                    |
 | `libairtree-*.a`      | Static libs  | C++ libraries — core, query, merge, export, reader |
 | `<airtree/...>`       | Headers      | Public C++ API                                     |
 
@@ -58,24 +58,28 @@ Generate, query, and export a 2D histogram:
 
 ```bash
 # Build a 2D histogram from a Parquet file
-airtree-cli generate parquet \
+airtree generate parquet \
   -i data/sales.parquet \
-  -o sales.bin \
+  -o sales.airtree \
   -s 2DxP \
   -c price quantity
 
 # Top-10% bins by count
-airtree-cli query topk -i sales.bin -o topk.txt -k 10.0
+airtree query topk -i sales.airtree -o topk.txt -k 10.0
 
 # Export to Parquet for downstream analysis
-AirTreeExport sales.bin --parquet --output ./out/
+airtree export sales.airtree --parquet --output ./out/
 ```
 
 Merge histograms from parallel batches:
 
 ```bash
-airtree-merge-cli batch1.bin batch2.bin merged.bin
+airtree merge batch1.airtree batch2.airtree merged.airtree
 ```
+
+> `airtree merge` / `airtree export` are equivalent to the standalone
+> `airtree-merge` / `airtree-export` binaries — same flags, same behavior.
+> Pick whichever fits your scripts.
 
 Use it from C++:
 
