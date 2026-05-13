@@ -61,8 +61,8 @@ of public headers under `<airtree/...>`.
 The generator produces an in-memory histogram buffer (`std::vector<char>`)
 that can be:
 
-- Written to disk and consumed by the CLI tools (`airtree-cli query …`,
-  `AirTreeExport`, `airtree-merge-cli`)
+- Written to disk and consumed by the CLI tools (`airtree query …`,
+  `airtree-export`, `airtree-merge`)
 - Passed straight into the [Query](#query-apis), [Merge](#merge-api), or
   [Export](#export-api) APIs without ever touching the filesystem
 
@@ -389,7 +389,7 @@ airtree::xport::exportAirTree(buf, "histogram.parquet",
 ```
 
 The output schema, dimensions, and special-value handling are identical to
-the [`AirTreeExport` CLI](cli.md#airtreeexport).
+the [`airtree-export` CLI](cli.md#airtree-export).
 
 ---
 

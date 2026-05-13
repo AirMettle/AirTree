@@ -137,9 +137,9 @@ By default the package installs under a versioned prefix:
 ```
 /opt/airmettle/airtree/<version>/
 ├── bin/
-│   ├── airtree-cli            # Generate + query CLI
-│   ├── AirTreeExport          # Export tool
-│   └── airtree-merge-cli      # Merge tool
+│   ├── airtree                # Generate + query CLI
+│   ├── airtree-export         # Export tool
+│   └── airtree-merge          # Merge tool
 ├── lib/
 │   ├── libairtree-core.a
 │   ├── libairtree-query.a
@@ -171,9 +171,9 @@ export PATH="/opt/airmettle/airtree/<version>/bin:$PATH"
 …or symlink the binaries into a directory that already is, e.g.:
 
 ```bash
-sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-cli /usr/local/bin/
-sudo ln -s /opt/airmettle/airtree/<version>/bin/AirTreeExport /usr/local/bin/
-sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-merge-cli /usr/local/bin/
+sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree /usr/local/bin/
+sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-export /usr/local/bin/
+sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-merge /usr/local/bin/
 ```
 
 You can also override the prefix at configure time with
@@ -181,5 +181,5 @@ You can also override the prefix at configure time with
 
 ## Next Steps
 
-- [CLI Reference](cli.md) — using `airtree-cli`, `AirTreeExport`, `airtree-merge-cli`
+- [CLI Reference](cli.md) — using `airtree`, `airtree-export`, `airtree-merge`
 - [C++ Library API](cpp-api.md) — programmatic use of the libraries

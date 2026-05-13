@@ -6,32 +6,32 @@ set(SOURCE_FILES
     ${SRC_DIR}/cli/Logger.cpp
 )
 
-add_executable(airtree-cli ${SOURCE_FILES})
+add_executable(airtree ${SOURCE_FILES})
 
 if(TARGET am_airtree_dependencies)
-    add_dependencies(airtree-cli am_airtree_dependencies)
+    add_dependencies(airtree am_airtree_dependencies)
 endif()
 
-target_include_directories(airtree-cli 
-    PUBLIC 
+target_include_directories(airtree
+    PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(airtree-cli
+target_link_libraries(airtree
     PUBLIC
     # Add exported dependencies
     PRIVATE
-    airtree::airtree-util 
-    airtree::airtree-core 
-    airtree::airtree-query 
-    airtree::airtree-reader 
+    airtree::airtree-util
+    airtree::airtree-core
+    airtree::airtree-query
+    airtree::airtree-reader
     cli11_headers
     spdlog::spdlog
 )
-    
+
 # Install targets
-install(TARGETS airtree-cli
+install(TARGETS airtree
     RUNTIME DESTINATION bin
 )
 

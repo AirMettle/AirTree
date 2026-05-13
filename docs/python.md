@@ -11,8 +11,8 @@ In the meantime:
 
 - Use the [CLI tools](cli.md) directly from a Python `subprocess` call, then
   load the exported Arrow / Parquet output via `pyarrow` or `pandas`.
-- Generate a histogram with `airtree-cli generate ...`, export it with
-  `AirTreeExport ... --parquet`, and read the resulting Parquet file:
+- Generate a histogram with `airtree generate ...`, export it with
+  `airtree-export ... --parquet`, and read the resulting Parquet file:
 
   ```python
   import pyarrow.parquet as pq
