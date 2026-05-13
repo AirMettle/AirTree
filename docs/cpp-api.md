@@ -473,7 +473,7 @@ int main() {
 ## Reader API
 
 The same reader the CLI uses is exposed publicly, so you can build histograms
-straight from Parquet / binary files in C++:
+straight from Parquet, CSV, or raw binary files in C++:
 
 ```cpp
 #include <airtree/reader/file/Reader.hpp>
@@ -486,7 +486,10 @@ enum SUPPORTED_DATA_TYPE {
 };
 
 // Parse a file into one FPHArray per requested column.
-// 'columns' is empty for binary input; required for Parquet.
+// - AT_BINARY: 'columns' is empty; 'data_type' selects the element type.
+// - AT_PARQUET / AT_CSV: 'columns' is required; 'data_type' is ignored
+//   (use AT_IGNORE) — element types come from the file's own schema /
+//   Arrow type inference.
 std::vector<FPHArray> parse_file(const std::string& path,
                                  SUPPORTED_FILE_TYPE file_type,
                                  SUPPORTED_DATA_TYPE data_type,
@@ -494,6 +497,10 @@ std::vector<FPHArray> parse_file(const std::string& path,
 
 } // namespace airtree::reader::file
 ```
+
+CSV files must have a header row; column names in the `columns` argument are
+matched against that header. Accepted numeric types are the same across all
+three readers: `int32`, `int64`, `float`, `double`.
 
 The resulting `FPHArray` values plug directly into the lower-level
 `generate(arrays, options)` overload from `<airtree/core/api/AirTreeGenerator.hpp>`.

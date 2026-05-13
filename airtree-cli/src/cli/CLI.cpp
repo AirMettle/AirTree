@@ -252,6 +252,33 @@ int main(int argc, char *argv[]) {
     airtree_cli.binary_handler();
   });
 
+  auto csv = generate->add_subcommand("csv", "CSV input file");
+  csv->add_option("-i,--input", input_data_file, "Path to input file")
+      ->required()
+      ->check(CLI::ExistingFile);
+  csv->add_option("-o,--output", result_file, "Path to output file")
+      ->required();
+  csv
+      ->add_option(
+          "-s,--schema", config_name,
+          std::string("Target histogram config. Supported configs are: ")
+              + AirTree::get_valid_config_names())
+      ->required()
+      ->check(config_validator);
+  std::vector<std::string> csv_column_list;
+  csv
+      ->add_option("-c,--columns", csv_column_list,
+                   "Space separated column names")
+      ->required();
+  csv->add_flag(
+      "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
+  csv->callback([&]() {
+    AirTree airtree_cli(config_name, input_data_file, csv_column_list,
+                        result_file, SUPPORTED_FILE_TYPE::AT_CSV,
+                        SUPPORTED_DATA_TYPE::AT_IGNORE, e2e);
+    airtree_cli.csv_handler();
+  });
+
   std::string merge_input1;
   std::string merge_input2;
   std::string merge_output;
