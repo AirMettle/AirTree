@@ -41,12 +41,18 @@ precision for size / speed:
 | `1DxT` | 1D         | Tiny        | Binary             |
 | `1DxF` | 1D         | Fast        | Binary, Parquet    |
 | `1DxP` | 1D         | Precise     | Binary, Parquet    |
-| `2DxF` | 2D         | Fast        | Parquet            |
+| `2DxF` \* | 2D      | Fast        | Parquet            |
 | `2DxP` | 2D         | Precise     | Parquet            |
-| `3DxF` | 3D         | Fast        | Parquet            |
+| `3DxF` \* | 3D      | Fast        | Parquet            |
 | `3DxP` | 3D         | Precise     | Parquet            |
-| `4DxF` | 4D         | Fast        | Parquet            |
+| `4DxF` \* | 4D      | Fast        | Parquet            |
 | `4DxP` | 4D         | Precise     | Parquet            |
+
+\* `2DxF`, `3DxF`, `4DxF` currently support **generate** and **merge** only.
+[Export](#airtree-export) and queries — both CLI and the C++
+[`BoundingBox`](cpp-api.md#boundingbox-2d--3d) / [`BinBoundary`](cpp-api.md#binboundary)
+APIs — throw on these schemas. Use the matching `xP` variant if you need
+analysis paths.
 
 **Variant guidance**
 
@@ -140,6 +146,12 @@ airtree generate binary \
 
 All queries operate directly on a generated `.airtree` histogram. They are extremely
 fast — the trie is parsed in place.
+
+> **CLI queries are 1D-only.** All subcommands listed below currently support only
+> 1D histograms (`1DxT`, `1DxF`, `1DxP`). Running them on a 2D / 3D / 4D histogram
+> throws at runtime with *"Unsupported dimensions or bit length."* For
+> multi-dimensional range queries, use the C++
+> [`BoundingBox`](cpp-api.md#boundingbox-2d--3d) API.
 
 ```bash
 airtree query <subcommand> [options]

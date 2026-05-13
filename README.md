@@ -37,9 +37,12 @@ See [Installation](docs/install.md) for paths and packaging details.
 | `1DxT` | 1D         | Tiny    | Binary           |
 | `1DxF` | 1D         | Fast    | Binary, Parquet  |
 | `1DxP` | 1D         | Precise | Binary, Parquet  |
-| `2DxF` / `2DxP` | 2D | Fast / Precise | Parquet  |
-| `3DxF` / `3DxP` | 3D | Fast / Precise | Parquet  |
-| `4DxF` / `4DxP` | 4D | Fast / Precise | Parquet  |
+| `2DxF` \* / `2DxP` | 2D | Fast / Precise | Parquet  |
+| `3DxF` \* / `3DxP` | 3D | Fast / Precise | Parquet  |
+| `4DxF` \* / `4DxP` | 4D | Fast / Precise | Parquet  |
+
+\* Multi-dim `Fast` variants currently support **generate** and **merge** only.
+The export pipeline and CLI / library queries do not yet handle them.
 
 See [CLI Reference → Histogram Schemas](docs/cli.md#histogram-schemas) for
 guidance on choosing a variant.
@@ -54,20 +57,30 @@ sudo dpkg -i cmake-build-*/airtree-*-Linux.deb
 export PATH="/opt/airmettle/airtree/<version>/bin:$PATH"
 ```
 
-Generate, query, and export a 2D histogram:
+Generate a 1D histogram and run a query on it (CLI queries are currently 1D-only — see
+[CLI Reference → `airtree query`](docs/cli.md#airtree-query)):
 
 ```bash
-# Build a 2D histogram from a Parquet file
+# Build a 1D histogram over a single column
+airtree generate parquet \
+  -i data/sales.parquet \
+  -o price.airtree \
+  -s 1DxP \
+  -c price
+
+# Bins covering the top 10% of count mass (from largest values inward)
+airtree query topk -i price.airtree -o topk.txt -k 10.0
+```
+
+Generate a 2D histogram and export it for downstream analysis:
+
+```bash
 airtree generate parquet \
   -i data/sales.parquet \
   -o sales.airtree \
   -s 2DxP \
   -c price quantity
 
-# Top-10% bins by count
-airtree query topk -i sales.airtree -o topk.txt -k 10.0
-
-# Export to Parquet for downstream analysis
 airtree export sales.airtree --parquet --output ./out/
 ```
 
