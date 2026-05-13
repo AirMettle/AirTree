@@ -80,10 +80,10 @@ airtree generate parquet \
 
 | Flag                | Required | Description                                                   |
 | ------------------- | :------: | ------------------------------------------------------------- |
-| `-i, --input`       | ✅       | Path to the Parquet file                                      |
-| `-o, --output`      | ✅       | Output histogram buffer file                                  |
-| `-s, --schema`      | ✅       | One of the schemas listed [above](#histogram-schemas)         |
-| `-c, --columns`     | ✅       | Space-separated column names; count must match schema dims    |
+| `-i, --input`       | Yes      | Path to the Parquet file                                      |
+| `-o, --output`      | Yes      | Output histogram buffer file                                  |
+| `-s, --schema`      | Yes      | One of the schemas listed [above](#histogram-schemas)         |
+| `-c, --columns`     | Yes      | Space-separated column names; count must match schema dims    |
 
 **Accepted Arrow column types.** `int32`, `int64`, `float`, `double`. Other
 Arrow types (`string`, `decimal`, `timestamp`, etc.) are rejected. Nullable
@@ -122,10 +122,10 @@ airtree generate binary \
 
 | Flag                | Required | Description                                                   |
 | ------------------- | :------: | ------------------------------------------------------------- |
-| `-i, --input`       | ✅       | Path to the raw binary file                                   |
-| `-o, --output`      | ✅       | Output histogram buffer file                                  |
-| `-s, --schema`      | ✅       | Must be a 1D schema (`1DxT`, `1DxF`, or `1DxP`)               |
-| `-d, --data-type`   | ✅       | One of: `int32`, `int64`, `float`, `double`                   |
+| `-i, --input`       | Yes      | Path to the raw binary file                                   |
+| `-o, --output`      | Yes      | Output histogram buffer file                                  |
+| `-s, --schema`      | Yes      | Must be a 1D schema (`1DxT`, `1DxF`, or `1DxP`)               |
+| `-d, --data-type`   | Yes      | One of: `int32`, `int64`, `float`, `double`                   |
 
 The raw binary file is interpreted as a tightly-packed array of values of the
 given type — no header, no metadata.

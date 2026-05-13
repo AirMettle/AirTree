@@ -13,10 +13,10 @@ query speed, and provides exact merging across shards or batches.
 
 | Doc | What's in it |
 | --- | --- |
-| [📦 Installation & Build](docs/install.md) | Supported platforms, prerequisites, build script, install layout |
-| [⌨️  CLI Reference](docs/cli.md) | `airtree`, `airtree-export`, `airtree-merge` — every flag and example |
-| [📚 C++ Library API](docs/cpp-api.md) | Generate, query, merge, export, and reader headers |
-| [🐍 Python Bindings](docs/python.md) | *Coming soon* |
+| [Installation & Build](docs/install.md) | Supported platforms, prerequisites, build script, install layout |
+| [CLI Reference](docs/cli.md) | `airtree`, `airtree-export`, `airtree-merge` — every flag and example |
+| [C++ Library API](docs/cpp-api.md) | Generate, query, merge, export, and reader headers |
+| [Python Bindings](docs/python.md) | *Coming soon* |
 
 ## What's in the Box
 
