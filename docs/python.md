@@ -2,7 +2,7 @@
 
 [← Back to README](../README.md)
 
-> 🚧 **Coming soon.** Python bindings for AirTree are in development and will
+> **Coming soon.** Python bindings for AirTree are in development and will
 > be documented here once released. The API is expected to mirror the
 > [C++ Library API](cpp-api.md) — generate, query, merge, and export — with
 > NumPy / pandas-friendly inputs and outputs.

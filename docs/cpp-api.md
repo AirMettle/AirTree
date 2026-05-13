@@ -184,7 +184,13 @@ All query classes take a histogram buffer (`std::vector<char>` or compatible)
 in their constructor. Methods are non-mutating and run directly against the
 trie — they do not deserialize into a heavy intermediate structure.
 
+> **Each operator only supports a subset of schemas.** Mismatched buffers throw
+> `std::runtime_error("Unsupported dimensions or bit length.")` (or a similar
+> message). The supported configs are listed under each operator below.
+
 ### Percentile
+
+> **Supported configs:** `1DxT`, `1DxF`, `1DxP`. Throws on 2D / 3D / 4D buffers.
 
 ```cpp
 #include <airtree/query/percentile/Percentile.hpp>
@@ -196,6 +202,8 @@ double value = p.getPercentile(50.0);   // percentile in 0 – 100
 ```
 
 ### TopK
+
+> **Supported configs:** `1DxT`, `1DxF`, `1DxP`. Throws on 2D / 3D / 4D buffers.
 
 ```cpp
 #include <airtree/query/topk/TopK.hpp>
@@ -225,6 +233,9 @@ from the upper tail until their cumulative count reaches 1% of the total,
 [`BinBoundary`](#binboundary).
 
 ### MinMax
+
+> **Supported configs:** `1DxT`, `1DxF`, `1DxP`. All four methods
+> (`getMin`, `getMax`, `getMinValue`, `getMaxValue`) throw on 2D / 3D / 4D buffers.
 
 ```cpp
 #include <airtree/query/minmax/MinMax.hpp>
@@ -258,6 +269,8 @@ plus a kernel smoother.
 
 ### CDF
 
+> **Supported configs:** `1DxT`, `1DxF`, `1DxP`. Throws on 2D / 3D / 4D buffers.
+
 ```cpp
 #include <airtree/query/cdf/CDF.hpp>
 
@@ -283,6 +296,9 @@ returning the bin's lower-edge probability.
 
 The most advanced query — fast spatial range counting against multi-dimensional
 histograms.
+
+> **Supported configs:** `2DxP` and `3DxP` only. The `Fast` variants (`2DxF`,
+> `3DxF`) and 1D / 4D buffers all throw.
 
 ```cpp
 #include <airtree/query/bounding-box/BoundingBox.hpp>
@@ -316,6 +332,10 @@ A `getCountsBatch(...)` overload is also available on `BoundingBox` for
 processing many query boxes in one call — see the header.
 
 ### BinBoundary
+
+> **Supported configs:** `1DxT`, `1DxF`, `1DxP`, `2DxP`, `3DxP`, `4DxP`. The
+> multi-dim `Fast` variants (`2DxF`, `3DxF`, `4DxF`) are not yet supported and
+> throw.
 
 When you need the raw bin boundaries of a histogram (e.g., to feed a custom
 analysis pipeline) without going through the export tools, use the
@@ -351,6 +371,10 @@ only need it if you want bin edges without converting to Arrow / Parquet / CSV.
 ---
 
 ## Export API
+
+> **Supported configs:** `1DxT`, `1DxF`, `1DxP`, `2DxP`, `3DxP`, `4DxP`. The
+> multi-dim `Fast` variants (`2DxF`, `3DxF`, `4DxF`) are not yet supported and
+> throw.
 
 ```cpp
 #include <airtree/export/AirTreeExporter.hpp>

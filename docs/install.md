@@ -18,9 +18,9 @@ dependency installation, configuration, compilation, testing, and packaging.
 
 | Platform        | Architecture     | Status              | Notes                  |
 | --------------- | ---------------- | ------------------- | ---------------------- |
-| macOS (Darwin)  | x86_64 / arm64   | ✅ Fully supported  | Requires Homebrew      |
-| Ubuntu 22.04    | x86_64 / aarch64 | ✅ Fully supported  | Official CI target     |
-| CentOS 7 / 8 / 9| x86_64           | ✅ Fully supported  | Uses `yum` + EPEL      |
+| macOS (Darwin)  | x86_64 / arm64   | Fully supported     | Requires Homebrew      |
+| Ubuntu 22.04    | x86_64 / aarch64 | Fully supported     | Official CI target     |
+| CentOS 7 / 8 / 9| x86_64           | Fully supported     | Uses `yum` + EPEL      |
 
 Other Linux distributions may work if you manually satisfy the dependencies,
 but only the above are exercised by the automated setup scripts.
