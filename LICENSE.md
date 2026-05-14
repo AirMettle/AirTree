@@ -145,3 +145,13 @@ software under these terms.
 
 **Use** means anything you do with the software requiring one
 of your licenses.
+
+## Patent Notice
+
+This software and related technology are **Patent Pending** in the United States and other jurisdictions.
+
+Specific applications include:
+- [U.S. Patent Application Publication No. 2025/0217930 A1](https://patents.google.com/patent/US20250217930A1) — "Compactly Constructing Hierarchical Histograms"
+- Additional patents pending
+
+All rights reserved pending patent issuance.
