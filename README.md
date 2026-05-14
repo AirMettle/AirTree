@@ -106,7 +106,11 @@ auto buffer = airtree::core::api::generate(data);   // 1D, default ConfigType::X
 For full programmatic usage (querying, merging, exporting from C++) see the
 [C++ Library API](docs/cpp-api.md).
 
-## References
+## Patent Notice
+This software and related technology are **Patent Pending** in the United States and other jurisdictions.
 
-- AirTree Patent: *US Patent No. TODO* <!-- TODO: actual patent number / link -->
-- License: *TODO* <!-- TODO: link to non-commercial license file -->
+Specific applications include:
+- [U.S. Patent Application Publication No. 2025/0217930 A1](https://patents.google.com/patent/US20250217930A1) — "Compactly Constructing Hierarchical Histograms"
+- Additional patents pending
+
+All rights reserved pending patent issuance.
