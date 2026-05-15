@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/cli/Logger.hpp>
 #include <airtree/util/logging/Logging.hpp>
 

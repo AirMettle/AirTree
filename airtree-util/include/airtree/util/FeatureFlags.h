@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <cstdint>
 #ifndef FEATURE_FLAGS_H
 

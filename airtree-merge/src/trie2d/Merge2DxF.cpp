@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <vector>
 
 #include <airtree/merge/trie2d/Merge2DxF.hpp>

@@ -1,3 +1,5 @@
+# Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 import glob
 import os
 import numpy as np

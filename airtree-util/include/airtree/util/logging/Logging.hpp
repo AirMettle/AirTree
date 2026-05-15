@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_UTIL_LOGGING_LOGGING_HPP
 #define AIRTREE_UTIL_LOGGING_LOGGING_HPP
 

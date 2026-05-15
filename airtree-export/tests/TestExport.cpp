@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <cmath>
 #include <gtest/gtest.h>
 #include <airtree/export/core/ArrowTableBuilder.hpp>

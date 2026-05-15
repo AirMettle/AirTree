@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/query/bounding-box/BoundingBox.hpp>
 #include <cstdint>
 #include <cstring>

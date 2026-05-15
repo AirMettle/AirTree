@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <filesystem>
 #include <fstream>
 #include <airtree/export/AirTreeExporter.hpp>

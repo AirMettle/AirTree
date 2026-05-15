@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_CORE_COMMON_CHUNK_TYPES_HPP
 #define AIRTREE_CORE_COMMON_CHUNK_TYPES_HPP
 

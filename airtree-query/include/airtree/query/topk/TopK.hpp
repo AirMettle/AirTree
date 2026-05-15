@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_TOPK_TOPK_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_TOPK_TOPK_HPP
 

@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/core/schema/trie4d/4DxF.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
