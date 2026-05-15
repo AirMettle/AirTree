@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP
 #define AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP
 

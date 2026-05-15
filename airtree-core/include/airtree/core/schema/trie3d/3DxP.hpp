@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_CORE_SCHEMA_TRIE3D_3DXP_HPP
 #define AIRTREE_CORE_SCHEMA_TRIE3D_3DXP_HPP
 

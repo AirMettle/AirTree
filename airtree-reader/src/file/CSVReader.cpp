@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <arrow/array.h>
 #include <arrow/chunked_array.h>
 #include <arrow/csv/reader.h>

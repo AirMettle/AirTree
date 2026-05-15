@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_READER_INCLUDE_AIRTREE_READER_FILE_READER_HPP
 #define AIRTREE_READER_INCLUDE_AIRTREE_READER_FILE_READER_HPP
 

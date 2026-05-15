@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/core/common/Conversion.hpp>
 #ifdef _MSC_VER
 #include <immintrin.h>

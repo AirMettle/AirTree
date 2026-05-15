@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/export/writer/ArrowWriter.hpp>
 #include <parquet/arrow/writer.h>
 #include <airtree/export/Logger.hpp>

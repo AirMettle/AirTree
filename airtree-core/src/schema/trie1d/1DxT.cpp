@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie1d/1DxT.hpp>
 #include <airtree/core/common/Conversion.hpp>

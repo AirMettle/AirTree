@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BOUNDING_BOX__BOUNDING_BOX_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BOUNDING_BOX__BOUNDING_BOX_HPP
 #include <airtree/core/AirTreeCore_internal.hpp>

@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <gtest/gtest.h>
 #include <airtree/reader/file/Reader.hpp>
 #include <filesystem>

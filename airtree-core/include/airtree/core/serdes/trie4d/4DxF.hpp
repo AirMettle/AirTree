@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_CORE_SERDES_TRIE4D_4DXFSER_HPP
 #define AIRTREE_CORE_SERDES_TRIE4D_4DXFSER_HPP
 

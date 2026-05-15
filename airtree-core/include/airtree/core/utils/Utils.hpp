@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef FLOATINGPOINTHISTOGRAM_UTILS_H
 #define FLOATINGPOINTHISTOGRAM_UTILS_H
 

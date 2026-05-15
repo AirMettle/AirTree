@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <cstddef>
 #include <airtree/core/serdes/trie1d/1DxT.hpp>
 #include <airtree/core/common/BooleanArray.hpp>

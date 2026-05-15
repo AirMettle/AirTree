@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <CLI/Validators.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <CLI/CLI.hpp>

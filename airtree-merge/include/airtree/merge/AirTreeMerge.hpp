@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_MERGE_AIRTREEMERGE_HPP
 #define AIRTREE_MERGE_AIRTREEMERGE_HPP
 

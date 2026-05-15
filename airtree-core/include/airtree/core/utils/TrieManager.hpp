@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef TRIE_MANAGER_H
 #define TRIE_MANAGER_H
 

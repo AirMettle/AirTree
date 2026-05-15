@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/query/bin-boundary/BinBoundary.hpp>
 #include <gtest/gtest.h>
 #include <airtree/core/AirTreeCore_internal.hpp>
