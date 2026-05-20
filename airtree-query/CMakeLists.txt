@@ -21,6 +21,8 @@ add_library(airtree-query STATIC
     ${SOURCE_FILES}/bin-boundary/BinBoundary.cpp
     # cdf module
     ${SOURCE_FILES}/cdf/CDF.cpp
+    # grid module
+    ${SOURCE_FILES}/grid/GridQuery.cpp
 )
 
 target_include_directories(airtree-query
@@ -47,9 +49,10 @@ add_executable(ut_query_test
     tests/TestBinBoundaries.cpp 
     tests/TestCDF.cpp
     tests/TestFuzzEncoding.cpp
-    tests/TestMinMax.cpp 
-    tests/TestPercentile.cpp 
-    tests/TestTopK.cpp)
+    tests/TestMinMax.cpp
+    tests/TestPercentile.cpp
+    tests/TestTopK.cpp
+    tests/TestGridQuery.cpp)
 
 target_link_libraries(ut_query_test PRIVATE 
     airtree::airtree-util 

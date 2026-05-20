@@ -38,4 +38,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 #include <airtree/query/cdf/CDF.hpp>
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Grid module
+// ─────────────────────────────────────────────────────────────────────────────
+#include <airtree/query/grid/GridQuery.hpp>
+
 #endif // AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_AIRTREE_QUERY_INTERNAL_HPP
