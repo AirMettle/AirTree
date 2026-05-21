@@ -7,9 +7,13 @@
 #include <airtree/core/common/AirTreeType.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace airtree::query::grid {
+
+// Lazily-computed per-axis data extent cache; defined in the implementation.
+struct ExtentCache;
 
 /**
  * How the requested range on an axis is divided into steps.
@@ -99,10 +103,18 @@ public:
                      uint64_t max_cells = 1000000) const;
 
 private:
+  // Computes the per-axis marginal data extent over finite-like values exactly
+  // once (only when a query actually has an infinite endpoint) and caches it, so
+  // repeated queries never re-walk the trie and finite-only queries never walk it
+  // at all.
+  void ensureExtent() const;
+
   int                                 dims_ = 0;
   int                                 bit_length_ = 0;
   airtree::core::common::AirTreeType  trie_node_;
   airtree::core::common::AirTreeHeader header_;
+
+  std::shared_ptr<ExtentCache> extent_;
 };
 
 } // namespace airtree::query::grid

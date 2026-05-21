@@ -6,14 +6,23 @@
 #include <airtree/core/utils/TrieManager.hpp>
 #include <airtree/query/AirTreeQuery_internal.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <limits>
+#include <thread>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 using namespace airtree::query::grid;
 using airtree::query::meta::Histogram;
+
+
+static_assert(std::is_move_constructible<GridQuery>::value,
+              "GridQuery must remain move-constructible");
+static_assert(std::is_move_assignable<GridQuery>::value,
+              "GridQuery must remain move-assignable");
 
 namespace {
 
@@ -682,6 +691,54 @@ TEST_F(TestGridQuery, MixedSpecial4D) {
   for (std::size_t i = 0; i < expected.size(); ++i) {
     EXPECT_EQ(res.counts[i], expected[i]) << "cell " << i;
   }
+}
+
+// Stress the lazy extent cache: many threads issue queries on one shared,
+// const GridQuery, interleaving finite-only queries (which never touch the
+// cache) with infinite-ended ones (which trigger the once-only extent build).
+// All queries cover the full data, so each must conserve the point count. This
+// is a regression harness for the cache's thread-safety and would surface a data
+// race under a thread sanitizer.
+TEST_F(TestGridQuery, ConcurrentLazyExtent) {
+  const std::size_t B = 3000;
+  const std::size_t K = 16;
+  std::vector<std::pair<std::size_t, std::size_t>> cells;
+  for (std::size_t x = B; x < B + K; ++x) {
+    for (std::size_t y = B; y < B + K; ++y) {
+      cells.emplace_back(x, y);
+    }
+  }
+  auto buf = build2D(cells);
+  GridQuery gq(buf); // shared across threads; getGrid is const
+
+  Histogram h(12);
+  const double lo = h.getFPNumber(B);
+  const double hi = h.getFPNumber(B + K - 1);
+  const double inf = std::numeric_limits<double>::infinity();
+  const uint64_t expected = static_cast<uint64_t>(K * K);
+
+  const int n_threads = 8;
+  const int iters = 400;
+  std::atomic<int> mismatches{0};
+  std::vector<std::thread> threads;
+  for (int t = 0; t < n_threads; ++t) {
+    threads.emplace_back([&, t]() {
+      for (int i = 0; i < iters; ++i) {
+        bool finite = ((t + i) & 1) == 0;
+        GridAxisSpec ax = finite
+                              ? GridAxisSpec{lo, hi, 4, GridScaling::Linear}
+                              : GridAxisSpec{-inf, inf, 4, GridScaling::Linear};
+        auto res = gq.getGrid({ax, ax});
+        if (sumCounts(res) != expected) {
+          mismatches.fetch_add(1);
+        }
+      }
+    });
+  }
+  for (auto &th : threads) {
+    th.join();
+  }
+  EXPECT_EQ(mismatches.load(), 0);
 }
 
 TEST_F(TestGridQuery, UnsupportedBufferThrows) {

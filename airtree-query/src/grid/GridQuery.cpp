@@ -9,6 +9,8 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <vector>
 
@@ -16,6 +18,15 @@ using namespace airtree::core::io;
 using namespace airtree::core::common;
 
 namespace airtree::query::grid {
+
+// Per-axis data extent, computed at most once. Held behind a pointer in
+// GridQuery so the once_flag does not make GridQuery non-movable.
+struct ExtentCache {
+  std::once_flag        once;
+  std::array<double, 4> min{};
+  std::array<double, 4> max{};
+  std::array<bool, 4>   has{};
+};
 
 namespace {
 
@@ -64,6 +75,11 @@ BinTable buildBinTable() {
   return t;
 }
 
+const BinTable &binTable() {
+  static const BinTable table = buildBinTable();
+  return table;
+}
+
 // ---------------------------------------------------------------------------
 // Visitor over the deserialized trie nodes. Emits, per populated bin, one
 // AxisBin per axis plus the count. Records where any axis is NaN are skipped.
@@ -76,31 +92,70 @@ struct AxisBin {
   double      value = 0.0;    // bin value (Finite), 0 (Zero), or +/-inf
 };
 
-bool tleHasNaN(const DimensionInfoVector &dims) {
-  for (const auto &d : dims) {
-    if (d.isSpecial && d.valueType == TLEValueType::NaN) {
-      return true;
+// One axis's decoded top-level encoding.
+struct AxisTle {
+  bool         special;
+  TLEValueType type;
+  uint32_t     prefix; // sign/exponent-sign prefix for finite axes
+};
+
+// A whole combined TLE decoded once.
+struct TleEntry {
+  std::array<AxisTle, 4> axes{};
+  int  specialCount = 0;
+  bool hasNaN = false;
+};
+
+std::vector<TleEntry> buildTleTable(int D) {
+  std::vector<TleEntry> table(static_cast<size_t>(1) << (3 * D));
+  for (size_t tle = 0; tle < table.size(); ++tle) {
+    auto res =
+        deconstructTLE(static_cast<uint32_t>(tle), static_cast<uint32_t>(D));
+    TleEntry &e = table[tle];
+    e.specialCount = static_cast<int>(res.specialCount);
+    for (int i = 0; i < D; ++i) {
+      const auto &di = res.dimensionInfos[static_cast<size_t>(i)];
+      e.axes[static_cast<size_t>(i)] = {di.isSpecial, di.valueType, di.prefix};
+      if (di.isSpecial && di.valueType == TLEValueType::NaN) {
+        e.hasNaN = true;
+      }
     }
   }
-  return false;
+  return table;
+}
+
+// Every combined TLE decoded once via the canonical deconstructTLE and cached, so
+// there is no second decode to drift and the per-node lookup is O(1) with no
+// allocation.
+const TleEntry &tleEntry(int D, uint32_t tle) {
+  if (D == 2) {
+    static const std::vector<TleEntry> t = buildTleTable(2);
+    return t[tle];
+  }
+  if (D == 3) {
+    static const std::vector<TleEntry> t = buildTleTable(3);
+    return t[tle];
+  }
+  static const std::vector<TleEntry> t = buildTleTable(4);
+  return t[tle];
 }
 
 template <class Cb>
-void emitRecord(int D, const DimensionInfoVector &dims, const uint32_t *chunks,
-                const BinTable &bt, uint64_t count, Cb &cb) {
+void emitRecord(int D, const std::array<AxisTle, 4> &dims,
+                const uint32_t *chunks, const BinTable &bt, uint64_t count,
+                Cb &cb) {
   std::array<AxisBin, 4> axes{};
   int ci = 0;
   for (int i = 0; i < D; ++i) {
-    const auto &di = dims[static_cast<size_t>(i)];
+    const AxisTle &di = dims[static_cast<size_t>(i)];
     AxisBin &ax = axes[static_cast<size_t>(i)];
-    if (!di.isSpecial) {
-      uint32_t id12 =
-          (static_cast<uint32_t>(di.prefix) << 10) | (chunks[ci++] & 0x3FFu);
+    if (!di.special) {
+      uint32_t id12 = (di.prefix << 10) | (chunks[ci++] & 0x3FFu);
       ax.kind = AxisBinKind::Finite;
       ax.internal12 = static_cast<uint16_t>(id12);
       ax.value = bt.value[id12];
     } else {
-      switch (di.valueType) {
+      switch (di.type) {
       case TLEValueType::InfPos:
         ax.kind = AxisBinKind::PosInf;
         ax.value = kPosInf;
@@ -162,15 +217,15 @@ void visit2D(const TLEoption3_2D *root, const BinTable &bt, Cb &&cb) {
     if (!root->populated[tle]) {
       continue;
     }
-    auto res = deconstructTLE(static_cast<uint32_t>(tle), 2);
-    if (tleHasNaN(res.dimensionInfos)) {
+    const TleEntry &e = tleEntry(2, static_cast<uint32_t>(tle));
+    if (e.hasNaN) {
       continue;
     }
-    int finiteDims = 2 - static_cast<int>(res.specialCount);
+    int finiteDims = 2 - e.specialCount;
     if (finiteDims == 0) {
       uint32_t c = root->counts[tle];
       if (c > 0) {
-        emitRecord(2, res.dimensionInfos, nullptr, bt, c, cb);
+        emitRecord(2, e.axes, nullptr, bt, c, cb);
       }
       continue;
     }
@@ -186,7 +241,7 @@ void visit2D(const TLEoption3_2D *root, const BinTable &bt, Cb &&cb) {
         }
         uint32_t chunks[1];
         splitChunks(l0, 1, chunks);
-        emitRecord(2, res.dimensionInfos, chunks, bt, c, cb);
+        emitRecord(2, e.axes, chunks, bt, c, cb);
       }
     } else {
       for (size_t l0 = 0; l0 < BINS_1024; ++l0) {
@@ -205,7 +260,7 @@ void visit2D(const TLEoption3_2D *root, const BinTable &bt, Cb &&cb) {
           uint64_t combined = (static_cast<uint64_t>(l0) << 10) | l1;
           uint32_t chunks[2];
           splitChunks(combined, 2, chunks);
-          emitRecord(2, res.dimensionInfos, chunks, bt, c, cb);
+          emitRecord(2, e.axes, chunks, bt, c, cb);
         }
       }
     }
@@ -221,15 +276,15 @@ void visit3D(const TLE_3D_3x10 *root, const BinTable &bt, Cb &&cb) {
     if (!root->populated[tle]) {
       continue;
     }
-    auto res = deconstructTLE(static_cast<uint32_t>(tle), 3);
-    if (tleHasNaN(res.dimensionInfos)) {
+    const TleEntry &e = tleEntry(3, static_cast<uint32_t>(tle));
+    if (e.hasNaN) {
       continue;
     }
-    int finiteDims = 3 - static_cast<int>(res.specialCount);
+    int finiteDims = 3 - e.specialCount;
     if (finiteDims == 0) {
       uint32_t c = root->counts[tle];
       if (c > 0) {
-        emitRecord(3, res.dimensionInfos, nullptr, bt, c, cb);
+        emitRecord(3, e.axes, nullptr, bt, c, cb);
       }
       continue;
     }
@@ -245,7 +300,7 @@ void visit3D(const TLE_3D_3x10 *root, const BinTable &bt, Cb &&cb) {
         }
         uint32_t chunks[1];
         splitChunks(a, 1, chunks);
-        emitRecord(3, res.dimensionInfos, chunks, bt, c, cb);
+        emitRecord(3, e.axes, chunks, bt, c, cb);
       }
       continue;
     }
@@ -266,7 +321,7 @@ void visit3D(const TLE_3D_3x10 *root, const BinTable &bt, Cb &&cb) {
           uint64_t combined = (static_cast<uint64_t>(a) << 10) | b;
           uint32_t chunks[2];
           splitChunks(combined, 2, chunks);
-          emitRecord(3, res.dimensionInfos, chunks, bt, c, cb);
+          emitRecord(3, e.axes, chunks, bt, c, cb);
         }
         continue;
       }
@@ -287,7 +342,7 @@ void visit3D(const TLE_3D_3x10 *root, const BinTable &bt, Cb &&cb) {
                               (static_cast<uint64_t>(b) << 10) | c2;
           uint32_t chunks[3];
           splitChunks(combined, 3, chunks);
-          emitRecord(3, res.dimensionInfos, chunks, bt, c, cb);
+          emitRecord(3, e.axes, chunks, bt, c, cb);
         }
       }
     }
@@ -303,15 +358,15 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
     if (!root->populated[tle]) {
       continue;
     }
-    auto res = deconstructTLE(static_cast<uint32_t>(tle), 4);
-    if (tleHasNaN(res.dimensionInfos)) {
+    const TleEntry &e = tleEntry(4, static_cast<uint32_t>(tle));
+    if (e.hasNaN) {
       continue;
     }
-    int finiteDims = 4 - static_cast<int>(res.specialCount);
+    int finiteDims = 4 - e.specialCount;
     if (finiteDims == 0) {
       uint32_t c = root->counts[tle];
       if (c > 0) {
-        emitRecord(4, res.dimensionInfos, nullptr, bt, c, cb);
+        emitRecord(4, e.axes, nullptr, bt, c, cb);
       }
       continue;
     }
@@ -327,7 +382,7 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
         }
         uint32_t chunks[1];
         splitChunks(a, 1, chunks);
-        emitRecord(4, res.dimensionInfos, chunks, bt, c, cb);
+        emitRecord(4, e.axes, chunks, bt, c, cb);
       }
       continue;
     }
@@ -348,7 +403,7 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
           uint64_t combined = (static_cast<uint64_t>(a) << 10) | b;
           uint32_t chunks[2];
           splitChunks(combined, 2, chunks);
-          emitRecord(4, res.dimensionInfos, chunks, bt, c, cb);
+          emitRecord(4, e.axes, chunks, bt, c, cb);
         }
         continue;
       }
@@ -370,7 +425,7 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
                                 (static_cast<uint64_t>(b) << 10) | c3;
             uint32_t chunks[3];
             splitChunks(combined, 3, chunks);
-            emitRecord(4, res.dimensionInfos, chunks, bt, c, cb);
+            emitRecord(4, e.axes, chunks, bt, c, cb);
           }
           continue;
         }
@@ -392,11 +447,24 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
                                 (static_cast<uint64_t>(c3) << 10) | d4;
             uint32_t chunks[4];
             splitChunks(combined, 4, chunks);
-            emitRecord(4, res.dimensionInfos, chunks, bt, c, cb);
+            emitRecord(4, e.axes, chunks, bt, c, cb);
           }
         }
       }
     }
+  }
+}
+
+// Walk the populated bins of whichever supported trie the buffer holds.
+template <class Cb>
+void dispatchVisit(int dims, const AirTreeType &node, const BinTable &bt,
+                   Cb &&cb) {
+  if (dims == 2) {
+    visit2D(node.borrow<TLEoption3_2D>(), bt, cb);
+  } else if (dims == 3) {
+    visit3D(node.borrow<TLE_3D_3x10>(), bt, cb);
+  } else if (dims == 4) {
+    visit4D(node.borrow<TLE_4D_4x10>(), bt, cb);
   }
 }
 
@@ -737,6 +805,38 @@ GridQuery::GridQuery(std::vector<char> buffer) {
   bit_length_ = reader.getBitLength();
   trie_node_ = reader.getType();
   header_ = reader.getHeader();
+  extent_ = std::make_shared<ExtentCache>();
+}
+
+void GridQuery::ensureExtent() const {
+  std::call_once(extent_->once, [&]() {
+    extent_->min.fill(kPosInf);
+    extent_->max.fill(kNegInf);
+    extent_->has.fill(false);
+    if (!((dims_ == 2 || dims_ == 3 || dims_ == 4) &&
+          bit_length_ == kBitLength)) {
+      return;
+    }
+    const BinTable &bt = binTable();
+    auto extentCb = [&](const std::array<AxisBin, 4> &ab, int d, uint64_t) {
+      for (int i = 0; i < d; ++i) {
+        const AxisBin &a = ab[static_cast<size_t>(i)];
+        double v;
+        if (a.kind == AxisBinKind::Finite) {
+          v = a.value;
+        } else if (a.kind == AxisBinKind::Zero) {
+          v = 0.0;
+        } else {
+          continue; // infinities do not contribute to the finite extent
+        }
+        size_t s = static_cast<size_t>(i);
+        extent_->has[s] = true;
+        extent_->min[s] = std::min(extent_->min[s], v);
+        extent_->max[s] = std::max(extent_->max[s], v);
+      }
+    };
+    dispatchVisit(dims_, trie_node_, bt, extentCb);
+  });
 }
 
 GridResult GridQuery::getGrid(const std::vector<GridAxisSpec> &axes,
@@ -751,6 +851,7 @@ GridResult GridQuery::getGrid(const std::vector<GridAxisSpec> &axes,
   if (max_cells == 0) {
     throw std::invalid_argument("max_cells must be greater than 0");
   }
+  bool needs_extent = false;
   for (const auto &a : axes) {
     if (a.steps == 0) {
       throw std::invalid_argument("steps must be greater than 0");
@@ -769,38 +870,38 @@ GridResult GridQuery::getGrid(const std::vector<GridAxisSpec> &axes,
             "end greater than start");
       }
     }
+    if ((std::isinf(a.min) && a.min < 0.0) ||
+        (std::isinf(a.max) && a.max > 0.0)) {
+      needs_extent = true;
+    }
   }
 
-  BinTable bt = buildBinTable();
+  // Only resolving an infinite endpoint needs the data extent; finite-only
+  // queries never walk the trie for it.
+  if (needs_extent) {
+    ensureExtent();
+  }
 
-  auto run = [&](auto &&cb) {
-    if (dims_ == 2) {
-      visit2D(trie_node_.borrow<TLEoption3_2D>(), bt, cb);
-    } else if (dims_ == 3) {
-      visit3D(trie_node_.borrow<TLE_3D_3x10>(), bt, cb);
-    } else {
-      visit4D(trie_node_.borrow<TLE_4D_4x10>(), bt, cb);
-    }
-  };
-
-  // First pass: per-axis finite data extent (for infinite endpoints).
-  std::array<Extent, 4> extent;
-  auto extentCb = [&](const std::array<AxisBin, 4> &ab, int d, uint64_t) {
-    for (int i = 0; i < d; ++i) {
-      if (ab[static_cast<size_t>(i)].kind == AxisBinKind::Finite) {
-        extent[static_cast<size_t>(i)].add(ab[static_cast<size_t>(i)].value);
-      } else if (ab[static_cast<size_t>(i)].kind == AxisBinKind::Zero) {
-        extent[static_cast<size_t>(i)].add(0.0);
-      }
-    }
-  };
-  run(extentCb);
+  const BinTable &bt = binTable();
 
   std::vector<AxisModel> models;
   models.reserve(static_cast<size_t>(dims_));
   for (int d = 0; d < dims_; ++d) {
-    models.push_back(buildAxisModel(axes[static_cast<size_t>(d)], bt,
-                                    extent[static_cast<size_t>(d)]));
+    size_t s = static_cast<size_t>(d);
+    const GridAxisSpec &a = axes[s];
+    Extent ext;
+    // The cache is only read for axes with an infinite endpoint. Those queries
+    // ran ensureExtent() above (so the read synchronizes via call_once); a
+    // finite axis never touches the cache, and buildAxisModel ignores ext for
+    // finite endpoints anyway.
+    bool axis_inf = (std::isinf(a.min) && a.min < 0.0) ||
+                    (std::isinf(a.max) && a.max > 0.0);
+    if (axis_inf) {
+      ext.min = extent_->min[s];
+      ext.max = extent_->max[s];
+      ext.has = extent_->has[s];
+    }
+    models.push_back(buildAxisModel(a, bt, ext));
   }
 
   // Project the cell count with overflow-safe multiplication before allocating.
@@ -843,7 +944,7 @@ GridResult GridQuery::getGrid(const std::vector<GridAxisSpec> &axes,
     }
     counts[idx] += cnt;
   };
-  run(bucketCb);
+  dispatchVisit(dims_, trie_node_, bt, bucketCb);
 
   result.counts = std::move(counts);
   return result;
