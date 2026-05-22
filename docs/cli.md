@@ -27,6 +27,7 @@ see [Installation](install.md) for how to put them on your `$PATH`.
   - [Percentile](#percentile)
   - [Min / Max Count](#min--max-count)
   - [Min / Max Value](#min--max-value)
+  - [Grid](#grid)
 - [`airtree-export`](#airtree-export)
 - [`airtree-merge`](#airtree-merge)
 
@@ -172,10 +173,12 @@ airtree generate binary \
 All queries operate directly on a generated `.airtree` histogram. They are extremely
 fast — the trie is parsed in place.
 
-> **CLI queries are 1D-only.** All subcommands listed below currently support only
-> 1D histograms (`1DxT`, `1DxF`, `1DxP`). Running them on a 2D / 3D / 4D histogram
-> throws at runtime with *"Unsupported dimensions or bit length."* For
-> multi-dimensional range queries, use the C++
+> **Most CLI queries are 1D-only.** The scalar subcommands (`topk`, `min_count`,
+> `max_count`, `min_value`, `max_value`, `percentile`) support only 1D histograms
+> (`1DxT`, `1DxF`, `1DxP`) and throw *"Unsupported dimensions or bit length."* on a
+> 2D / 3D / 4D buffer. The exception is [`grid`](#grid), which queries the
+> multi-dimensional Precise variants (`2DxP`, `3DxP`, `4DxP`). For 2D / 3D
+> point-range counts there is also the C++
 > [`BoundingBox`](cpp-api.md#boundingbox-2d--3d) API.
 
 ```bash
@@ -190,6 +193,7 @@ airtree query <subcommand> [options]
 | `min_value`   | Smallest value present in the histogram                                                                  | `-i`, `-o`             |
 | `max_value`   | Largest value present in the histogram                                                                   | `-i`, `-o`             |
 | `percentile`  | Computes a percentile (0 – 100)                                                                          | `-i`, `-o`, `-p`       |
+| `grid`        | Re-binned histogram / heatmap over a region of a `2DxP` / `3DxP` / `4DxP` buffer — see [below](#grid)    | `-i`, `-o`, `-a`       |
 
 **Common flags**
 
@@ -252,6 +256,64 @@ airtree query max_count -i histogram.airtree -o max_count.txt
 ```bash
 airtree query min_value -i histogram.airtree -o min_value.txt
 airtree query max_value -i histogram.airtree -o max_value.txt
+```
+
+### Grid
+
+The only multi-dimensional CLI query. It subdivides a region into a grid of
+non-overlapping cells and writes one CSV row per cell — a 2D heatmap or 3D / 4D
+cube at a resolution you choose. Supported on `2DxP`, `3DxP`, and `4DxP`
+buffers.
+
+```bash
+# 2D heatmap: x in [0,100] split into 4, y in [0,50] split into 2
+airtree query grid \
+  -i sales.airtree \
+  -o grid.csv \
+  -a 0:100:4 \
+  -a 0:50:2
+```
+
+Pass one `-a/--axis` per dimension (the count must match the buffer's
+dimensionality), each formatted as `min:max:steps[:scaling]`:
+
+- `min` / `max` — the axis range. Use `inf` / `-inf` for an open end; the grid
+  then starts/ends at the data extent and surfaces the infinity as its own row.
+- `steps` — number of partitions to split the finite range into.
+- `scaling` (optional) — `linear` (default, equal-width steps) or `mult`
+  (geometric / log-spaced steps; requires a strictly positive range).
+
+Other flags:
+
+- `--max-cells` — guard on the total number of output cells (default
+  `1000000`); the query throws rather than allocate beyond it.
+
+**Output.** A CSV carrying the full interval semantics per dimension, then the
+count. Each dimension contributes six columns: `dimN_min`, `dimN_max`,
+`dimN_min_inclusive`, `dimN_max_inclusive`, `dimN_kind`, `dimN_is_edge`.
+
+```
+dim0_min,dim0_max,dim0_min_inclusive,dim0_max_inclusive,dim0_kind,dim0_is_edge,dim1_min,dim1_max,dim1_min_inclusive,dim1_max_inclusive,dim1_kind,dim1_is_edge,count
+0,25,true,false,finite,false,0,25,true,false,finite,false,239
+0,25,true,false,finite,false,25,50,true,false,finite,false,256
+...
+```
+
+- `min` / `max` — snapped to the histogram's internal bin edges (so they may not
+  equal the exact requested values).
+- `min_inclusive` / `max_inclusive` — native inclusivity (positive bins
+  `[lo, hi)`, negative `(lo, hi]`).
+- `kind` — `finite`, `-inf`, or `+inf` (the infinity rows appear when an axis end
+  is `inf` / `-inf`).
+- `is_edge` — `true` for a bin straddling the requested `min` / `max`, reported
+  with its full count so you can pro-rate it.
+
+Empty cells are included.
+
+```bash
+# 3D, with an open upper end on z and log-spaced x
+airtree query grid -i cube.airtree -o cube.csv \
+  -a 1:1000:5:mult -a 0:50:10 -a 0:inf:4
 ```
 
 ---

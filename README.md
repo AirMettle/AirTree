@@ -57,8 +57,9 @@ sudo dpkg -i cmake-build-*/airtree-*-Linux.deb
 export PATH="/opt/airmettle/airtree/<version>/bin:$PATH"
 ```
 
-Generate a 1D histogram and run a query on it (CLI queries are currently 1D-only — see
-[CLI Reference → `airtree query`](docs/cli.md#airtree-query)):
+Generate a 1D histogram and run a query on it (the scalar CLI queries are 1D-only;
+the multi-dimensional [`grid`](docs/cli.md#grid) query covers `2DxP` / `3DxP` /
+`4DxP` — see [CLI Reference → `airtree query`](docs/cli.md#airtree-query)):
 
 ```bash
 # Build a 1D histogram over a single column
