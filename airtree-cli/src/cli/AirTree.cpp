@@ -1,11 +1,13 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -384,4 +386,78 @@ void AirTree::percentile_handler(float percentile_value) {
     return;
   }
   SPDLOG_LOGGER_INFO(logger(), "Percentile: ({})", percentile_result);
+}
+
+bool AirTree::grid_handler(
+    const std::vector<airtree::query::grid::GridAxisSpec> &axes,
+    uint64_t max_cells) {
+  using namespace airtree::query::grid;
+
+  GridResult result;
+  try {
+    GridQuery grid(histogram_buffer_);
+    result = grid.getGrid(axes, max_cells);
+  } catch (const std::exception &ex) {
+    SPDLOG_LOGGER_ERROR(logger(), "Grid query failed: {}", ex.what());
+    return false;
+  }
+
+  std::ofstream out(result_file_);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Could not open output file: {}", result_file_);
+    return false;
+  }
+  // Full precision so snapped internal bin boundaries round-trip exactly.
+  out << std::setprecision(std::numeric_limits<double>::max_digits10);
+
+  auto kind_str = [](IntervalKind k) -> const char * {
+    switch (k) {
+    case IntervalKind::NegInf:
+      return "-inf";
+    case IntervalKind::PosInf:
+      return "+inf";
+    case IntervalKind::Finite:
+    default:
+      return "finite";
+    }
+  };
+
+  // CSV header: the full interval semantics per dimension, plus the count.
+  for (uint16_t d = 0; d < result.dims; ++d) {
+    out << "dim" << d << "_min,dim" << d << "_max,dim" << d
+        << "_min_inclusive,dim" << d << "_max_inclusive,dim" << d << "_kind,dim"
+        << d << "_is_edge,";
+  }
+  out << "count\n";
+
+  // Stream one row per cell, decoding the flat row-major index back into a
+  // per-axis partition index. Done in place to avoid materializing every cell.
+  auto shape = result.shape();
+  for (std::size_t idx = 0; idx < result.counts.size(); ++idx) {
+    std::size_t rem = idx;
+    std::array<std::size_t, 4> p{};
+    for (std::size_t d = shape.size(); d-- > 0;) {
+      std::size_t n = shape[d];
+      p[d] = (n == 0) ? 0 : rem % n;
+      rem = (n == 0) ? 0 : rem / n;
+    }
+    for (uint16_t d = 0; d < result.dims; ++d) {
+      const auto &iv = result.axis_intervals[d][p[d]];
+      out << iv.lower << "," << iv.upper << ","
+          << (iv.lower_inclusive ? "true" : "false") << ","
+          << (iv.upper_inclusive ? "true" : "false") << "," << kind_str(iv.kind)
+          << "," << (iv.is_edge ? "true" : "false") << ",";
+    }
+    out << result.counts[idx] << "\n";
+  }
+  out.close();
+  if (!out) { // catches write/flush failures (e.g. disk full)
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write output file: {}", result_file_);
+    return false;
+  }
+  SPDLOG_LOGGER_INFO(logger(), "Grid query complete: {} cells written to {}",
+                     result.counts.size(), result_file_);
+  return true;
 }

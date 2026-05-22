@@ -48,6 +48,10 @@ public:
   void parquet_handler();
   void csv_handler();
   void percentile_handler(float percentile_value);
+  // Returns false if the query or writing the output failed.
+  [[nodiscard]] bool grid_handler(
+      const std::vector<airtree::query::grid::GridAxisSpec> &axes,
+      uint64_t max_cells);
 
 private:
   std::vector<char> histogram_buffer_;
