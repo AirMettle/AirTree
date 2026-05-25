@@ -333,8 +333,9 @@ TEST_F(CSVReaderTest, MultiChunkLargeFile) {
   ASSERT_NE(vec, nullptr);
   ASSERT_EQ(vec->size(), static_cast<size_t>(kRows))
       << "All rows must be read across every Arrow block";
+  const int64_t mid = kRows / 2; // exact: kRows is even
   EXPECT_DOUBLE_EQ(vec->front(), 0.5);
-  EXPECT_DOUBLE_EQ((*vec)[kRows / 2], static_cast<double>(kRows / 2) + 0.5);
+  EXPECT_DOUBLE_EQ((*vec)[mid], static_cast<double>(mid) + 0.5);
   EXPECT_DOUBLE_EQ(vec->back(), static_cast<double>(kRows - 1) + 0.5);
 
   std::filesystem::remove(filepath);
