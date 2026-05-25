@@ -2,7 +2,11 @@
 
 #include <gtest/gtest.h>
 #include <airtree/reader/file/Reader.hpp>
+#include <arrow/api.h>
+#include <arrow/io/file.h>
+#include <parquet/arrow/writer.h>
 #include <filesystem>
+#include <memory>
 #include <vector>
 #include <variant>
 
@@ -241,4 +245,44 @@ TEST_F(ParquetReaderTest, EmptyColumnList) {
 
   // Behavior depends on implementation - typically returns empty for parquet
   // without columns This test documents the current behavior
+}
+
+// Regression: a Parquet column spanning multiple row groups is returned as a
+// multi-chunk array. The reader must concatenate every chunk; 
+TEST_F(ParquetReaderTest, MultiRowGroupLargeFile) {
+  std::string filepath = testdata_dir + "/large_multichunk.parquet";
+  const int64_t kRows = 50000;
+  const int64_t kRowGroup = 10000; // 5 row groups -> multi-chunk column
+
+  arrow::DoubleBuilder builder;
+  ASSERT_TRUE(builder.Reserve(kRows).ok());
+  for (int64_t i = 0; i < kRows; ++i) {
+    ASSERT_TRUE(builder.Append(static_cast<double>(i) + 0.5).ok());
+  }
+  std::shared_ptr<arrow::Array> array;
+  ASSERT_TRUE(builder.Finish(&array).ok());
+
+  auto schema = arrow::schema({arrow::field("value", arrow::float64())});
+  auto table = arrow::Table::Make(schema, {array});
+
+  std::shared_ptr<arrow::io::FileOutputStream> outfile;
+  ASSERT_TRUE(arrow::io::FileOutputStream::Open(filepath).Value(&outfile).ok());
+  ASSERT_TRUE(parquet::arrow::WriteTable(*table, arrow::default_memory_pool(),
+                                         outfile, kRowGroup)
+                  .ok());
+  ASSERT_TRUE(outfile->Close().ok());
+
+  std::vector<std::string> columns = {"value"};
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_PARQUET,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
+
+  ASSERT_EQ(data.size(), 1);
+  auto *vec = std::get_if<std::vector<double>>(&data[0]);
+  ASSERT_NE(vec, nullptr);
+  ASSERT_EQ(vec->size(), static_cast<size_t>(kRows))
+      << "All rows must be read across every Parquet row group";
+  EXPECT_DOUBLE_EQ(vec->front(), 0.5);
+  EXPECT_DOUBLE_EQ(vec->back(), static_cast<double>(kRows - 1) + 0.5);
+
+  std::filesystem::remove(filepath);
 }

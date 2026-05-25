@@ -19,6 +19,7 @@ of public headers under `<airtree/...>`.
   - [CDF](#cdf)
   - [BoundingBox (2D / 3D)](#boundingbox-2d--3d)
   - [BinBoundary](#binboundary)
+  - [GridQuery](#gridquery)
 - [Export API](#export-api)
 - [Merge API](#merge-api)
 - [Reader API](#reader-api)
@@ -37,6 +38,7 @@ of public headers under `<airtree/...>`.
 | `<airtree/query/cdf/CDF.hpp>`                       | `airtree::query::cdf`                | Cumulative distribution function            |
 | `<airtree/query/bounding-box/BoundingBox.hpp>`      | `airtree::query::bounding_box`       | 2D / 3D range counting                      |
 | `<airtree/query/bin-boundary/BinBoundary.hpp>`      | `airtree::query::bin_boundary`       | Enumerate bin boundaries from a buffer      |
+| `<airtree/query/grid/GridQuery.hpp>`                | `airtree::query::grid`               | Grid (re-binned histogram / heatmap) queries |
 | `<airtree/export/AirTreeExporter.hpp>`              | `airtree::xport`                     | Export buffers to Arrow / Parquet / CSV     |
 | `<airtree/merge/AirTreeMerge.hpp>`                  | `airtree::merge`                     | Merge two compatible histograms             |
 | `<airtree/reader/file/Reader.hpp>`                  | `airtree::reader::file`              | Read Parquet / binary files into arrays     |
@@ -367,6 +369,68 @@ if (std::holds_alternative<bb_ns::BinBoundary2DList>(*boundaries_ptr)) {
 
 This is the same machinery the [Export API](#export-api) uses internally; you
 only need it if you want bin edges without converting to Arrow / Parquet / CSV.
+
+### GridQuery
+
+> **Supported configs:** `2DxP`, `3DxP`, `4DxP`. 1D buffers and the `Fast`
+> variants throw.
+
+The multi-dimensional counterpart to a single `BoundingBox` count: instead of
+one box you give one region per dimension plus a step count and scaling, and get
+back a grid of non-overlapping cells, each with a count — a re-binned histogram
+/ heatmap / cube over the region.
+
+```cpp
+#include <airtree/query/grid/GridQuery.hpp>
+
+namespace grid = airtree::query::grid;
+
+grid::GridQuery gq(histogram_buffer);   // 2DxP / 3DxP / 4DxP buffer
+
+std::vector<grid::GridAxisSpec> axes = {
+    { /*min*/ 0.0, /*max*/ 100.0, /*steps*/ 4, grid::GridScaling::Linear },
+    { /*min*/ 0.0, /*max*/ 50.0,  /*steps*/ 2, grid::GridScaling::Linear },
+};
+
+// optional second argument: max_cells guard (default 1'000'000)
+grid::GridResult res = gq.getGrid(axes);
+```
+
+`GridAxisSpec` (one per dimension; the count must match the buffer's
+dimensionality):
+
+- `min` / `max` — the axis range. `±inf` opens that end at the data extent and
+  surfaces the infinity as its own partition.
+- `steps` — partitions to split the finite range into.
+- `scaling` — `Linear` (equal-width) or `Multiplicative` (geometric / log-spaced;
+  requires a strictly positive resolved interior, else throws).
+
+`GridResult`:
+
+- `axis_intervals[d]` — the partitions on dimension `d`. Each `GridInterval` has
+  `kind` (`Finite` / `NegInf` / `PosInf`), `lower`, `upper`, `lower_inclusive`,
+  `upper_inclusive`, and `is_edge` (a single bin straddling the requested
+  `min`/`max`).
+- `counts` — a flat, **row-major (mixed-radix)** array of cell counts;
+  `counts.size()` equals the product of the per-axis partition counts.
+- `shape()` returns the per-axis partition counts; `materializeRows()` expands
+  the flat array into one `GridCell { bounds, count }` per cell (including empty
+  cells).
+
+```cpp
+// read cell (px, py) of a 2D result
+std::size_t ny = res.axis_intervals[1].size();
+uint64_t c = res.counts[px * ny + py];
+```
+
+**Semantics.** Cell bounds snap to the histogram's internal bin edges, so
+reported bounds may differ slightly from the requested values and follow the
+native inclusivity (positive bins `[lo, hi)`, negative `(lo, hi]`). A bin
+straddling the requested `min`/`max` is surfaced as its own `is_edge` row with
+its full count, so the caller can pro-rate it. Zero routes into the finite
+partition containing it; NaN is excluded. `getGrid` throws
+`std::invalid_argument` on malformed axes and `std::runtime_error` on an
+unsupported buffer or if the projected cell count exceeds `max_cells`.
 
 ---
 
