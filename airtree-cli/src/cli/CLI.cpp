@@ -196,9 +196,12 @@ int main(int argc, char *argv[]) {
   topk->callback([&]() {
     AirTree airtree_cli(histogram_file, result_file);
     if (!airtree_cli.read_histogram_file()) {
+      exit_code = 1;
       return;
     }
-    airtree_cli.topk_handler(topk_value);
+    if (!airtree_cli.topk_handler(topk_value)) {
+      exit_code = 1;
+    }
   });
 
   auto minCount =
@@ -211,9 +214,12 @@ int main(int argc, char *argv[]) {
   minCount->callback([&]() {
     AirTree airtree_cli(histogram_file, result_file);
     if (!airtree_cli.read_histogram_file()) {
+      exit_code = 1;
       return;
     }
-    airtree_cli.min_count_handler();
+    if (!airtree_cli.min_count_handler()) {
+      exit_code = 1;
+    }
   });
 
   auto maxCount =
@@ -226,9 +232,12 @@ int main(int argc, char *argv[]) {
   maxCount->callback([&]() {
     AirTree airtree_cli(histogram_file, result_file);
     if (!airtree_cli.read_histogram_file()) {
+      exit_code = 1;
       return;
     }
-    airtree_cli.max_count_handler();
+    if (!airtree_cli.max_count_handler()) {
+      exit_code = 1;
+    }
   });
 
   auto minValue =
@@ -241,9 +250,12 @@ int main(int argc, char *argv[]) {
   minValue->callback([&]() {
     AirTree airtree_cli(histogram_file, result_file);
     if (!airtree_cli.read_histogram_file()) {
+      exit_code = 1;
       return;
     }
-    airtree_cli.min_value_handler();
+    if (!airtree_cli.min_value_handler()) {
+      exit_code = 1;
+    }
   });
 
   auto maxValue =
@@ -256,9 +268,12 @@ int main(int argc, char *argv[]) {
   maxValue->callback([&]() {
     AirTree airtree_cli(histogram_file, result_file);
     if (!airtree_cli.read_histogram_file()) {
+      exit_code = 1;
       return;
     }
-    airtree_cli.max_value_handler();
+    if (!airtree_cli.max_value_handler()) {
+      exit_code = 1;
+    }
   });
 
   float percentile_input = 0.0;
@@ -274,9 +289,12 @@ int main(int argc, char *argv[]) {
   percentile->callback([&]() {
     AirTree airtree_cli(histogram_file, result_file);
     if (!airtree_cli.read_histogram_file()) {
+      exit_code = 1;
       return;
     }
-    airtree_cli.percentile_handler(percentile_input);
+    if (!airtree_cli.percentile_handler(percentile_input)) {
+      exit_code = 1;
+    }
   });
 
   auto grid = query->add_subcommand(

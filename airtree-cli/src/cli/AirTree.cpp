@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <limits>
 #include <string>
+#include <tuple>
 #include <vector>
 #include <fstream>
 
@@ -143,74 +144,90 @@ std::vector<char> AirTree::generate_buffer() {
   return buffer;
 }
 
-void AirTree::min_count_handler() {
+bool AirTree::write_bins_csv(
+    const std::string &query_name,
+    const std::vector<std::tuple<double, double, uint64_t>> &rows) {
+  std::ofstream out(result_file_);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Could not open output file: {}", result_file_);
+    return false;
+  }
+  // Full precision so bin boundaries round-trip exactly.
+  out << std::setprecision(std::numeric_limits<double>::max_digits10);
+  out << "lower,upper,count\n";
+  for (const auto &[lower, upper, count] : rows) {
+    out << lower << "," << upper << "," << count << "\n";
+  }
+  out.close();
+  if (!out) { // catches write/flush failures (e.g. disk full)
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write output file: {}", result_file_);
+    return false;
+  }
+  SPDLOG_LOGGER_INFO(logger(), "{} complete: {} bins written to {}", query_name,
+                     rows.size(), result_file_);
+  return true;
+}
+
+bool AirTree::min_count_handler() {
   auto min_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto query_result = min_query.getMin();
-  if (query_result.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for minCount query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(query_result.size());
   for (const auto &result : query_result) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("min_count query", rows);
 }
 
-void AirTree::max_count_handler() {
+bool AirTree::max_count_handler() {
   auto max_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto max_query_res = max_query.getMax();
-  if (max_query_res.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for maxCount query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(max_query_res.size());
   for (const auto &result : max_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("max_count query", rows);
 }
 
-void AirTree::min_value_handler() {
+bool AirTree::min_value_handler() {
   auto min_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto min_query_res = min_query.getMinValue();
-  if (min_query_res.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for minValue query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(min_query_res.size());
   for (const auto &result : min_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("min_value query", rows);
 }
 
-void AirTree::max_value_handler() {
+bool AirTree::max_value_handler() {
   auto max_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto max_query_res = max_query.getMaxValue();
-  if (max_query_res.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for maxValue query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(max_query_res.size());
   for (const auto &result : max_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("max_value query", rows);
 }
 
-void AirTree::topk_handler(float topk_value) {
+bool AirTree::topk_handler(float topk_value) {
   auto topk_query = airtree::query::topk::TopK(histogram_buffer_);
   auto query_result = topk_query.getTopK(topk_value);
-  if (query_result.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for topK query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(query_result.size());
   for (const auto &result : query_result) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getCount());
   }
+  return write_bins_csv("topk query", rows);
 }
 
 bool AirTree::read_input_file(const std::string &file_path,
@@ -378,14 +395,31 @@ void AirTree::csv_handler() {
   }
 }
 
-void AirTree::percentile_handler(float percentile_value) {
+bool AirTree::percentile_handler(float percentile_value) {
   auto percentile = query::percentile::Percentile(histogram_buffer_);
   auto percentile_result = percentile.getPercentile(percentile_value);
   if (percentile_result == -std::numeric_limits<float>::infinity()) {
     SPDLOG_LOGGER_INFO(logger(), "No results found for percentile query.");
-    return;
   }
-  SPDLOG_LOGGER_INFO(logger(), "Percentile: ({})", percentile_result);
+
+  std::ofstream out(result_file_);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Could not open output file: {}", result_file_);
+    return false;
+  }
+  out << std::setprecision(std::numeric_limits<double>::max_digits10);
+  out << "percentile,value\n";
+  out << percentile_value << "," << percentile_result << "\n";
+  out.close();
+  if (!out) { 
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write output file: {}", result_file_);
+    return false;
+  }
+  SPDLOG_LOGGER_INFO(logger(), "percentile query complete: written to {}",
+                     result_file_);
+  return true;
 }
 
 bool AirTree::grid_handler(
