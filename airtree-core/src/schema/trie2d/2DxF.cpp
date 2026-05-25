@@ -200,7 +200,7 @@ std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
 std::vector<char>
 execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
                  std::unique_ptr<SpecialCounts> &specialCounts,
-                 bool default_mode) {
+                 [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_2D_Fast, {}, 0,
       specialCounts->posInfCount, specialCounts->negInfCount,

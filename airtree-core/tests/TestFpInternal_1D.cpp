@@ -132,7 +132,7 @@ TEST_F(CreateAndInsertFPTest, EqualExponent_TestCase3) {
 
   unsigned int expectedIndex8 =
       0b00111100; // Refer FpInternalManualTest.cpp Test Case 2
-  unsigned int expectedIndex5 = 0b00000;
+  [[maybe_unused]] unsigned int expectedIndex5 = 0b00000;
 
   createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
 

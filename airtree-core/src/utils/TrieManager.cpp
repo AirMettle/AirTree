@@ -212,7 +212,7 @@ void TrieManager::insert1DxP(unsigned int index0, unsigned int index1,
 }
 
 void TrieManager::insert2DxP(uint32_t combinedTLE, uint32_t combined20Bits,
-                             uint32_t count) {
+                             [[maybe_unused]] uint32_t count) {
   auto [dimensionInfos, specialCounts] = deconstructTLE(combinedTLE, 2);
 
   // std::cout << "Inserting into 2DxP with combinedTLE: " << combinedTLE
@@ -521,7 +521,7 @@ uint64_t TrieManager::getTrieSize2DxP() const {
 }
 
 std::vector<char>
-TrieManager::MockTrieHeader(int precisionBits, bool default_mode,
+TrieManager::MockTrieHeader(int precisionBits, [[maybe_unused]] bool default_mode,
                             const SpecialCounts &specialCounts) const {
   using namespace airtree::core;
 using namespace airtree::core::common;
@@ -550,7 +550,8 @@ using namespace airtree::core::common;
 }
 
 std::vector<char>
-TrieManager::MockTrieHeader2D(int precisionBits, bool default_mode,
+TrieManager::MockTrieHeader2D(int precisionBits,
+                              [[maybe_unused]] bool default_mode,
                               const SpecialCounts &specialCounts) const {
   using namespace airtree::core;
 using namespace airtree::core::common;
@@ -648,7 +649,8 @@ uint64_t TrieManager::getTrieSize3DxP() const {
 }
 
 std::vector<char>
-TrieManager::MockTrieHeader3D(int precisionBits, bool default_mode,
+TrieManager::MockTrieHeader3D(int precisionBits,
+                              [[maybe_unused]] bool default_mode,
                               const SpecialCounts &specialCounts) const {
 using namespace airtree::core;
 using namespace airtree::core::common;

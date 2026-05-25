@@ -1052,46 +1052,46 @@ void special_append(arrow::DoubleBuilder &builder, unsigned int tle_idx,
   if (dim == 1) {
     std::bitset<3> TLE_dim1 = (tle_idx >> 9) & 0x7;
     if (TLE_dim1 == 0) { // NaN
-      builder.Append(std::numeric_limits<double>::quiet_NaN());
+      (void)builder.Append(std::numeric_limits<double>::quiet_NaN());
     } else if (TLE_dim1 == 1) { // +ve Inf
-      builder.Append(std::numeric_limits<double>::infinity());
+      (void)builder.Append(std::numeric_limits<double>::infinity());
     } else if (TLE_dim1 == 4) { // 0
-      builder.Append(0.0);
+      (void)builder.Append(0.0);
     } else if (TLE_dim1 == 7) { // -ve Inf
-      builder.Append(-std::numeric_limits<double>::infinity());
+      (void)builder.Append(-std::numeric_limits<double>::infinity());
     }
   } else if (dim == 2) {
     std::bitset<3> TLE_dim2 = (tle_idx >> 6) & 0x7;
     if (TLE_dim2 == 0) { // NaN
-      builder.Append(std::numeric_limits<double>::quiet_NaN());
+      (void)builder.Append(std::numeric_limits<double>::quiet_NaN());
     } else if (TLE_dim2 == 1) { // +ve Inf
-      builder.Append(std::numeric_limits<double>::infinity());
+      (void)builder.Append(std::numeric_limits<double>::infinity());
     } else if (TLE_dim2 == 4) { // 0
-      builder.Append(0.0);
+      (void)builder.Append(0.0);
     } else if (TLE_dim2 == 7) { // -ve Inf
-      builder.Append(-std::numeric_limits<double>::infinity());
+      (void)builder.Append(-std::numeric_limits<double>::infinity());
     }
   } else if (dim == 3) {
     std::bitset<3> TLE_dim3 = (tle_idx >> 3) & 0x7;
     if (TLE_dim3 == 0) { // NaN
-      builder.Append(std::numeric_limits<double>::quiet_NaN());
+      (void)builder.Append(std::numeric_limits<double>::quiet_NaN());
     } else if (TLE_dim3 == 1) { // +ve Inf
-      builder.Append(std::numeric_limits<double>::infinity());
+      (void)builder.Append(std::numeric_limits<double>::infinity());
     } else if (TLE_dim3 == 4) { // 0
-      builder.Append(0.0);
+      (void)builder.Append(0.0);
     } else if (TLE_dim3 == 7) { // -ve Inf
-      builder.Append(-std::numeric_limits<double>::infinity());
+      (void)builder.Append(-std::numeric_limits<double>::infinity());
     }
   } else if (dim == 4) {
     std::bitset<3> TLE_dim4 = tle_idx & 0x7;
     if (TLE_dim4 == 0) { // NaN
-      builder.Append(std::numeric_limits<double>::quiet_NaN());
+      (void)builder.Append(std::numeric_limits<double>::quiet_NaN());
     } else if (TLE_dim4 == 1) { // +ve Inf
-      builder.Append(std::numeric_limits<double>::infinity());
+      (void)builder.Append(std::numeric_limits<double>::infinity());
     } else if (TLE_dim4 == 4) { // 0
-      builder.Append(0.0);
+      (void)builder.Append(0.0);
     } else if (TLE_dim4 == 7) { // -ve Inf
-      builder.Append(-std::numeric_limits<double>::infinity());
+      (void)builder.Append(-std::numeric_limits<double>::infinity());
     }
   }
 }
@@ -1751,8 +1751,8 @@ void saveArrowToFile(const std::shared_ptr<arrow::Table> &table,
                      const std::string &output_path) {
   auto outfile = *arrow::io::FileOutputStream::Open(output_path);
   auto writer = *arrow::ipc::MakeFileWriter(outfile.get(), table->schema());
-  writer->WriteTable(*table);
-  writer->Close();
+  PARQUET_THROW_NOT_OK(writer->WriteTable(*table));
+  PARQUET_THROW_NOT_OK(writer->Close());
 }
 
 std::vector<char> readBinaryFile(const std::string &path) {
@@ -1769,9 +1769,9 @@ std::shared_ptr<arrow::Table> handle1D(const BinBoundary1DList &list) {
   arrow::DoubleBuilder builder_x_max;
   arrow::UInt32Builder builder_counts;
   for (const auto &boundary : list) {
-    builder_x_min.Append(boundary.getLowerBound());
-    builder_x_max.Append(boundary.getUpperBound());
-    builder_counts.Append(boundary.getCount());
+    (void)builder_x_min.Append(boundary.getLowerBound());
+    (void)builder_x_max.Append(boundary.getUpperBound());
+    (void)builder_counts.Append(boundary.getCount());
   }
 
   std::shared_ptr<arrow::Array> arr_x_min, arr_x_max, arr_counts;
@@ -1802,11 +1802,11 @@ std::shared_ptr<arrow::Table> handle2D(const BinBoundary2DList &list) {
   arrow::DoubleBuilder builder_y_max;
   arrow::UInt32Builder builder_counts;
   for (const auto &boundary : list) {
-    builder_x_min.Append(boundary.getLowerBoundX());
-    builder_x_max.Append(boundary.getUpperBoundX());
-    builder_y_min.Append(boundary.getLowerBoundY());
-    builder_y_max.Append(boundary.getUpperBoundY());
-    builder_counts.Append(boundary.getCount());
+    (void)builder_x_min.Append(boundary.getLowerBoundX());
+    (void)builder_x_max.Append(boundary.getUpperBoundX());
+    (void)builder_y_min.Append(boundary.getLowerBoundY());
+    (void)builder_y_max.Append(boundary.getUpperBoundY());
+    (void)builder_counts.Append(boundary.getCount());
   }
 
   std::shared_ptr<arrow::Array> arr_x_min, arr_x_max, arr_y_min, arr_y_max,
@@ -1849,13 +1849,13 @@ std::shared_ptr<arrow::Table> handle3D(const BinBoundary3DList &list) {
   arrow::UInt32Builder builder_counts;
   // Handle 3D bin boundaries
   for (const auto &boundary : list) {
-    builder_x_min.Append(boundary.getLowerBoundX());
-    builder_x_max.Append(boundary.getUpperBoundX());
-    builder_y_min.Append(boundary.getLowerBoundY());
-    builder_y_max.Append(boundary.getUpperBoundY());
-    builder_z_min.Append(boundary.getLowerBoundZ());
-    builder_z_max.Append(boundary.getUpperBoundZ());
-    builder_counts.Append(boundary.getCount());
+    (void)builder_x_min.Append(boundary.getLowerBoundX());
+    (void)builder_x_max.Append(boundary.getUpperBoundX());
+    (void)builder_y_min.Append(boundary.getLowerBoundY());
+    (void)builder_y_max.Append(boundary.getUpperBoundY());
+    (void)builder_z_min.Append(boundary.getLowerBoundZ());
+    (void)builder_z_max.Append(boundary.getUpperBoundZ());
+    (void)builder_counts.Append(boundary.getCount());
   }
 
   std::shared_ptr<arrow::Array> arr_x_min, arr_x_max, arr_y_min, arr_y_max,
@@ -1910,15 +1910,15 @@ std::shared_ptr<arrow::Table> handle4D(const BinBoundary4DList &list) {
 
   // Handle 4D bin boundaries
   for (const auto &boundary : list) {
-    builder_x_min.Append(boundary.getLowerBoundX());
-    builder_x_max.Append(boundary.getUpperBoundX());
-    builder_y_min.Append(boundary.getLowerBoundY());
-    builder_y_max.Append(boundary.getUpperBoundY());
-    builder_z_min.Append(boundary.getLowerBoundZ());
-    builder_z_max.Append(boundary.getUpperBoundZ());
-    builder_w_min.Append(boundary.getLowerBoundW());
-    builder_w_max.Append(boundary.getUpperBoundW());
-    builder_counts.Append(boundary.getCount());
+    (void)builder_x_min.Append(boundary.getLowerBoundX());
+    (void)builder_x_max.Append(boundary.getUpperBoundX());
+    (void)builder_y_min.Append(boundary.getLowerBoundY());
+    (void)builder_y_max.Append(boundary.getUpperBoundY());
+    (void)builder_z_min.Append(boundary.getLowerBoundZ());
+    (void)builder_z_max.Append(boundary.getUpperBoundZ());
+    (void)builder_w_min.Append(boundary.getLowerBoundW());
+    (void)builder_w_max.Append(boundary.getUpperBoundW());
+    (void)builder_counts.Append(boundary.getCount());
   }
 
   std::shared_ptr<arrow::Array> arr_x_min, arr_x_max, arr_y_min, arr_y_max,

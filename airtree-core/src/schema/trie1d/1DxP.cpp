@@ -168,7 +168,8 @@ execCreateAndInsert_TrieNode20(SpecialCounts &specialCounts,
 std::vector<char>
 execSerialization_TrieNode20(const std::unique_ptr<TrieNode_20> &root,
                              const SpecialCounts &specialCounts,
-                             uint64_t trieSize, bool default_mode) {
+                             uint64_t trieSize,
+                             [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_1D_Precise, {}, 0,
       specialCounts.posInfCount, specialCounts.negInfCount,

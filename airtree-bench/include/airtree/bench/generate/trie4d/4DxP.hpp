@@ -20,7 +20,7 @@ protected:
   std::unique_ptr<TLE_4D_4x10> airTree4DxP_root;
   std::vector<char> serializedTrie;
 
-  void SetUp(const ::benchmark::State &state) override {
+  void SetUp([[maybe_unused]] const ::benchmark::State &state) override {
     specialCounts = std::make_unique<SpecialCounts>();
     curr_trie_size = 0;
   }
@@ -88,7 +88,7 @@ protected:
     }
   }
 
-  void TearDown(const ::benchmark::State &state) override {
+  void TearDown([[maybe_unused]] const ::benchmark::State &state) override {
     serializedTrie.clear();
   }
 };

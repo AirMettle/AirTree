@@ -20,7 +20,7 @@ protected:
   std::unique_ptr<TLETrieNode_2D> airTree2DxF_root;
   std::vector<char> serializedTrie;
 
-  void SetUp(const ::benchmark::State &state) override {
+  void SetUp([[maybe_unused]] const ::benchmark::State &state) override {
     specialCounts = std::make_unique<SpecialCounts>();
     curr_trie_size = 0;
   }
@@ -81,7 +81,7 @@ protected:
     }
   }
 
-  void TearDown(const ::benchmark::State &state) override {}
+  void TearDown([[maybe_unused]] const ::benchmark::State &state) override {}
 };
 
 } // namespace airtree::bench::generate::trie2D

@@ -114,8 +114,22 @@ void saveArrowToFile(const std::shared_ptr<arrow::Table> &table,
                      const std::string &output_path) {
   auto outfile = *arrow::io::FileOutputStream::Open(output_path);
   auto writer = *arrow::ipc::MakeFileWriter(outfile.get(), table->schema());
-  writer->WriteTable(*table);
-  writer->Close();
+
+  auto write_result = writer->WriteTable(*table);
+  if (!write_result.ok()) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Failed to write Arrow file: {}", write_result.ToString());
+    throw std::runtime_error("Failed to write Arrow file: "
+                             + write_result.ToString());
+  }
+
+  auto close_result = writer->Close();
+  if (!close_result.ok()) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Failed to close Arrow file: {}", close_result.ToString());
+    throw std::runtime_error("Failed to close Arrow file: "
+                             + close_result.ToString());
+  }
 }
 
 } // namespace airtree::xport::writer

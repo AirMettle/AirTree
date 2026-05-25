@@ -145,7 +145,7 @@ TEST(Generate_2d_88, DISABLED_Generate_2d_88_fntest) {
 
 static void verifyHistogramSanity2D(const std::vector<char> &buffer,
                                     const std::vector<double> &dim1,
-                                    const std::vector<double> &dim2) {
+                                    [[maybe_unused]] const std::vector<double> &dim2) {
   BinBoundary query(buffer);
   auto result = query.generateBinBoundaries();
   auto bins = std::get<BinBoundary2DList>(*result.getBoundaries());

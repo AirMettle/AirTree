@@ -162,7 +162,7 @@ TEST_F(TestCDF, TestCDF1DxT_InterpolationVsStep) {
   for (size_t idx = ((n_bins / 2) - 10); idx < ((n_bins / 2) + 10); idx++) {
     auto internal_rep = histogram->getInternalRepresentation(idx);
     uint64_t prefix_8 = (internal_rep >> 5) & 0xFF;
-    uint64_t suffix_5 = internal_rep & 0x1F;
+    [[maybe_unused]] uint64_t suffix_5 = internal_rep & 0x1F;
     trieManager.insert1DxT(prefix_8, 32, DistributionMethod::EVEN);
   }
 
