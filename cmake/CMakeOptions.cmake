@@ -10,6 +10,8 @@ option(PACKAGE_FPH                      "Generate the package for the target sys
 option(BUILD_SHARED_LIBS                "Build shared libraries"                     ON)
 option(AIRMETTLE_AIRTREE_USE_SHARED_LIBS "Use shared libraries for dependencies" OFF)
 
+option(AIRTREE_WARNINGS_AS_ERRORS       "Treat warnings as errors for AirTree code"  ON)
+
 # Sanitizer mode: none, asan, ubsan, asan_ubsan
 set(AIRTREE_SANITIZER "nosan" CACHE STRING "Enable sanitizer instrumentation (nosan, asan, ubsan, asan_ubsan)")
 set_property(CACHE AIRTREE_SANITIZER PROPERTY STRINGS nosan asan ubsan asan_ubsan)
