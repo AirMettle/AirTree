@@ -198,7 +198,13 @@ airtree query <subcommand> [options]
 **Common flags**
 
 - `-i, --input` — path to the generated `.airtree` file
-- `-o, --output` — path to write human-readable results
+- `-o, --output` — path to write the results (CSV)
+
+**Output format.** `topk`, `min_count`, `max_count`, `min_value`, and
+`max_value` write a CSV with a `lower,upper,count` header followed by one row
+per result bin. `percentile` writes a `percentile,value` header and a single
+row. `grid` writes its own multi-column CSV — see [Grid](#grid). Bin bounds are
+written at full `double` precision so they round-trip exactly.
 
 > Currently only the queries listed above are exposed via the CLI. **CDF** and
 > **bounding-box** queries are available through the [C++ library](cpp-api.md#query-apis).
@@ -208,7 +214,7 @@ airtree query <subcommand> [options]
 ```bash
 airtree query topk \
   -i results/sales_2d.airtree \
-  -o results/topk.txt \
+  -o results/topk.csv \
   -k 10.0
 ```
 
@@ -238,7 +244,7 @@ prefer the coarser `xF` variant or post-process exported bin counts.
 ```bash
 airtree query percentile \
   -i results/temp_1d.airtree \
-  -o results/median.txt \
+  -o results/median.csv \
   -p 50.0
 ```
 
@@ -247,15 +253,15 @@ airtree query percentile \
 ### Min / Max Count
 
 ```bash
-airtree query min_count -i histogram.airtree -o min_count.txt
-airtree query max_count -i histogram.airtree -o max_count.txt
+airtree query min_count -i histogram.airtree -o min_count.csv
+airtree query max_count -i histogram.airtree -o max_count.csv
 ```
 
 ### Min / Max Value
 
 ```bash
-airtree query min_value -i histogram.airtree -o min_value.txt
-airtree query max_value -i histogram.airtree -o max_value.txt
+airtree query min_value -i histogram.airtree -o min_value.csv
+airtree query max_value -i histogram.airtree -o max_value.csv
 ```
 
 ### Grid

@@ -70,7 +70,7 @@ airtree generate parquet \
   -c price
 
 # Bins covering the top 10% of count mass (from largest values inward)
-airtree query topk -i price.airtree -o topk.txt -k 10.0
+airtree query topk -i price.airtree -o topk.csv -k 10.0
 ```
 
 Generate a 2D histogram and export it for downstream analysis:
