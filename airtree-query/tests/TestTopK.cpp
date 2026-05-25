@@ -33,7 +33,7 @@ TEST_F(TestTopK, TopK_1DxT_POS_POS) {
   TrieManager trieManager;
 
   // get the root of the trie
-  auto &root_13_ref = trieManager.getRoot1DxT();
+  [[maybe_unused]] auto &root_13_ref = trieManager.getRoot1DxT();
 
   // lets populate the +ve sign +ve exponent quadrant
   uint16_t sign_bit = 0; // +ve sign
@@ -72,8 +72,8 @@ TEST_F(TestTopK, TopK_1DxT_POS_POS) {
   auto topKquery = airtree::query::topk::TopK(buffer);
   auto query_result_vec = topKquery.getTopK(topK);
   auto result_bin = query_result_vec[query_result_vec.size() - 1];
-  double lower_bound = result_bin.getLowerBound();
-  uint32_t result_internal_rep = result_bin.getCount();
+  [[maybe_unused]] double lower_bound = result_bin.getLowerBound();
+  [[maybe_unused]] uint32_t result_internal_rep = result_bin.getCount();
   EXPECT_EQ(expected_topK_bins_count, query_result_vec.size());
 }
 
@@ -85,7 +85,7 @@ TEST_F(TestTopK, TopK_1DxT_POS_NEG) {
   TrieManager trieManager;
 
   // get the root of the trie
-  auto &root_13_ref = trieManager.getRoot1DxT();
+  [[maybe_unused]] auto &root_13_ref = trieManager.getRoot1DxT();
 
   // lets populate the +ve sign +ve exponent quadrant
   uint16_t sign_bit = 0; // +ve sign
@@ -124,8 +124,8 @@ TEST_F(TestTopK, TopK_1DxT_POS_NEG) {
   auto topKquery = airtree::query::topk::TopK(buffer);
   auto query_result_vec = topKquery.getTopK(topK);
   auto result_bin = query_result_vec[query_result_vec.size() - 1];
-  double lower_bound = result_bin.getLowerBound();
-  uint32_t result_internal_rep = result_bin.getCount();
+  [[maybe_unused]] double lower_bound = result_bin.getLowerBound();
+  [[maybe_unused]] uint32_t result_internal_rep = result_bin.getCount();
   EXPECT_EQ(expected_topK_bins_count, query_result_vec.size());
 }
 

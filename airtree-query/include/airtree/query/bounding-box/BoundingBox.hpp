@@ -194,13 +194,6 @@ public:
   BatchBoundingBoxResult
   getCountsBatchSimple(const BatchBoundingBoxInput &queries) const;
 
-  // This is used to get the counts for the bounding box with just xmin and
-  // ymin as inputs. The max values are set to infinity, so the "bounding" box
-  // is unbounded on one end.
-  [[deprecated("Use getCounts() instead.")]]
-  BoxCoordinate2DResultPair
-  getCountsUnbounded(BoundingBoxCoordinate2D box) const;
-
 private:
   BoxCoordinate2DResultPair
   calculateBoundingBox2D(const BoundingBoxCoordinate2D &box) const;

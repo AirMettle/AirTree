@@ -21,7 +21,7 @@ using namespace airtree::core::io;
 // Sentinel for special values not in the Trie
 constexpr uint32_t SPECIAL_VAL_REP = std::numeric_limits<uint32_t>::max();
 
-TopK::TopK(std::vector<char> buffer) : buffer_(std::move(buffer)), offset_(0) {
+TopK::TopK(std::vector<char> buffer) : offset_(0), buffer_(std::move(buffer)) {
 
   AirTreeReader reader;
   reader.read(buffer_);
@@ -169,7 +169,6 @@ template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
       zeros_handled = true;
     }
 
-    const auto &bin = histogram_bins[bin_idx];
     uint64_t internal_rep = histogram_->getInternalRepresentation(bin_idx);
     uint32_t bin_count = getCount<NodeType>(trie_root, internal_rep);
 

@@ -43,8 +43,8 @@ TEST_F(TestBinBoundaries, BuildBinBoundaries1DxF) {
   // Print the bin boundaries for debugging
   auto count_sum = 0;
   for (const auto &boundary : bin_boundaries_1d) {
-    double lower = boundary.getLowerBound();
-    double upper = boundary.getUpperBound();
+    [[maybe_unused]] double lower = boundary.getLowerBound();
+    [[maybe_unused]] double upper = boundary.getUpperBound();
     uint32_t count = boundary.getCount();
     count_sum += count;
   }

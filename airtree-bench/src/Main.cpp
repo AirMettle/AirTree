@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
   std::string result_file;
   std::string histogram_file;
   std::string config_name;
-  bool e2e = false;
+  [[maybe_unused]] bool e2e = false;
 
   auto generate =
       app.add_subcommand("generate", "Generate the histogram buffer");

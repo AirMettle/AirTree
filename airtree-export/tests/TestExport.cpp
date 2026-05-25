@@ -52,7 +52,7 @@ static void DumpVec(const char *label, const std::vector<T> &v) {
   std::cout << "]\n";
 }
 
-static void DumpSchema(const std::shared_ptr<arrow::Table> &t) {
+[[maybe_unused]] static void DumpSchema(const std::shared_ptr<arrow::Table> &t) {
   auto s = t->schema();
   std::cout << "schema: ";
   for (int i = 0; i < t->num_columns(); ++i) {
