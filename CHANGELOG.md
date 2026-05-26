@@ -28,9 +28,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
 ### Fixed
-- CPack `CPACK_RESOURCE_FILE_LICENSE` now resolves to the actual `LICENSE.md`
-  and is set *before* `include(CPack)`, so .deb / .rpm / .tgz packages bundle
-  the license.
+- License file renamed from `LICENSE.md` to plain `LICENSE` (no extension)
+  for broader tool compatibility; content de-markdownified.
+- CPack `CPACK_RESOURCE_FILE_LICENSE` now resolves to the actual `LICENSE`
+  file and is set *before* `include(CPack)`, so .deb / .rpm / .tgz packages
+  bundle the license.
 - Bounding-box / weighted-average-error fixes in `airtree-query`.
 
 ## [1.2.0] - 2026-05-13

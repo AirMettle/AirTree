@@ -121,11 +121,16 @@ auto buffer = airtree::core::api::generate(data);   // 1D, default ConfigType::X
 For full programmatic usage (querying, merging, exporting from C++) see the
 [C++ Library API](docs/cpp-api.md).
 
-## Patent Notice
-This software and related technology are **Patent Pending** in the United States and other jurisdictions.
+## Patent & Licensing
 
-Specific applications include:
-- [U.S. Patent Application Publication No. 2025/0217930 A1](https://patents.google.com/patent/US20250217930A1) — "Compactly Constructing Hierarchical Histograms"
-- Additional patents pending
+**Patent Pending** — U.S. Patent Application Publication No.
+[2025/0217930 A1](https://patents.google.com/patent/US20250217930A1).
 
-All rights reserved pending patent issuance.
+As noted in the [LICENSE](LICENSE) file, this software is provided for
+**non-commercial use only**.
+
+For commercial licensing, support, or enterprise usage, please contact
+**sales@airmettle.com**.
+
+Cloud services powered by this technology are launching in **June 2026**,
+starting with **Azure**.
