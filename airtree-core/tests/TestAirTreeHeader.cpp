@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/ConfigWire.hpp>
 

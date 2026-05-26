@@ -8,6 +8,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra)
+    if(AIRTREE_WARNINGS_AS_ERRORS)
+        add_compile_options(-Werror)
+    endif()
+elseif(MSVC)
+    add_compile_options(/W4)
+    if(AIRTREE_WARNINGS_AS_ERRORS)
+        add_compile_options(/WX)
+    endif()
+endif()
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Enable to debug target tree (produces a lot of output)

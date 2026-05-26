@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BOUNDING_BOX__BOUNDING_BOX_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BOUNDING_BOX__BOUNDING_BOX_HPP
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -191,13 +193,6 @@ public:
   getCountsBatch(const BatchBoundingBoxInput &queries) const;
   BatchBoundingBoxResult
   getCountsBatchSimple(const BatchBoundingBoxInput &queries) const;
-
-  // This is used to get the counts for the bounding box with just xmin and
-  // ymin as inputs. The max values are set to infinity, so the "bounding" box
-  // is unbounded on one end.
-  [[deprecated("Use getCounts() instead.")]]
-  BoxCoordinate2DResultPair
-  getCountsUnbounded(BoundingBoxCoordinate2D box) const;
 
 private:
   BoxCoordinate2DResultPair

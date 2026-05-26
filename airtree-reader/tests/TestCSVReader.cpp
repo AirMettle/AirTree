@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <gtest/gtest.h>
 #include <airtree/reader/file/Reader.hpp>
 #include <filesystem>
@@ -305,5 +307,36 @@ TEST_F(CSVReaderTest, MixedNumericTypes) {
   }
 
   // Cleanup
+  std::filesystem::remove(filepath);
+}
+
+// Regression: a CSV larger than Arrow's read block size is returned as a
+// multi-chunk column. The reader must concatenate every chunk; 
+TEST_F(CSVReaderTest, MultiChunkLargeFile) {
+  std::string filepath = testdata_dir + "/large_multichunk.csv";
+  const int64_t kRows = 300000; // a few MB -> spans multiple read blocks
+
+  {
+    std::ofstream csv_file(filepath);
+    csv_file << "value\n";
+    for (int64_t i = 0; i < kRows; ++i) {
+      csv_file << i << ".5\n"; // decimal point forces double inference
+    }
+  }
+
+  std::vector<std::string> columns = {"value"};
+  InputDataVector data = parse_file(filepath, SUPPORTED_FILE_TYPE::AT_CSV,
+                                    SUPPORTED_DATA_TYPE::AT_DOUBLE, columns);
+
+  ASSERT_EQ(data.size(), 1);
+  auto *vec = std::get_if<std::vector<double>>(&data[0]);
+  ASSERT_NE(vec, nullptr);
+  ASSERT_EQ(vec->size(), static_cast<size_t>(kRows))
+      << "All rows must be read across every Arrow block";
+  const int64_t mid = kRows / 2; // exact: kRows is even
+  EXPECT_DOUBLE_EQ(vec->front(), 0.5);
+  EXPECT_DOUBLE_EQ((*vec)[mid], static_cast<double>(mid) + 0.5);
+  EXPECT_DOUBLE_EQ(vec->back(), static_cast<double>(kRows - 1) + 0.5);
+
   std::filesystem::remove(filepath);
 }

@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <gtest/gtest.h>
 #include <airtree/query/AirTreeQuery_internal.hpp>
 #include <cstddef>
@@ -319,230 +321,6 @@ TEST_F(TestBoundingBox, TestBoundingBox2DxP_BoxQueryHasExtremeInputs) {
   EXPECT_EQ(safe.getMaxY(), edge.getMaxY());
 }
 
-// Unbounded bounding box query test
-TEST_F(TestBoundingBox,
-       TestBoundingBox2DxP_UnboundedBoxQueryHasPerfectAlignment) {
-
-  auto histogram = std::make_shared<airtree::query::meta::Histogram>(12);
-
-  // Define the input bounding box coordinates
-  double input_x_min = 10.0;
-  double input_y_min = 10.0;
-
-  // std::cout << "Input bounding box: "
-  //           << "[(" << input_x_min << ", " << input_y_min << ")"
-  //           << "]" << std::endl;
-
-  TrieManager trie_manager;
-  // Populate the entire histogram with values
-  for (size_t x = 0; x < histogram->getBinCount(); ++x) {
-    uint32_t internal_rep_x = histogram->getInternalRepresentation(x);
-    uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
-    uint32_t x_10 = internal_rep_x & 0x3FF; // Get the last 10 bits
-    for (size_t y = 0; y < histogram->getBinCount(); ++y) {
-      uint32_t internal_rep_y = histogram->getInternalRepresentation(y);
-      uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
-      uint32_t combined_tle = (x_tle << 3) | y_tle;
-      uint32_t y_10 = internal_rep_y & 0x3FF; // Get the last 10 bits
-      uint64_t internal_rep = combine_chunks_10b(x_10, y_10);
-      trie_manager.insert2DxP(combined_tle, internal_rep, 1);
-    }
-  }
-
-  std::vector<char> serialized_trie = trie_manager.MockTrieHeader2D(6);
-  trie_manager.serializeTrie<TLEoption3_2D>(serialized_trie);
-
-  // Run the bounding box query
-  BoundingBox bounding_box(serialized_trie);
-  BoundingBoxCoordinate2D query_box(
-      input_x_min, std::numeric_limits<double>::infinity(), input_y_min,
-      std::numeric_limits<double>::infinity());
-  BoxCoordinate2DResultPair result = bounding_box.getCountsUnbounded(query_box);
-
-  // Capture the results
-  BoxCoordinate2DResult safe_box = result.first;
-  BoxCoordinate2DResult edge_box = result.second;
-  BoundingBoxCoordinate2D safe = std::get<0>(safe_box);
-  uint32_t safe_count = std::get<1>(safe_box);
-  BoundingBoxCoordinate2D edge = std::get<0>(edge_box);
-  uint32_t edge_count = std::get<1>(edge_box);
-
-  // std::cout << "Safe box: [(" << safe.getMinX() << ", " << safe.getMinY()
-  //           << "), (" << safe.getMaxX() << ", " << safe.getMaxY()
-  //           << ")] -> count: " << safe_count << std::endl;
-  // std::cout << "Edge box: [(" << edge.getMinX() << ", " << edge.getMinY()
-  //           << "), (" << edge.getMaxX() << ", " << edge.getMaxY()
-  //           << ")] -> count: " << edge_count << std::endl;
-
-  EXPECT_EQ(safe_count, 287296);
-  EXPECT_EQ(edge_count, 0);
-  EXPECT_EQ(safe.getMinX(), 10.0);
-  EXPECT_EQ(safe.getMinY(), 10.0);
-  EXPECT_EQ(safe.getMaxX(), std::numeric_limits<double>::infinity());
-  EXPECT_EQ(safe.getMaxY(), std::numeric_limits<double>::infinity());
-  EXPECT_EQ(safe.getMinX(), edge.getMinX());
-  EXPECT_EQ(safe.getMinY(), edge.getMinY());
-  EXPECT_EQ(safe.getMaxX(), edge.getMaxX());
-  EXPECT_EQ(safe.getMaxY(), edge.getMaxY());
-}
-
-TEST_F(TestBoundingBox,
-       TestBoundingBox2DxP_UnboundedBoxQueryDoesNotHavePerfectAlignment) {
-
-  auto histogram = std::make_shared<airtree::query::meta::Histogram>(12);
-
-  double input_x_min = 10.125;
-  double input_x_max = 49.432;
-  double input_y_min = 10.134;
-  double input_y_max = 49.0;
-
-  // std::cout << "Input bounding box: "
-  //           << "[(" << input_x_min << ", " << input_x_max << "), ("
-  //           << input_y_min << ", " << input_y_max << ")]" << std::endl;
-
-  TrieManager trie_manager;
-  for (size_t x = 0; x < histogram->getBinCount(); ++x) {
-    uint32_t internal_rep_x = histogram->getInternalRepresentation(x);
-    uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
-    uint32_t x_10 = internal_rep_x & 0x3FF; // Get the last 10 bits
-    for (size_t y = 0; y < histogram->getBinCount(); ++y) {
-      uint32_t internal_rep_y = histogram->getInternalRepresentation(y);
-      uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
-      uint32_t combined_tle = (x_tle << 3) | y_tle;
-      uint32_t y_10 = internal_rep_y & 0x3FF; // Get the last 10 bits
-      uint64_t internal_rep = combine_chunks_10b(x_10, y_10);
-      trie_manager.insert2DxP(combined_tle, internal_rep, 1);
-    }
-  }
-
-  std::vector<char> serialized_trie = trie_manager.MockTrieHeader2D(6);
-  trie_manager.serializeTrie<TLEoption3_2D>(serialized_trie);
-
-  BoundingBox bounding_box(serialized_trie);
-  BoundingBoxCoordinate2D query_box(
-      input_x_min, std::numeric_limits<double>::infinity(), input_y_min,
-      std::numeric_limits<double>::infinity());
-  BoxCoordinate2DResultPair result = bounding_box.getCountsUnbounded(query_box);
-  BoxCoordinate2DResult safe_box = result.first;
-  BoxCoordinate2DResult edge_box = result.second;
-  BoundingBoxCoordinate2D safe = std::get<0>(safe_box);
-  uint32_t safe_count = std::get<1>(safe_box);
-  BoundingBoxCoordinate2D edge = std::get<0>(edge_box);
-  uint32_t edge_count = std::get<1>(edge_box);
-
-  // std::cout << "Safe box: [(" << safe.getMinX() << ", " << safe.getMinY()
-  //           << "), (" << safe.getMaxX() << ", " << safe.getMaxY()
-  //           << ")] -> count: " << safe_count << std::endl;
-  // std::cout << "Edge box: [(" << edge.getMinX() << ", " << edge.getMinY()
-  //           << "), (" << edge.getMaxX() << ", " << edge.getMaxY()
-  //           << ")] -> count: " << edge_count << std::endl;
-
-  EXPECT_EQ(safe_count, 286225);
-  EXPECT_EQ(edge_count, 1);
-  // verify the safe bounding box
-  EXPECT_EQ(safe.getMinX(),
-            histogram->getFPNumber(histogram->getBinIndex(input_x_min)));
-  EXPECT_EQ(safe.getMinY(),
-            histogram->getFPNumber(histogram->getBinIndex(input_y_min)));
-  EXPECT_EQ(safe.getMaxX(), std::numeric_limits<double>::infinity());
-  EXPECT_EQ(safe.getMaxY(), std::numeric_limits<double>::infinity());
-  // verify the edge bounding box
-  EXPECT_EQ(edge.getMinX(),
-            histogram->getFPNumber(histogram->getBinIndex(input_x_min) - 1));
-  EXPECT_EQ(edge.getMinY(),
-            histogram->getFPNumber(histogram->getBinIndex(input_y_min) - 1));
-  EXPECT_EQ(edge.getMaxX(), std::numeric_limits<double>::infinity());
-  EXPECT_EQ(edge.getMaxY(), std::numeric_limits<double>::infinity());
-}
-
-// This test checks if the bounding box query works correctly when the subset
-// region is populated with data points that are not perfectly aligned with the
-// histogram bins. It ensures the safe/edge boxes returned are shrunk to just
-// the populated region.
-TEST_F(TestBoundingBox, TestBoundingBox2DxP_UnboundedSubsetRegionIsPopulated) {
-
-  auto histogram = std::make_shared<airtree::query::meta::Histogram>(12);
-
-  double populate_region_x_min = 20.0;
-  double populate_region_x_max = 40.0;
-  double populate_region_y_min = 20.0;
-  double populate_region_y_max = 40.0;
-
-  // std::cout << "Populating region: "
-  //           << "[(" << populate_region_x_min << ", " << populate_region_x_max
-  //           << "), (" << populate_region_y_min << ", " <<
-  //           populate_region_y_max
-  //           << ")]" << std::endl;
-
-  double query_x_min = 10.125;
-  double query_x_max = std::numeric_limits<double>::infinity();
-  double query_y_min = 10.134;
-  double query_y_max = std::numeric_limits<double>::infinity();
-
-  // std::cout << "Querying region: "
-  //           << "[(" << query_x_min << ", " << query_x_max << "), ("
-  //           << query_y_min << ", " << query_y_max << ")]" << std::endl;
-
-  TrieManager trie_manager;
-  // Populate a subset of the histogram with values
-  for (double x = populate_region_x_min; x <= populate_region_x_max; ++x) {
-    uint32_t bin_idx_x = histogram->getBinIndex(x);
-    uint32_t internal_rep_x = histogram->getInternalRepresentation(bin_idx_x);
-    uint32_t x_tle = getTLEEncoding((internal_rep_x >> 10) & 0x3);
-    uint32_t x_10 = internal_rep_x & 0x3FF; // Get the last 10 bits
-    for (double y = populate_region_y_min; y <= populate_region_y_max; ++y) {
-      uint32_t bin_idx_y = histogram->getBinIndex(y);
-      uint32_t internal_rep_y = histogram->getInternalRepresentation(bin_idx_y);
-      uint32_t y_tle = getTLEEncoding((internal_rep_y >> 10) & 0x3);
-      uint32_t combined_tle = (x_tle << 3) | y_tle;
-      uint32_t y_10 = internal_rep_y & 0x3FF; // Get the last 10 bits
-      uint64_t internal_rep = combine_chunks_10b(x_10, y_10);
-      trie_manager.insert2DxP(combined_tle, internal_rep, 1);
-    }
-  }
-
-  std::vector<char> serialized_trie = trie_manager.MockTrieHeader2D(6);
-  trie_manager.serializeTrie<TLEoption3_2D>(serialized_trie);
-
-  BoundingBox bounding_box(serialized_trie);
-  BoundingBoxCoordinate2D query_box(
-      query_x_min, std::numeric_limits<double>::infinity(), query_y_min,
-      std::numeric_limits<double>::infinity());
-  BoxCoordinate2DResultPair result = bounding_box.getCountsUnbounded(query_box);
-  BoxCoordinate2DResult safe_box = result.first;
-  BoxCoordinate2DResult edge_box = result.second;
-  BoundingBoxCoordinate2D safe = std::get<0>(safe_box);
-  uint32_t safe_count = std::get<1>(safe_box);
-  BoundingBoxCoordinate2D edge = std::get<0>(edge_box);
-  uint32_t edge_count = std::get<1>(edge_box);
-  // std::cout << "Safe box: [(" << safe.getMinX() << ", " << safe.getMinY()
-  //           << "), (" << safe.getMaxX() << ", " << safe.getMaxY()
-  //           << ")] -> count: " << safe_count << std::endl;
-  // std::cout << "Edge box: [(" << edge.getMinX() << ", " << edge.getMinY()
-  //           << "), (" << edge.getMaxX() << ", " << edge.getMaxY()
-  //           << ")] -> count: " << edge_count << std::endl;
-
-  EXPECT_EQ(safe_count, 441);
-  EXPECT_EQ(edge_count, 0);
-  // verify the safe bounding box
-  EXPECT_EQ(safe.getMinX(), histogram->getFPNumber(
-                                histogram->getBinIndex(populate_region_x_min)));
-  EXPECT_EQ(safe.getMinY(), histogram->getFPNumber(
-                                histogram->getBinIndex(populate_region_y_min)));
-  EXPECT_EQ(safe.getMaxX(), std::numeric_limits<double>::infinity());
-  EXPECT_EQ(safe.getMaxY(), std::numeric_limits<double>::infinity());
-  // verify the edge bounding box
-  EXPECT_EQ(edge.getMinX(),
-            histogram->getFPNumber(histogram->getBinIndex(populate_region_x_min)
-                                   - 1));
-  EXPECT_EQ(edge.getMinY(),
-            histogram->getFPNumber(histogram->getBinIndex(populate_region_y_min)
-                                   - 1));
-  EXPECT_EQ(edge.getMaxX(), std::numeric_limits<double>::infinity());
-  EXPECT_EQ(edge.getMaxY(), std::numeric_limits<double>::infinity());
-}
-
-
 std::vector<char> readFileToVector(const std::string &filename) {
   std::ifstream file(
       filename, std::ios::binary | std::ios::ate); // open at end to get size
@@ -560,40 +338,6 @@ std::vector<char> readFileToVector(const std::string &filename) {
 
   return buffer;
 }
-
-
-TEST_F(TestBoundingBox, DISABLED_TestBoundingBox2DxP_UseSerializedBuffer) {
-
-  auto histogram = std::make_shared<airtree::query::meta::Histogram>(12);
-
-  double query_x_min = 291;
-  double query_x_max = std::numeric_limits<double>::infinity();
-  double query_y_min = 1.01563;
-  double query_y_max = std::numeric_limits<double>::infinity();
-
-  std::vector<char> serialized_trie = readFileToVector(
-      "/home/rjairaj/workspace/AirMettle/Floating-Point-Histogram-2d-bug/"
-      "temp_data/histogram_data_TSLA_price_2d_3.bin");
-
-  BoundingBox bounding_box(serialized_trie);
-  BoundingBoxCoordinate2D query_box(
-      query_x_min, std::numeric_limits<double>::infinity(), query_y_min,
-      std::numeric_limits<double>::infinity());
-  BoxCoordinate2DResultPair result = bounding_box.getCountsUnbounded(query_box);
-  BoxCoordinate2DResult safe_box = result.first;
-  BoxCoordinate2DResult edge_box = result.second;
-  BoundingBoxCoordinate2D safe = std::get<0>(safe_box);
-  uint32_t safe_count = std::get<1>(safe_box);
-  BoundingBoxCoordinate2D edge = std::get<0>(edge_box);
-  uint32_t edge_count = std::get<1>(edge_box);
-  std::cout << "Safe box: [(" << safe.getMinX() << ", " << safe.getMinY()
-            << "), (" << safe.getMaxX() << ", " << safe.getMaxY()
-            << ")] -> count: " << safe_count << std::endl;
-  std::cout << "Edge box: [(" << edge.getMinX() << ", " << edge.getMinY()
-            << "), (" << edge.getMaxX() << ", " << edge.getMaxY()
-            << ")] -> count: " << edge_count << std::endl;
-}
-
 
 TEST_F(TestBoundingBox, DISABLED_TestBoundingBox2DxP_Simulation_1) {
 
@@ -1062,7 +806,6 @@ TEST_F(TestBoundingBox,
             << ", " << safe.getMinZ() << "), (" << safe.getMaxX() << ", "
             << safe.getMaxY() << ", " << safe.getMaxZ() << ")]" << std::endl;
 
-
   std::cout << "Edge box: [(" << edge.getMinX() << ", " << edge.getMinY()
             << ", " << edge.getMinZ() << "), (" << edge.getMaxX() << ", "
             << edge.getMaxY() << ", " << edge.getMaxZ() << ")]" << std::endl;
@@ -1088,7 +831,6 @@ TEST_F(TestBoundingBox,
   // print for z max
   std::cout << "Z max bins:" << std::endl;
   std::cout << histogram->getFPNumber(histogram->getBinIndex(input_z_max) - 1);
-
 
   // Since we populated sparsely at integers, the safe box shrinks to actual
   // data First populated values within query range

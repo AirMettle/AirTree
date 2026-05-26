@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/core/schema/trie4d/4DxF.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
@@ -378,7 +380,7 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
 std::vector<char>
 execSerialize_4D_4x8(TLE_4D_4x8 *root, uint64_t &curr_trie_size,
                      std::unique_ptr<SpecialCounts> &specialCounts,
-                     bool default_mode) {
+                     [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_4D_Fast, {}, 0,
       specialCounts->posInfCount, specialCounts->negInfCount,

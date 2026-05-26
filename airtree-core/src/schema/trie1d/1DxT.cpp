@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie1d/1DxT.hpp>
 #include <airtree/core/common/Conversion.hpp>
@@ -144,7 +146,8 @@ execCreateAndInsert_TrieNode13(SpecialCounts &specialCounts,
 std::vector<char>
 execSerialization_TrieNode13(const std::unique_ptr<TrieNode_13> &root,
                              const SpecialCounts &specialCounts,
-                             uint64_t trieSize, bool default_mode) {
+                             uint64_t trieSize,
+                             [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_1D_Tiny, {}, 0,
       specialCounts.posInfCount, specialCounts.negInfCount,

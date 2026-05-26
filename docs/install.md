@@ -2,25 +2,34 @@
 
 [← Back to README](../README.md)
 
-- [Supported Platforms](#supported-platforms)
-- [Prerequisites](#prerequisites)
-- [Recommended Build Command](#recommended-build-command)
-- [Step-by-Step Options](#step-by-step-options)
-- [Where Build Output Goes](#where-build-output-goes)
-- [Installing the Built Package](#installing-the-built-package)
-- [What Gets Installed](#what-gets-installed)
-- [Putting AirTree on Your `PATH`](#putting-airtree-on-your-path)
+- [Installation \& Build](#installation--build)
+  - [Supported Platforms](#supported-platforms)
+  - [Prerequisites](#prerequisites)
+    - [macOS](#macos)
+    - [Linux (Ubuntu / CentOS)](#linux-ubuntu--centos)
+  - [Recommended Build Command](#recommended-build-command)
+  - [Step-by-Step Options](#step-by-step-options)
+  - [Native CMake Build (Advanced)](#native-cmake-build-advanced)
+  - [Where Build Output Goes](#where-build-output-goes)
+  - [Installing the Built Package](#installing-the-built-package)
+    - [Per-user install (no sudo)](#per-user-install-no-sudo)
+  - [What Gets Installed](#what-gets-installed)
+  - [Putting AirTree on Your `PATH`](#putting-airtree-on-your-path)
+  - [Verifying the Install](#verifying-the-install)
+  - [Uninstalling](#uninstalling)
+  - [Troubleshooting](#troubleshooting)
+  - [Next Steps](#next-steps)
 
 AirTree is built from source via a single driver script that handles
 dependency installation, configuration, compilation, testing, and packaging.
 
 ## Supported Platforms
 
-| Platform        | Architecture     | Status              | Notes                  |
-| --------------- | ---------------- | ------------------- | ---------------------- |
-| macOS (Darwin)  | x86_64 / arm64   | ✅ Fully supported  | Requires Homebrew      |
-| Ubuntu 22.04    | x86_64 / aarch64 | ✅ Fully supported  | Official CI target     |
-| CentOS 7 / 8 / 9| x86_64           | ✅ Fully supported  | Uses `yum` + EPEL      |
+| Platform        | Architecture     | Status              | Notes                              |
+| --------------- | ---------------- | ------------------- | ---------------------------------- |
+| macOS (Darwin)  | x86_64 / arm64   | Fully supported     | Requires Homebrew and `gcc@14`     |
+| Ubuntu 22.04    | x86_64 / aarch64 | Fully supported     | Official CI target                 |
+| CentOS Stream 9 | x86_64           | Fully supported     | Uses `dnf` + EPEL                  |
 
 Other Linux distributions may work if you manually satisfy the dependencies,
 but only the above are exercised by the automated setup scripts.
@@ -31,6 +40,8 @@ but only the above are exercised by the automated setup scripts.
 
 - [Homebrew](https://brew.sh) installed under `/opt/homebrew` or `/usr/local`.
 - Xcode Command Line Tools (the build will prompt to install them if missing).
+- GCC 14 (`brew install gcc@14`). The macOS build hard-requires `gcc-14` /
+  `g++-14` on `PATH` and will fail at configure time if they are missing.
 
 ### Linux (Ubuntu / CentOS)
 
@@ -75,16 +86,45 @@ If you want finer control:
 ./tools/build/build.sh clean_deps
 ```
 
+## Native CMake Build (Advanced)
+
+The driver script is a convenience; the underlying build is plain CMake.
+Packagers (Nix, AUR, vcpkg, …) and CI integrators who already have the
+toolchain installed can skip the wrapper entirely:
+
+```bash
+cmake -B build -S . -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build -j
+sudo cmake --install build --prefix /opt/airmettle/airtree/$(cat version.txt)
+
+# Optional: produce installable packages
+( cd build && cpack -G DEB )    # .deb
+( cd build && cpack -G RPM )    # .rpm
+( cd build && cpack -G TGZ )    # .tar.gz
+```
+
+Toolchain prerequisites you provide yourself (the wrapper's `setup` stage
+installs them automatically): `gcc`, `g++`, `cmake>=3.22`, `ninja`,
+`pkg-config`, `python3.12`, `git`, `curl`, `unzip`. C++ libraries (Arrow,
+Boost, OpenSSL, zstd, etc.) are downloaded and built by CMake via
+`ExternalProject_Add` — you do **not** need to install them yourself.
+
+The first configure performs that download/build for every third-party
+dependency, so a cold build takes substantially longer than a subsequent
+incremental one. Re-running `cmake --build build` after editing AirTree
+source files reuses the already-built deps.
+
 ## Where Build Output Goes
 
-The build directory is isolated per compiler / version / build-type:
+The build directory is isolated per compiler / version / build-type / sanitizer:
 
 ```
-cmake-build-<compiler>-<version>-<buildtype>[-<sanitizer>]
+cmake-build-<compiler>-<version>-<buildtype>-<sanitizer>
 ```
 
-For example, on Ubuntu 22.04 / x86_64 / gcc-11 / RelWithDebInfo with no
-sanitizer: `cmake-build-gnu-11-RelWithDebInfo-nosan`.
+The sanitizer suffix is always present; the no-sanitizer build is spelled
+`-nosan`. For example, on Ubuntu 22.04 / x86_64 / gcc-11 / RelWithDebInfo with
+no sanitizer: `cmake-build-gnu-11-RelWithDebInfo-nosan`.
 
 Third-party C++ dependencies are cached in:
 
@@ -137,9 +177,9 @@ By default the package installs under a versioned prefix:
 ```
 /opt/airmettle/airtree/<version>/
 ├── bin/
-│   ├── airtree-cli            # Generate + query CLI
-│   ├── AirTreeExport          # Export tool
-│   └── airtree-merge-cli      # Merge tool
+│   ├── airtree                # Generate + query CLI
+│   ├── airtree-export         # Export tool
+│   └── airtree-merge          # Merge tool
 ├── lib/
 │   ├── libairtree-core.a
 │   ├── libairtree-query.a
@@ -171,15 +211,81 @@ export PATH="/opt/airmettle/airtree/<version>/bin:$PATH"
 …or symlink the binaries into a directory that already is, e.g.:
 
 ```bash
-sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-cli /usr/local/bin/
-sudo ln -s /opt/airmettle/airtree/<version>/bin/AirTreeExport /usr/local/bin/
-sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-merge-cli /usr/local/bin/
+sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree /usr/local/bin/
+sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-export /usr/local/bin/
+sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-merge /usr/local/bin/
 ```
 
 You can also override the prefix at configure time with
 `-DCMAKE_INSTALL_PREFIX=/usr/local` if you prefer a system-wide install.
 
+## Verifying the Install
+
+Once `airtree` is on your `PATH`:
+
+```bash
+airtree --version
+# AirMettle AirTree v1.3.0-SNAPSHOT
+
+airtree generate csv -i examples/sales.csv -o /tmp/price.airtree -s 1DxP -c price
+airtree query percentile -i /tmp/price.airtree -o /tmp/median.csv -p 50.0
+cat /tmp/median.csv
+# percentile,value
+# 50,13.7509765625
+```
+
+If both commands run without errors, the install is good.
+
+## Uninstalling
+
+```bash
+# Ubuntu / Debian
+sudo dpkg -r airtree
+
+# CentOS / RHEL / Fedora
+sudo rpm -e airtree
+
+# Per-user (tarball install)
+rm -rf ~/.local/airtree
+```
+
+The system-package commands remove the binaries and headers but leave the
+versioned prefix directory itself. Delete it manually if you want a fully
+clean state: `sudo rm -rf /opt/airmettle/airtree/<version>`.
+
+## Troubleshooting
+
+**`./tools/build/build.sh` says "Platform not supported."**
+Your OS / version isn't covered by the auto-setup scripts. See
+[Supported Platforms](#supported-platforms). You can still build by installing
+the dependencies manually (`gcc`, `cmake>=3.22`, `ninja`, `python3.12`,
+`git`, `curl`, `unzip`) and running `./tools/build/build.sh airtree` to skip
+the setup stage.
+
+**Dependency download hangs or fails partway.**
+Third-party C++ deps (Arrow, Boost, OpenSSL, …) are downloaded on first
+build and cached under `<repo>/cmake-build-*/.airmettle/airtree-deps/`. If a
+download is interrupted, the partial cache entry can confuse the next build.
+Clear it with `./tools/build/build.sh clean_deps` and retry. Behind a corporate
+proxy: make sure `https_proxy` / `http_proxy` are exported in the shell you
+launch the build from.
+
+**`airtree: command not found` after `dpkg -i`.**
+The default install prefix is `/opt/airmettle/airtree/<version>/bin/`, which
+is not on `$PATH` by default. See
+[Putting AirTree on Your `PATH`](#putting-airtree-on-your-path).
+
+**macOS build fails with "GCC-14 not found".**
+The macOS build hard-requires GCC 14, not Apple Clang. Install it with
+`brew install gcc@14` and ensure `gcc-14` / `g++-14` are on `PATH`.
+
+**`Permission denied: /opt/airmettle/airtree`.**
+You ran the system-package install (`dpkg -i` / `rpm -i`) without `sudo`, or
+you tried `dpkg -i` in a container where `/opt` isn't writable. Either rerun
+with `sudo`, or use the per-user tarball install described
+[above](#per-user-install-no-sudo).
+
 ## Next Steps
 
-- [CLI Reference](cli.md) — using `airtree-cli`, `AirTreeExport`, `airtree-merge-cli`
+- [CLI Reference](cli.md) — using `airtree`, `airtree-export`, `airtree-merge`
 - [C++ Library API](cpp-api.md) — programmatic use of the libraries

@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_BENCH_INCLUDE_AIRTREE_BENCH_BENCHMARKCONFIGS_HPP
 #define AIRTREE_BENCH_INCLUDE_AIRTREE_BENCH_BENCHMARKCONFIGS_HPP
 

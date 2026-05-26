@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/merge/MergeStrategy.hpp>
 #include <airtree/merge/Logger.hpp>
 #include <fstream>

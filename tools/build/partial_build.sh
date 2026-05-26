@@ -20,12 +20,12 @@ Build one or more CMake targets. With no targets, builds everything (same as 'al
 CMake's dependency graph ensures prerequisites are built automatically.
 
 Common targets:
-  airtree-util, airtree-core, airtree-query, airtree-export, airtree-reader, airtree-merge,
-  airtree-cli
+  airtree-util, airtree-core, airtree-query, airtree-reader,
+  libairtree-merge, libairtree-export,
+  airtree, airtree-merge, airtree-export
 
 Special targets:
   all         Build everything (default)
-  airtree        Alias for 'all'
 
 Options:
   -h, --help  Show this help message and exit
@@ -36,8 +36,8 @@ Priority: CLI args > BUILD_TARGET env var > default (all)
 Examples:
   partial_build.sh                        # Full build (all)
   partial_build.sh airtree-query             # Build airtree-query (+ deps)
-  partial_build.sh airtree-query airtree-cli    # Build multiple targets
-  BUILD_TARGET=airtree-cli partial_build.sh  # Via environment variable
+  partial_build.sh airtree-query airtree    # Build multiple targets
+  BUILD_TARGET=airtree partial_build.sh  # Via environment variable
 HELP
 }
 
@@ -88,15 +88,10 @@ fi
 # Determine whether this is a targeted build (skip unit tests) or a full build
 _PB_FULL_BUILD=1
 for t in "${_PB_TARGETS[@]}"; do
-    if [[ "$t" != "all" && "$t" != "airtree" ]]; then
+    if [[ "$t" != "all" ]]; then
         _PB_FULL_BUILD=0
         break
     fi
-done
-
-# Normalize: "airtree" is an alias for "all"
-for i in "${!_PB_TARGETS[@]}"; do
-    [[ "${_PB_TARGETS[$i]}" == "airtree" ]] && _PB_TARGETS[$i]=all
 done
 
 if [[ ! -d "$_CMAKE_BUILD_DIR" ]]; then

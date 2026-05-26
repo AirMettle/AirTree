@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/bench/generate/trie1d/1DxF.hpp>
 #include <airtree/bench/BenchmarkData.hpp>
 #include <cassert>

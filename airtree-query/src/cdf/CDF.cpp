@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/query/cdf/CDF.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/Logger.hpp>

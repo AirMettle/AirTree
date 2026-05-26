@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_EXPORT_WRITER_ARROWWRITER_HPP
 #define AIRTREE_EXPORT_WRITER_ARROWWRITER_HPP
 #include <arrow/api.h>

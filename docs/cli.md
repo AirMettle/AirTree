@@ -6,9 +6,9 @@ AirTree ships three command-line tools:
 
 | Binary               | Purpose                                                            |
 | -------------------- | ------------------------------------------------------------------ |
-| `airtree-cli`        | [Generate](#airtree-cli-generate) and [query](#airtree-cli-query) histograms |
-| `AirTreeExport`      | [Export](#airtreeexport) histograms to Arrow / Parquet / CSV       |
-| `airtree-merge-cli`  | [Merge](#airtree-merge-cli) two compatible histograms              |
+| `airtree`            | [Generate](#airtree-generate), [query](#airtree-query), [merge](#airtree-merge), and [export](#airtree-export) histograms |
+| `airtree-export`     | [Export](#airtree-export) histograms to Arrow / Parquet / CSV (standalone) |
+| `airtree-merge`      | [Merge](#airtree-merge) two compatible histograms (standalone)     |
 
 All three are installed under `/opt/airmettle/airtree/<version>/bin/` —
 see [Installation](install.md) for how to put them on your `$PATH`.
@@ -18,16 +18,18 @@ see [Installation](install.md) for how to put them on your `$PATH`.
 ## Table of Contents
 
 - [Histogram Schemas](#histogram-schemas)
-- [`airtree-cli generate`](#airtree-cli-generate)
+- [`airtree generate`](#airtree-generate)
   - [Generate from Parquet](#generate-from-parquet)
+  - [Generate from CSV](#generate-from-csv)
   - [Generate from Binary File](#generate-from-binary-file-1d-only)
-- [`airtree-cli query`](#airtree-cli-query)
+- [`airtree query`](#airtree-query)
   - [Top-K](#top-k)
   - [Percentile](#percentile)
   - [Min / Max Count](#min--max-count)
   - [Min / Max Value](#min--max-value)
-- [`AirTreeExport`](#airtreeexport)
-- [`airtree-merge-cli`](#airtree-merge-cli)
+  - [Grid](#grid)
+- [`airtree-export`](#airtree-export)
+- [`airtree-merge`](#airtree-merge)
 
 ---
 
@@ -36,17 +38,23 @@ see [Installation](install.md) for how to put them on your `$PATH`.
 A schema selects the dimensionality and the trie variant. Variants trade
 precision for size / speed:
 
-| Schema | Dimensions | Variant     | Input Types        |
-| ------ | ---------- | ----------- | ------------------ |
-| `1DxT` | 1D         | Tiny        | Binary             |
-| `1DxF` | 1D         | Fast        | Binary, Parquet    |
-| `1DxP` | 1D         | Precise     | Binary, Parquet    |
-| `2DxF` | 2D         | Fast        | Parquet            |
-| `2DxP` | 2D         | Precise     | Parquet            |
-| `3DxF` | 3D         | Fast        | Parquet            |
-| `3DxP` | 3D         | Precise     | Parquet            |
-| `4DxF` | 4D         | Fast        | Parquet            |
-| `4DxP` | 4D         | Precise     | Parquet            |
+| Schema | Dimensions | Variant     | Input Types          |
+| ------ | ---------- | ----------- | -------------------- |
+| `1DxT` | 1D         | Tiny        | Binary, Parquet, CSV |
+| `1DxF` | 1D         | Fast        | Binary, Parquet, CSV |
+| `1DxP` | 1D         | Precise     | Binary, Parquet, CSV |
+| `2DxF` \* | 2D      | Fast        | Parquet, CSV         |
+| `2DxP` | 2D         | Precise     | Parquet, CSV         |
+| `3DxF` \* | 3D      | Fast        | Parquet, CSV         |
+| `3DxP` | 3D         | Precise     | Parquet, CSV         |
+| `4DxF` \* | 4D      | Fast        | Parquet, CSV         |
+| `4DxP` | 4D         | Precise     | Parquet, CSV         |
+
+\* `2DxF`, `3DxF`, `4DxF` currently support **generate** and **merge** only.
+[Export](#airtree-export) and queries — both CLI and the C++
+[`BoundingBox`](cpp-api.md#boundingbox-2d--3d) / [`BinBoundary`](cpp-api.md#binboundary)
+APIs — throw on these schemas. Use the matching `xP` variant if you need
+analysis paths.
 
 **Variant guidance**
 
@@ -57,49 +65,76 @@ precision for size / speed:
 
 ---
 
-## `airtree-cli generate`
+## `airtree generate`
 
-Generate a histogram buffer (`.bin`) from an input file. Two input modes are
-supported: **Parquet** (1D – 4D) and **raw binary** (1D only).
+Generate a histogram buffer (`.airtree`) from an input file. Three input modes
+are supported: **Parquet** (1D – 4D), **CSV** (1D – 4D), and **raw binary**
+(1D only).
 
 ### Generate from Parquet
 
 ```bash
-airtree-cli generate parquet \
+airtree generate parquet \
   -i /path/to/input.parquet \
-  -o /path/to/histogram.bin \
+  -o /path/to/histogram.airtree \
   -s 2DxP \
   -c column_name_1 column_name_2
 ```
 
 | Flag                | Required | Description                                                   |
 | ------------------- | :------: | ------------------------------------------------------------- |
-| `-i, --input`       | ✅       | Path to the Parquet file                                      |
-| `-o, --output`      | ✅       | Output histogram buffer file                                  |
-| `-s, --schema`      | ✅       | One of the schemas listed [above](#histogram-schemas)         |
-| `-c, --columns`     | ✅       | Space-separated column names; count must match schema dims    |
+| `-i, --input`       | Yes      | Path to the Parquet file                                      |
+| `-o, --output`      | Yes      | Output histogram buffer file                                  |
+| `-s, --schema`      | Yes      | One of the schemas listed [above](#histogram-schemas)         |
+| `-c, --columns`     | Yes      | Space-separated column names; count must match schema dims    |
 
 **Accepted Arrow column types.** `int32`, `int64`, `float`, `double`. Other
 Arrow types (`string`, `decimal`, `timestamp`, etc.) are rejected. Nullable
 columns are accepted but null values are skipped — the histogram counts
 non-null entries only.
 
-**CSV / TSV input is not accepted.** If your data is in CSV, convert it to
-Parquet first:
-
-```python
-import pyarrow.csv as csv
-import pyarrow.parquet as pq
-
-pq.write_table(csv.read_csv("data.csv"), "data.parquet")
-```
+**TSV input is not accepted.** Convert TSV to CSV (or Parquet) first.
 
 **Example — 2D histogram over `price` and `quantity`:**
 
 ```bash
-airtree-cli generate parquet \
+airtree generate parquet \
   -i data/sales.parquet \
-  -o results/sales_2d.bin \
+  -o results/sales_2d.airtree \
+  -s 2DxP \
+  -c price quantity
+```
+
+### Generate from CSV
+
+```bash
+airtree generate csv \
+  -i /path/to/input.csv \
+  -o /path/to/histogram.airtree \
+  -s 2DxP \
+  -c column_name_1 column_name_2
+```
+
+| Flag                | Required | Description                                                   |
+| ------------------- | :------: | ------------------------------------------------------------- |
+| `-i, --input`       | Yes      | Path to the CSV file (header row required)                    |
+| `-o, --output`      | Yes      | Output histogram buffer file                                  |
+| `-s, --schema`      | Yes      | One of the schemas listed [above](#histogram-schemas)         |
+| `-c, --columns`     | Yes      | Space-separated column names; count must match schema dims    |
+
+**Accepted column types** — same as Parquet: `int32`, `int64`, `float`,
+`double`. The CSV reader uses Arrow's type inference; if a column doesn't
+auto-detect to one of these numeric types it will be rejected.
+
+**Comma-separated only.** The reader does not accept TSV, semicolon- or
+pipe-delimited files. Convert them to comma-separated (or Parquet) first.
+
+**Example — 2D histogram over `price` and `quantity` from a CSV:**
+
+```bash
+airtree generate csv \
+  -i data/sales.csv \
+  -o results/sales_2d.airtree \
   -s 2DxP \
   -c price quantity
 ```
@@ -107,19 +142,19 @@ airtree-cli generate parquet \
 ### Generate from Binary File (1D only)
 
 ```bash
-airtree-cli generate binary \
+airtree generate binary \
   -i /path/to/data.bin \
-  -o /path/to/histogram.bin \
+  -o /path/to/histogram.airtree \
   -s 1DxP \
   -d double
 ```
 
 | Flag                | Required | Description                                                   |
 | ------------------- | :------: | ------------------------------------------------------------- |
-| `-i, --input`       | ✅       | Path to the raw binary file                                   |
-| `-o, --output`      | ✅       | Output histogram buffer file                                  |
-| `-s, --schema`      | ✅       | Must be a 1D schema (`1DxT`, `1DxF`, or `1DxP`)               |
-| `-d, --data-type`   | ✅       | One of: `int32`, `int64`, `float`, `double`                   |
+| `-i, --input`       | Yes      | Path to the raw binary file                                   |
+| `-o, --output`      | Yes      | Output histogram buffer file                                  |
+| `-s, --schema`      | Yes      | Must be a 1D schema (`1DxT`, `1DxF`, or `1DxP`)               |
+| `-d, --data-type`   | Yes      | One of: `int32`, `int64`, `float`, `double`                   |
 
 The raw binary file is interpreted as a tightly-packed array of values of the
 given type — no header, no metadata.
@@ -127,22 +162,30 @@ given type — no header, no metadata.
 **Example:**
 
 ```bash
-airtree-cli generate binary \
+airtree generate binary \
   -i data/temperatures.bin \
-  -o results/temp_1d.bin \
+  -o results/temp_1d.airtree \
   -s 1DxF \
   -d float
 ```
 
 ---
 
-## `airtree-cli query`
+## `airtree query`
 
-All queries operate directly on a generated `.bin` histogram. They are extremely
+All queries operate directly on a generated `.airtree` histogram. They are extremely
 fast — the trie is parsed in place.
 
+> **Most CLI queries are 1D-only.** The scalar subcommands (`topk`, `min_count`,
+> `max_count`, `min_value`, `max_value`, `percentile`) support only 1D histograms
+> (`1DxT`, `1DxF`, `1DxP`) and throw *"Unsupported dimensions or bit length."* on a
+> 2D / 3D / 4D buffer. The exception is [`grid`](#grid), which queries the
+> multi-dimensional Precise variants (`2DxP`, `3DxP`, `4DxP`). For 2D / 3D
+> point-range counts there is also the C++
+> [`BoundingBox`](cpp-api.md#boundingbox-2d--3d) API.
+
 ```bash
-airtree-cli query <subcommand> [options]
+airtree query <subcommand> [options]
 ```
 
 | Subcommand    | Description                                                                                              | Required Flags         |
@@ -153,11 +196,18 @@ airtree-cli query <subcommand> [options]
 | `min_value`   | Smallest value present in the histogram                                                                  | `-i`, `-o`             |
 | `max_value`   | Largest value present in the histogram                                                                   | `-i`, `-o`             |
 | `percentile`  | Computes a percentile (0 – 100)                                                                          | `-i`, `-o`, `-p`       |
+| `grid`        | Re-binned histogram / heatmap over a region of a `2DxP` / `3DxP` / `4DxP` buffer — see [below](#grid)    | `-i`, `-o`, `-a`       |
 
 **Common flags**
 
-- `-i, --input` — path to the generated `.bin` file
-- `-o, --output` — path to write human-readable results
+- `-i, --input` — path to the generated `.airtree` file
+- `-o, --output` — path to write the results (CSV)
+
+**Output format.** `topk`, `min_count`, `max_count`, `min_value`, and
+`max_value` write a CSV with a `lower,upper,count` header followed by one row
+per result bin. `percentile` writes a `percentile,value` header and a single
+row. `grid` writes its own multi-column CSV — see [Grid](#grid). Bin bounds are
+written at full `double` precision so they round-trip exactly.
 
 > Currently only the queries listed above are exposed via the CLI. **CDF** and
 > **bounding-box** queries are available through the [C++ library](cpp-api.md#query-apis).
@@ -165,9 +215,9 @@ airtree-cli query <subcommand> [options]
 ### Top-K
 
 ```bash
-airtree-cli query topk \
-  -i results/sales_2d.bin \
-  -o results/topk.txt \
+airtree query topk \
+  -i results/sales_2d.airtree \
+  -o results/topk.csv \
   -k 10.0
 ```
 
@@ -183,7 +233,7 @@ For a unimodal distribution (e.g. a Gaussian centred at zero), `topk -k 1.0`
 returns bins from the upper tail until their cumulative count reaches 1% of
 the total — *not* the densest bins around the mode. If you want the densest
 bins, use `max_count` (one bin) or post-process the
-[`AirTreeExport`](#airtreeexport) output.
+[`airtree-export`](#airtree-export) output.
 
 ### `max_count` on fine tries
 
@@ -195,9 +245,9 @@ prefer the coarser `xF` variant or post-process exported bin counts.
 ### Percentile
 
 ```bash
-airtree-cli query percentile \
-  -i results/temp_1d.bin \
-  -o results/median.txt \
+airtree query percentile \
+  -i results/temp_1d.airtree \
+  -o results/median.csv \
   -p 50.0
 ```
 
@@ -206,22 +256,80 @@ airtree-cli query percentile \
 ### Min / Max Count
 
 ```bash
-airtree-cli query min_count -i histogram.bin -o min_count.txt
-airtree-cli query max_count -i histogram.bin -o max_count.txt
+airtree query min_count -i histogram.airtree -o min_count.csv
+airtree query max_count -i histogram.airtree -o max_count.csv
 ```
 
 ### Min / Max Value
 
 ```bash
-airtree-cli query min_value -i histogram.bin -o min_value.txt
-airtree-cli query max_value -i histogram.bin -o max_value.txt
+airtree query min_value -i histogram.airtree -o min_value.csv
+airtree query max_value -i histogram.airtree -o max_value.csv
+```
+
+### Grid
+
+The only multi-dimensional CLI query. It subdivides a region into a grid of
+non-overlapping cells and writes one CSV row per cell — a 2D heatmap or 3D / 4D
+cube at a resolution you choose. Supported on `2DxP`, `3DxP`, and `4DxP`
+buffers.
+
+```bash
+# 2D heatmap: x in [0,100] split into 4, y in [0,50] split into 2
+airtree query grid \
+  -i sales.airtree \
+  -o grid.csv \
+  -a 0:100:4 \
+  -a 0:50:2
+```
+
+Pass one `-a/--axis` per dimension (the count must match the buffer's
+dimensionality), each formatted as `min:max:steps[:scaling]`:
+
+- `min` / `max` — the axis range. Use `inf` / `-inf` for an open end; the grid
+  then starts/ends at the data extent and surfaces the infinity as its own row.
+- `steps` — number of partitions to split the finite range into.
+- `scaling` (optional) — `linear` (default, equal-width steps) or `mult`
+  (geometric / log-spaced steps; requires a strictly positive range).
+
+Other flags:
+
+- `--max-cells` — guard on the total number of output cells (default
+  `1000000`); the query throws rather than allocate beyond it.
+
+**Output.** A CSV carrying the full interval semantics per dimension, then the
+count. Each dimension contributes six columns: `dimN_min`, `dimN_max`,
+`dimN_min_inclusive`, `dimN_max_inclusive`, `dimN_kind`, `dimN_is_edge`.
+
+```
+dim0_min,dim0_max,dim0_min_inclusive,dim0_max_inclusive,dim0_kind,dim0_is_edge,dim1_min,dim1_max,dim1_min_inclusive,dim1_max_inclusive,dim1_kind,dim1_is_edge,count
+0,25,true,false,finite,false,0,25,true,false,finite,false,239
+0,25,true,false,finite,false,25,50,true,false,finite,false,256
+...
+```
+
+- `min` / `max` — snapped to the histogram's internal bin edges (so they may not
+  equal the exact requested values).
+- `min_inclusive` / `max_inclusive` — native inclusivity (positive bins
+  `[lo, hi)`, negative `(lo, hi]`).
+- `kind` — `finite`, `-inf`, or `+inf` (the infinity rows appear when an axis end
+  is `inf` / `-inf`).
+- `is_edge` — `true` for a bin straddling the requested `min` / `max`, reported
+  with its full count so you can pro-rate it.
+
+Empty cells are included.
+
+```bash
+# 3D, with an open upper end on z and log-spaced x
+airtree query grid -i cube.airtree -o cube.csv \
+  -a 1:1000:5:mult -a 0:50:10 -a 0:inf:4
 ```
 
 ---
 
-## `AirTreeExport`
+## `airtree-export`
 
-Convert an AirTree histogram buffer (`.bin`) into an analysis-ready tabular
+Convert an AirTree histogram buffer (`.airtree`) into an analysis-ready tabular
 format:
 
 - **Apache Arrow** (default, `.arrow` IPC)
@@ -229,14 +337,14 @@ format:
 - **CSV** (human-readable, with metadata in `#` comment header)
 
 ```bash
-AirTreeExport <input_histogram.bin> [OPTIONS]
+airtree-export <input_histogram.airtree> [OPTIONS]
 ```
 
 | Option              | Description                                  | Default                                   |
 | ------------------- | -------------------------------------------- | ----------------------------------------- |
 | `--parquet`         | Export to Parquet                            | —                                         |
 | `--csv`             | Export to CSV                                | —                                         |
-| `--output <path>`   | Output file or directory                     | Same dir as input, with matching extension|
+| `--output <path>`   | Output file or directory (long form only — there is no `-o`) | Same dir as input, with matching extension|
 | *(no format flag)*  | Export to Arrow IPC (`.arrow`)               | Arrow                                     |
 
 - Specify at most one of `--parquet` or `--csv`.
@@ -269,19 +377,38 @@ get the full statistical picture.
 
 ```bash
 # Default Arrow export (fastest, most compact)
-AirTreeExport results/sales_2d.bin
+airtree-export results/sales_2d.airtree
 # → results/sales_2d.arrow
 
 # Parquet
-AirTreeExport results/temp_1d.bin --parquet
+airtree-export results/temp_1d.airtree --parquet
 # → results/temp_1d.parquet
 
 # CSV with explicit filename
-AirTreeExport results/histogram.bin --csv --output ./exports/my_histogram.csv
+airtree-export results/histogram.airtree --csv --output ./exports/my_histogram.csv
 
 # Export to a directory (auto-named)
-AirTreeExport data/4d_histogram.bin --parquet --output ./exports/
+airtree-export data/4d_histogram.airtree --parquet --output ./exports/
 # → exports/4d_histogram.parquet
+```
+
+#### Via `airtree`
+
+The same operations are exposed as `airtree export` — identical flags, identical
+behavior:
+
+```bash
+# Default Arrow export
+airtree export results/sales_2d.airtree
+
+# Parquet
+airtree export results/temp_1d.airtree --parquet
+
+# CSV with explicit filename
+airtree export results/histogram.airtree --csv --output ./exports/my_histogram.csv
+
+# Export to a directory (auto-named)
+airtree export data/4d_histogram.airtree --parquet --output ./exports/
 ```
 
 ### Loading the Output in Python
@@ -294,14 +421,14 @@ print(table)
 
 ---
 
-## `airtree-merge-cli`
+## `airtree-merge`
 
 Combine two compatible AirTree histograms into a single histogram. The merge
 is **exact** — no approximation — and produces a valid histogram that can be
 queried, exported, or merged again.
 
 ```bash
-airtree-merge-cli <input1.bin> <input2.bin> <output.bin>
+airtree-merge <input1.airtree> <input2.airtree> <output.airtree>
 ```
 
 The two inputs must have **identical configuration** (same schema, same
@@ -311,22 +438,33 @@ dimensionality, same trie variant). Mixing schemas raises a clear error.
 
 ```bash
 # Two 2D histograms from different data batches
-airtree-merge-cli batch1_2d.bin batch2_2d.bin merged_2d.bin
+airtree-merge batch1_2d.airtree batch2_2d.airtree merged_2d.airtree
 
 # Two 1D histograms from parallel runs
-airtree-merge-cli run1_1d.bin run2_1d.bin final_1d.bin
+airtree-merge run1_1d.airtree run2_1d.airtree final_1d.airtree
+```
+
+#### Via `airtree`
+
+Equivalent invocations through `airtree`:
+
+```bash
+airtree merge batch1_2d.airtree batch2_2d.airtree merged_2d.airtree
+airtree merge run1_1d.airtree run2_1d.airtree final_1d.airtree
 ```
 
 **Workflow:**
 
 1. Generate one histogram per shard / batch with the same schema:
    ```bash
-   airtree-cli generate parquet -i shard1.parquet -o part1.bin -s 2DxP -c price quantity
-   airtree-cli generate parquet -i shard2.parquet -o part2.bin -s 2DxP -c price quantity
+   airtree generate parquet -i shard1.parquet -o part1.airtree -s 2DxP -c price quantity
+   airtree generate parquet -i shard2.parquet -o part2.airtree -s 2DxP -c price quantity
    ```
-2. Merge them:
+2. Merge them (either form works):
    ```bash
-   airtree-merge-cli part1.bin part2.bin combined.bin
+   airtree-merge part1.airtree part2.airtree combined.airtree
+   # or
+   airtree merge part1.airtree part2.airtree combined.airtree
    ```
 3. Use the result like any other histogram — query it, export it, or merge it
    again with more data.

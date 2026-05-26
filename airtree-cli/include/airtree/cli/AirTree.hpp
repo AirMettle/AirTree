@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_CLI_INCLUDE_AIRTREE_CLI_AIRTREE_HPP
 #define AIRTREE_CLI_INCLUDE_AIRTREE_CLI_AIRTREE_HPP
 
@@ -5,6 +7,9 @@
 #include <airtree/reader/file/Reader.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/AirTreeQuery_internal.hpp>
+#include <cstdint>
+#include <string>
+#include <tuple>
 #include <vector>
 
 namespace airtree::cli {
@@ -32,11 +37,11 @@ public:
   static bool validate_config_name(const std::string &config_name);
 
   [[nodiscard]] std::vector<char> generate_buffer();
-  void min_count_handler();
-  void max_count_handler();
-  void min_value_handler();
-  void max_value_handler();
-  void topk_handler(float topk_value);
+  [[nodiscard]] bool min_count_handler();
+  [[nodiscard]] bool max_count_handler();
+  [[nodiscard]] bool min_value_handler();
+  [[nodiscard]] bool max_value_handler();
+  [[nodiscard]] bool topk_handler(float topk_value);
   void plot_histogram();
 
   [[nodiscard]] bool read_histogram_file();
@@ -44,7 +49,12 @@ public:
 
   void binary_handler();
   void parquet_handler();
-  void percentile_handler(float percentile_value);
+  void csv_handler();
+  [[nodiscard]] bool percentile_handler(float percentile_value);
+  // Returns false if the query or writing the output failed.
+  [[nodiscard]] bool grid_handler(
+      const std::vector<airtree::query::grid::GridAxisSpec> &axes,
+      uint64_t max_cells);
 
 private:
   std::vector<char> histogram_buffer_;
@@ -62,6 +72,11 @@ private:
                        reader::file::SUPPORTED_DATA_TYPE data_type,
                        const std::vector<std::string> &columns,
                        std::vector<FPHArray> &data_arrays);
+  // Writes (lower, upper, count) bin rows as CSV to result_file_. Returns false
+  // if the output file cannot be opened or written.
+  [[nodiscard]] bool write_bins_csv(
+      const std::string &query_name,
+      const std::vector<std::tuple<double, double, uint64_t>> &rows);
 };
 
 } // namespace airtree::cli

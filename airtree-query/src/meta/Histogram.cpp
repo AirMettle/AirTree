@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/meta/Histogram.hpp>
 #include <algorithm>
@@ -77,7 +79,7 @@ double Histogram::getBinUpperBound(size_t index) const {
 }
 
 uint8_t Histogram::getSignBit(size_t index) const {
-  if (index < 0 || index >= bins_.size()) {
+  if (index >= bins_.size()) {
     throw std::out_of_range("Index out of bounds");
   }
   uint64_t internal_rep = getInternalRepresentation(index);
@@ -85,7 +87,7 @@ uint8_t Histogram::getSignBit(size_t index) const {
 }
 
 uint8_t Histogram::getExponentSignBit(size_t index) const {
-  if (index < 0 || index >= bins_.size()) {
+  if (index >= bins_.size()) {
     throw std::out_of_range("Index out of bounds");
   }
   uint64_t internal_rep = getInternalRepresentation(index);

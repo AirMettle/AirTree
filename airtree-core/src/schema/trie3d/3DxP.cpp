@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie3d/3DxP.hpp>
 #include <airtree/core/Logger.hpp>
@@ -323,7 +325,7 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
 std::vector<char>
 execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
                       std::unique_ptr<SpecialCounts> &specialCounts,
-                      bool default_mode) {
+                      [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_3D_Precise, {}, 0,
       specialCounts->posInfCount, specialCounts->negInfCount,

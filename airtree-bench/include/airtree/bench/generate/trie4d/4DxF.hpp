@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #ifndef AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP
 #define AIRTREE_BENCH_GENERATE_TRIE4D_4DXF_HPP
 
@@ -18,7 +20,7 @@ protected:
   std::unique_ptr<TLE_4D_4x8> airTree4DxF_root;
   std::vector<char> serializedTrie;
 
-  void SetUp(const ::benchmark::State &state) override {
+  void SetUp([[maybe_unused]] const ::benchmark::State &state) override {
     specialCounts = std::make_unique<SpecialCounts>();
     curr_trie_size = 0;
   }
@@ -86,7 +88,7 @@ protected:
     }
   }
 
-  void TearDown(const ::benchmark::State &state) override {
+  void TearDown([[maybe_unused]] const ::benchmark::State &state) override {
     // serializedTrie.clear();
   }
 };

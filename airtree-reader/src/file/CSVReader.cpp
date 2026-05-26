@@ -1,3 +1,5 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <arrow/array.h>
 #include <arrow/chunked_array.h>
 #include <arrow/csv/reader.h>
@@ -26,12 +28,14 @@ readColumnData(const std::shared_ptr<arrow::ChunkedArray> &chunked_array) {
     return {};
   }
 
-  auto array = arrow::internal::checked_pointer_cast<ArrowArrayType>(
-      chunked_array->chunk(0));
-  data_vector.reserve(array->length());
+  data_vector.reserve(chunked_array->length());
 
-  for (int64_t j = 0; j < array->length(); ++j) {
-    data_vector.push_back(static_cast<T>(array->Value(j)));
+  for (int chunk_idx = 0; chunk_idx < chunked_array->num_chunks(); ++chunk_idx) {
+    auto array = arrow::internal::checked_pointer_cast<ArrowArrayType>(
+        chunked_array->chunk(chunk_idx));
+    for (int64_t j = 0; j < array->length(); ++j) {
+      data_vector.push_back(static_cast<T>(array->Value(j)));
+    }
   }
 
   return data_vector;

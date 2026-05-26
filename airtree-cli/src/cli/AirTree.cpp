@@ -1,10 +1,15 @@
+// Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
+
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <string>
+#include <tuple>
 #include <vector>
 #include <fstream>
 
@@ -35,9 +40,9 @@ AirTree::AirTree(const std::string &config_name,
                  airtree::reader::file::SUPPORTED_FILE_TYPE file_type,
                  airtree::reader::file::SUPPORTED_DATA_TYPE data_type,
                  bool run_e2e)
-    : config_name_(config_name), input_file_(input_data_file),
-      columns_(column_list), result_file_(result_file), file_type_(file_type),
-      data_type_(data_type), run_e2e_(run_e2e) {}
+    : columns_(column_list), config_name_(config_name),
+      input_file_(input_data_file), data_type_(data_type), file_type_(file_type),
+      result_file_(result_file), run_e2e_(run_e2e) {}
 
 std::string AirTree::get_valid_config_names() {
   std::string config_list;
@@ -56,7 +61,8 @@ std::string AirTree::get_valid_config_names() {
 bool AirTree::validate_file_type(
     airtree::reader::file::SUPPORTED_FILE_TYPE type) {
   return (type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY
-          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET);
+          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET
+          || type == airtree::reader::file::SUPPORTED_FILE_TYPE::AT_CSV);
 }
 
 bool AirTree::validate_data_type(
@@ -138,74 +144,90 @@ std::vector<char> AirTree::generate_buffer() {
   return buffer;
 }
 
-void AirTree::min_count_handler() {
+bool AirTree::write_bins_csv(
+    const std::string &query_name,
+    const std::vector<std::tuple<double, double, uint64_t>> &rows) {
+  std::ofstream out(result_file_);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Could not open output file: {}", result_file_);
+    return false;
+  }
+  // Full precision so bin boundaries round-trip exactly.
+  out << std::setprecision(std::numeric_limits<double>::max_digits10);
+  out << "lower,upper,count\n";
+  for (const auto &[lower, upper, count] : rows) {
+    out << lower << "," << upper << "," << count << "\n";
+  }
+  out.close();
+  if (!out) { // catches write/flush failures (e.g. disk full)
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write output file: {}", result_file_);
+    return false;
+  }
+  SPDLOG_LOGGER_INFO(logger(), "{} complete: {} bins written to {}", query_name,
+                     rows.size(), result_file_);
+  return true;
+}
+
+bool AirTree::min_count_handler() {
   auto min_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto query_result = min_query.getMin();
-  if (query_result.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for minCount query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(query_result.size());
   for (const auto &result : query_result) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("min_count query", rows);
 }
 
-void AirTree::max_count_handler() {
+bool AirTree::max_count_handler() {
   auto max_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto max_query_res = max_query.getMax();
-  if (max_query_res.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for maxCount query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(max_query_res.size());
   for (const auto &result : max_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("max_count query", rows);
 }
 
-void AirTree::min_value_handler() {
+bool AirTree::min_value_handler() {
   auto min_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto min_query_res = min_query.getMinValue();
-  if (min_query_res.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for minValue query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(min_query_res.size());
   for (const auto &result : min_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("min_value query", rows);
 }
 
-void AirTree::max_value_handler() {
+bool AirTree::max_value_handler() {
   auto max_query = airtree::query::minmax::MinMax(histogram_buffer_);
   auto max_query_res = max_query.getMaxValue();
-  if (max_query_res.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for maxValue query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(max_query_res.size());
   for (const auto &result : max_query_res) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getBinCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getBinCount());
   }
+  return write_bins_csv("max_value query", rows);
 }
 
-void AirTree::topk_handler(float topk_value) {
+bool AirTree::topk_handler(float topk_value) {
   auto topk_query = airtree::query::topk::TopK(histogram_buffer_);
   auto query_result = topk_query.getTopK(topk_value);
-  if (query_result.empty()) {
-    SPDLOG_LOGGER_INFO(logger(), "No results found for topK query.");
-    return;
-  }
+  std::vector<std::tuple<double, double, uint64_t>> rows;
+  rows.reserve(query_result.size());
   for (const auto &result : query_result) {
-    SPDLOG_LOGGER_INFO(logger(), "Bin: ({}, {}), Count: {}",
-                       result.getLowerBound(), result.getUpperBound(),
-                       result.getCount());
+    rows.emplace_back(result.getLowerBound(), result.getUpperBound(),
+                      result.getCount());
   }
+  return write_bins_csv("topk query", rows);
 }
 
 bool AirTree::read_input_file(const std::string &file_path,
@@ -351,12 +373,125 @@ void AirTree::parquet_handler() {
   }
 }
 
-void AirTree::percentile_handler(float percentile_value) {
+void AirTree::csv_handler() {
+  SPDLOG_LOGGER_INFO(
+      logger(), "Generating histogram using given CSV file...");
+  if (!read_input_file(input_file_,
+                       airtree::reader::file::SUPPORTED_FILE_TYPE::AT_CSV,
+                       airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE,
+                       columns_, data_arrays_)) {
+    return;
+  }
+  histogram_buffer_ = generate_buffer();
+  if (histogram_buffer_.empty()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Error: Histogram is empty.");
+    return;
+  }
+  if (!write_histogram_file()) {
+    return;
+  }
+  if (run_e2e_) {
+    plot_histogram();
+  }
+}
+
+bool AirTree::percentile_handler(float percentile_value) {
   auto percentile = query::percentile::Percentile(histogram_buffer_);
   auto percentile_result = percentile.getPercentile(percentile_value);
   if (percentile_result == -std::numeric_limits<float>::infinity()) {
     SPDLOG_LOGGER_INFO(logger(), "No results found for percentile query.");
-    return;
   }
-  SPDLOG_LOGGER_INFO(logger(), "Percentile: ({})", percentile_result);
+
+  std::ofstream out(result_file_);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Could not open output file: {}", result_file_);
+    return false;
+  }
+  out << std::setprecision(std::numeric_limits<double>::max_digits10);
+  out << "percentile,value\n";
+  out << percentile_value << "," << percentile_result << "\n";
+  out.close();
+  if (!out) { 
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write output file: {}", result_file_);
+    return false;
+  }
+  SPDLOG_LOGGER_INFO(logger(), "percentile query complete: written to {}",
+                     result_file_);
+  return true;
+}
+
+bool AirTree::grid_handler(
+    const std::vector<airtree::query::grid::GridAxisSpec> &axes,
+    uint64_t max_cells) {
+  using namespace airtree::query::grid;
+
+  GridResult result;
+  try {
+    GridQuery grid(histogram_buffer_);
+    result = grid.getGrid(axes, max_cells);
+  } catch (const std::exception &ex) {
+    SPDLOG_LOGGER_ERROR(logger(), "Grid query failed: {}", ex.what());
+    return false;
+  }
+
+  std::ofstream out(result_file_);
+  if (!out) {
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Could not open output file: {}", result_file_);
+    return false;
+  }
+  // Full precision so snapped internal bin boundaries round-trip exactly.
+  out << std::setprecision(std::numeric_limits<double>::max_digits10);
+
+  auto kind_str = [](IntervalKind k) -> const char * {
+    switch (k) {
+    case IntervalKind::NegInf:
+      return "-inf";
+    case IntervalKind::PosInf:
+      return "+inf";
+    case IntervalKind::Finite:
+    default:
+      return "finite";
+    }
+  };
+
+  // CSV header: the full interval semantics per dimension, plus the count.
+  for (uint16_t d = 0; d < result.dims; ++d) {
+    out << "dim" << d << "_min,dim" << d << "_max,dim" << d
+        << "_min_inclusive,dim" << d << "_max_inclusive,dim" << d << "_kind,dim"
+        << d << "_is_edge,";
+  }
+  out << "count\n";
+
+  // Stream one row per cell, decoding the flat row-major index back into a
+  // per-axis partition index. Done in place to avoid materializing every cell.
+  auto shape = result.shape();
+  for (std::size_t idx = 0; idx < result.counts.size(); ++idx) {
+    std::size_t rem = idx;
+    std::array<std::size_t, 4> p{};
+    for (std::size_t d = shape.size(); d-- > 0;) {
+      std::size_t n = shape[d];
+      p[d] = (n == 0) ? 0 : rem % n;
+      rem = (n == 0) ? 0 : rem / n;
+    }
+    for (uint16_t d = 0; d < result.dims; ++d) {
+      const auto &iv = result.axis_intervals[d][p[d]];
+      out << iv.lower << "," << iv.upper << ","
+          << (iv.lower_inclusive ? "true" : "false") << ","
+          << (iv.upper_inclusive ? "true" : "false") << "," << kind_str(iv.kind)
+          << "," << (iv.is_edge ? "true" : "false") << ",";
+    }
+    out << result.counts[idx] << "\n";
+  }
+  out.close();
+  if (!out) { // catches write/flush failures (e.g. disk full)
+    SPDLOG_LOGGER_ERROR(
+        logger(), "Error: Failed to write output file: {}", result_file_);
+    return false;
+  }
+  SPDLOG_LOGGER_INFO(logger(), "Grid query complete: {} cells written to {}",
+                     result.counts.size(), result_file_);
+  return true;
 }
