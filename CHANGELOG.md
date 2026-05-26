@@ -4,7 +4,7 @@ All notable changes to AirTree are listed here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — 1.3.0-SNAPSHOT
+## [1.3.0] - 2026-05-26
 
 ### Added
 - `airtree query grid` — multi-dimensional grid (re-binned histogram /
@@ -17,7 +17,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   walkthrough in the README that exercises generate → query → export.
 - License (PolyForm Noncommercial with a government-institution carve-out)
   and Patent Pending notice (US 20250217930 A1).
-- First-time-user documentation pass: "Why AirTree?" intro, install
+- First-time-user documentation pass: install
   verification, uninstall, and troubleshooting sections in `docs/install.md`.
 
 ### Changed
