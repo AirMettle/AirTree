@@ -2,17 +2,23 @@
 
 [← Back to README](../README.md)
 
-- [Supported Platforms](#supported-platforms)
-- [Prerequisites](#prerequisites)
-- [Recommended Build Command](#recommended-build-command)
-- [Step-by-Step Options](#step-by-step-options)
-- [Where Build Output Goes](#where-build-output-goes)
-- [Installing the Built Package](#installing-the-built-package)
-- [What Gets Installed](#what-gets-installed)
-- [Putting AirTree on Your `PATH`](#putting-airtree-on-your-path)
-- [Verifying the Install](#verifying-the-install)
-- [Uninstalling](#uninstalling)
-- [Troubleshooting](#troubleshooting)
+- [Installation \& Build](#installation--build)
+  - [Supported Platforms](#supported-platforms)
+  - [Prerequisites](#prerequisites)
+    - [macOS](#macos)
+    - [Linux (Ubuntu / CentOS)](#linux-ubuntu--centos)
+  - [Recommended Build Command](#recommended-build-command)
+  - [Step-by-Step Options](#step-by-step-options)
+  - [Native CMake Build (Advanced)](#native-cmake-build-advanced)
+  - [Where Build Output Goes](#where-build-output-goes)
+  - [Installing the Built Package](#installing-the-built-package)
+    - [Per-user install (no sudo)](#per-user-install-no-sudo)
+  - [What Gets Installed](#what-gets-installed)
+  - [Putting AirTree on Your `PATH`](#putting-airtree-on-your-path)
+  - [Verifying the Install](#verifying-the-install)
+  - [Uninstalling](#uninstalling)
+  - [Troubleshooting](#troubleshooting)
+  - [Next Steps](#next-steps)
 
 AirTree is built from source via a single driver script that handles
 dependency installation, configuration, compilation, testing, and packaging.
@@ -79,6 +85,34 @@ If you want finer control:
 # Clean only the cached third-party C++ dependencies
 ./tools/build/build.sh clean_deps
 ```
+
+## Native CMake Build (Advanced)
+
+The driver script is a convenience; the underlying build is plain CMake.
+Packagers (Nix, AUR, vcpkg, …) and CI integrators who already have the
+toolchain installed can skip the wrapper entirely:
+
+```bash
+cmake -B build -S . -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build -j
+sudo cmake --install build --prefix /opt/airmettle/airtree/$(cat version.txt)
+
+# Optional: produce installable packages
+( cd build && cpack -G DEB )    # .deb
+( cd build && cpack -G RPM )    # .rpm
+( cd build && cpack -G TGZ )    # .tar.gz
+```
+
+Toolchain prerequisites you provide yourself (the wrapper's `setup` stage
+installs them automatically): `gcc`, `g++`, `cmake>=3.22`, `ninja`,
+`pkg-config`, `python3.12`, `git`, `curl`, `unzip`. C++ libraries (Arrow,
+Boost, OpenSSL, zstd, etc.) are downloaded and built by CMake via
+`ExternalProject_Add` — you do **not** need to install them yourself.
+
+The first configure performs that download/build for every third-party
+dependency, so a cold build takes substantially longer than a subsequent
+incremental one. Re-running `cmake --build build` after editing AirTree
+source files reuses the already-built deps.
 
 ## Where Build Output Goes
 
