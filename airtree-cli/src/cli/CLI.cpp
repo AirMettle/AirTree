@@ -180,7 +180,6 @@ int main(int argc, char *argv[]) {
   std::string input_data_file;
   std::string result_file;
   std::string histogram_file;
-  bool e2e = false;
   int exit_code = 0;
 
   auto query = app.add_subcommand("query", "Query histogram");
@@ -363,12 +362,10 @@ int main(int argc, char *argv[]) {
   parquet
       ->add_option("-c,--columns", column_list, "Space separated column names")
       ->required();
-  parquet->add_flag(
-      "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
   parquet->callback([&]() {
     AirTree airtree_cli(config_name, input_data_file, column_list, result_file,
                         SUPPORTED_FILE_TYPE::AT_PARQUET,
-                        SUPPORTED_DATA_TYPE::AT_IGNORE, e2e);
+                        SUPPORTED_DATA_TYPE::AT_IGNORE, false);
     airtree_cli.parquet_handler();
   });
 
@@ -393,8 +390,6 @@ int main(int argc, char *argv[]) {
                    "int64, float, double.")
       ->required()
       ->check(data_type_validator);
-  binary->add_flag(
-      "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
   binary->callback([&]() {
     SUPPORTED_DATA_TYPE data_type_enum;
     if (data_type == "int32") {
@@ -409,7 +404,7 @@ int main(int argc, char *argv[]) {
       data_type_enum = SUPPORTED_DATA_TYPE::AT_IGNORE;
     }
     AirTree airtree_cli(config_name, input_data_file, {}, result_file,
-                        SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum, e2e);
+                        SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum, false);
     airtree_cli.binary_handler();
   });
 
@@ -431,12 +426,10 @@ int main(int argc, char *argv[]) {
       ->add_option("-c,--columns", csv_column_list,
                    "Space separated column names")
       ->required();
-  csv->add_flag(
-      "-e,--e2e", e2e, "Set this flag to generate the buffer and plots.");
   csv->callback([&]() {
     AirTree airtree_cli(config_name, input_data_file, csv_column_list,
                         result_file, SUPPORTED_FILE_TYPE::AT_CSV,
-                        SUPPORTED_DATA_TYPE::AT_IGNORE, e2e);
+                        SUPPORTED_DATA_TYPE::AT_IGNORE, false);
     airtree_cli.csv_handler();
   });
 

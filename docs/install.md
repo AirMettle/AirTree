@@ -16,11 +16,11 @@ dependency installation, configuration, compilation, testing, and packaging.
 
 ## Supported Platforms
 
-| Platform        | Architecture     | Status              | Notes                  |
-| --------------- | ---------------- | ------------------- | ---------------------- |
-| macOS (Darwin)  | x86_64 / arm64   | Fully supported     | Requires Homebrew      |
-| Ubuntu 22.04    | x86_64 / aarch64 | Fully supported     | Official CI target     |
-| CentOS 7 / 8 / 9| x86_64           | Fully supported     | Uses `yum` + EPEL      |
+| Platform        | Architecture     | Status              | Notes                              |
+| --------------- | ---------------- | ------------------- | ---------------------------------- |
+| macOS (Darwin)  | x86_64 / arm64   | Fully supported     | Requires Homebrew and `gcc@14`     |
+| Ubuntu 22.04    | x86_64 / aarch64 | Fully supported     | Official CI target                 |
+| CentOS Stream 9 | x86_64           | Fully supported     | Uses `dnf` + EPEL                  |
 
 Other Linux distributions may work if you manually satisfy the dependencies,
 but only the above are exercised by the automated setup scripts.
@@ -31,6 +31,8 @@ but only the above are exercised by the automated setup scripts.
 
 - [Homebrew](https://brew.sh) installed under `/opt/homebrew` or `/usr/local`.
 - Xcode Command Line Tools (the build will prompt to install them if missing).
+- GCC 14 (`brew install gcc@14`). The macOS build hard-requires `gcc-14` /
+  `g++-14` on `PATH` and will fail at configure time if they are missing.
 
 ### Linux (Ubuntu / CentOS)
 
@@ -77,14 +79,15 @@ If you want finer control:
 
 ## Where Build Output Goes
 
-The build directory is isolated per compiler / version / build-type:
+The build directory is isolated per compiler / version / build-type / sanitizer:
 
 ```
-cmake-build-<compiler>-<version>-<buildtype>[-<sanitizer>]
+cmake-build-<compiler>-<version>-<buildtype>-<sanitizer>
 ```
 
-For example, on Ubuntu 22.04 / x86_64 / gcc-11 / RelWithDebInfo with no
-sanitizer: `cmake-build-gnu-11-RelWithDebInfo-nosan`.
+The sanitizer suffix is always present; the no-sanitizer build is spelled
+`-nosan`. For example, on Ubuntu 22.04 / x86_64 / gcc-11 / RelWithDebInfo with
+no sanitizer: `cmake-build-gnu-11-RelWithDebInfo-nosan`.
 
 Third-party C++ dependencies are cached in:
 

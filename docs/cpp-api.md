@@ -288,11 +288,11 @@ returning the bin's lower-edge probability.
 
 > **Constructor signature.** Unlike its sister classes (`Percentile`,
 > `TopK`, `MinMax`, `BoundingBox`, `BinBoundary`) which take the buffer
-> **by value**, `CDF`'s constructor is `CDF(std::vector<char>& buffer)` —
-> a non-const reference. The buffer must outlive the `CDF` instance and
-> may be mutated; you cannot construct a `CDF` directly from an rvalue
-> (e.g. the return of `airtree::core::api::generate(...)`). Bind to a
-> named variable first.
+> **by value**, `CDF`'s constructor takes a non-const lvalue reference:
+> `CDF(std::vector<char>& buffer)`. The buffer is copied into an internal
+> member, so its lifetime after construction does not matter — but you
+> cannot construct a `CDF` directly from an rvalue (e.g. the return of
+> `airtree::core::api::generate(...)`). Bind to a named variable first.
 
 ### BoundingBox (2D / 3D)
 
@@ -542,6 +542,15 @@ straight from Parquet, CSV, or raw binary files in C++:
 ```cpp
 #include <airtree/reader/file/Reader.hpp>
 
+// One column per entry; each entry is one of the four supported numeric
+// element types. Declared at namespace scope (not inside
+// airtree::reader::file) — alias as-is.
+using InputDataVariant = std::variant<std::vector<int32_t>,
+                                      std::vector<int64_t>,
+                                      std::vector<float>,
+                                      std::vector<double>>;
+using InputDataVector  = std::vector<InputDataVariant>;
+
 namespace airtree::reader::file {
 
 enum SUPPORTED_FILE_TYPE { AT_BINARY, AT_PARQUET, AT_CSV };
@@ -549,15 +558,15 @@ enum SUPPORTED_DATA_TYPE {
   AT_INT32, AT_INT64, AT_FLOAT, AT_DOUBLE, AT_IGNORE
 };
 
-// Parse a file into one FPHArray per requested column.
+// Parse a file into one column per requested entry.
 // - AT_BINARY: 'columns' is empty; 'data_type' selects the element type.
 // - AT_PARQUET / AT_CSV: 'columns' is required; 'data_type' is ignored
 //   (use AT_IGNORE) — element types come from the file's own schema /
 //   Arrow type inference.
-std::vector<FPHArray> parse_file(const std::string& path,
-                                 SUPPORTED_FILE_TYPE file_type,
-                                 SUPPORTED_DATA_TYPE data_type,
-                                 const std::vector<std::string>& columns);
+InputDataVector parse_file(const std::string& path,
+                           SUPPORTED_FILE_TYPE file_type,
+                           SUPPORTED_DATA_TYPE data_type,
+                           const std::vector<std::string>& columns);
 
 } // namespace airtree::reader::file
 ```
@@ -566,8 +575,40 @@ CSV files must have a header row; column names in the `columns` argument are
 matched against that header. Accepted numeric types are the same across all
 three readers: `int32`, `int64`, `float`, `double`.
 
-The resulting `FPHArray` values plug directly into the lower-level
-`generate(arrays, options)` overload from `<airtree/core/api/AirTreeGenerator.hpp>`.
+Each column comes back as a `std::variant` of the four supported
+`std::vector<T>` element types. To feed them into the lower-level
+`generate(arrays, options)` overload from
+`<airtree/core/api/AirTreeGenerator.hpp>`, wrap each variant in an `FPHArray`
+via `std::visit` and `buildFPHArray`:
+
+```cpp
+#include <airtree/core/api/AirTreeGenerator.hpp>
+#include <airtree/core/common/FPHArray.hpp>
+#include <airtree/reader/file/Reader.hpp>
+
+namespace api = airtree::core::api;
+namespace rdr = airtree::reader::file;
+
+auto columns = rdr::parse_file("data.parquet", rdr::AT_PARQUET,
+                               rdr::AT_IGNORE, {"x", "y"});
+
+std::vector<FPHArray> arrays;
+arrays.reserve(columns.size());
+for (const auto& col : columns) {
+  std::visit([&](const auto& vec) {
+    arrays.push_back(buildFPHArray(vec.data(),
+                                   static_cast<int>(vec.size())));
+  }, col);
+}
+
+std::vector<const FPHArray*> ptrs;
+ptrs.reserve(arrays.size());
+for (const auto& a : arrays) ptrs.push_back(&a);
+
+api::AirTreeOptions opts{ .dimensions = 2,
+                          .type       = api::ConfigType::XP };
+auto buffer = api::generate(ptrs, opts);
+```
 
 > Pulling in the reader transitively pulls in Apache Arrow / Parquet runtime
 > dependencies, which the convenience template overloads in
