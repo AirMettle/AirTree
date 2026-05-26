@@ -54,35 +54,49 @@ Build and install (Ubuntu / Debian):
 ```bash
 ./tools/build/build.sh
 sudo dpkg -i cmake-build-*/airtree-*-Linux.deb
-export PATH="/opt/airmettle/airtree/<version>/bin:$PATH"
+export PATH="/opt/airmettle/airtree/$(cat version.txt)/bin:$PATH"
+airtree --version    # confirms the install
 ```
 
-Generate a 1D histogram and run a query on it (the scalar CLI queries are 1D-only;
-the multi-dimensional [`grid`](docs/cli.md#grid) query covers `2DxP` / `3DxP` /
-`4DxP` — see [CLI Reference → `airtree query`](docs/cli.md#airtree-query)):
+A tiny sample (`examples/sales.csv`, 60 rows with `price` and `quantity`
+columns) ships with the repo. Scalar CLI queries are 1D; the
+[`grid`](docs/cli.md#grid) query covers `2DxP` / `3DxP` / `4DxP`.
 
 ```bash
-# Build a 1D histogram over a single column
-airtree generate parquet \
-  -i data/sales.parquet \
-  -o price.airtree \
-  -s 1DxP \
-  -c price
+# Build a 1D histogram over the price column
+airtree generate csv -i examples/sales.csv -o price.airtree -s 1DxP -c price
 
-# Bins covering the top 10% of count mass (from largest values inward)
+# Bins covering the top 10% of total count mass, walked from the largest
+# values inward — surfaces the high-end sales:
 airtree query topk -i price.airtree -o topk.csv -k 10.0
+cat topk.csv
+# lower,upper,count
+# 312,312.125,1
+# 210.5,210.53125,1
+# 145,145.03125,1
+# 89.984375,90,1
+# 67.25,67.265625,1
+# 55.75,55.7578125,1
+
+# Median price
+airtree query percentile -i price.airtree -o median.csv -p 50.0
+cat median.csv
+# percentile,value
+# 50,13.7509765625
 ```
 
-Generate a 2D histogram and export it for downstream analysis:
+Build a 2D histogram over `price × quantity`, then run a grid query or export
+the bins for downstream analysis:
 
 ```bash
-airtree generate parquet \
-  -i data/sales.parquet \
-  -o sales.airtree \
-  -s 2DxP \
+airtree generate csv -i examples/sales.csv -o sales2d.airtree -s 2DxP \
   -c price quantity
 
-airtree export sales.airtree --parquet --output ./out/
+# 5×3 grid over the [0,50] × [0,30] region
+airtree query grid -i sales2d.airtree -o grid.csv -a 0:50:5 -a 0:30:3
+
+# Or export every bin to CSV / Parquet / Arrow
+airtree export sales2d.airtree --csv --output sales2d_bins.csv
 ```
 
 Merge histograms from parallel batches:
@@ -107,11 +121,16 @@ auto buffer = airtree::core::api::generate(data);   // 1D, default ConfigType::X
 For full programmatic usage (querying, merging, exporting from C++) see the
 [C++ Library API](docs/cpp-api.md).
 
-## Patent Notice
-This software and related technology are **Patent Pending** in the United States and other jurisdictions.
+## Patent & Licensing
 
-Specific applications include:
-- [U.S. Patent Application Publication No. 2025/0217930 A1](https://patents.google.com/patent/US20250217930A1) — "Compactly Constructing Hierarchical Histograms"
-- Additional patents pending
+**Patent Pending** — U.S. Patent Application Publication No.
+[2025/0217930 A1](https://patents.google.com/patent/US20250217930A1).
 
-All rights reserved pending patent issuance.
+As noted in the [LICENSE](LICENSE) file, this software is provided for
+**non-commercial use only**.
+
+For commercial licensing, support, or enterprise usage, please contact
+**sales@airmettle.com**.
+
+Cloud services powered by this technology are launching in **June 2026**,
+starting with **Azure**.

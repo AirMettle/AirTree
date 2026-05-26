@@ -126,6 +126,9 @@ airtree generate csv \
 `double`. The CSV reader uses Arrow's type inference; if a column doesn't
 auto-detect to one of these numeric types it will be rejected.
 
+**Comma-separated only.** The reader does not accept TSV, semicolon- or
+pipe-delimited files. Convert them to comma-separated (or Parquet) first.
+
 **Example — 2D histogram over `price` and `quantity` from a CSV:**
 
 ```bash
@@ -341,7 +344,7 @@ airtree-export <input_histogram.airtree> [OPTIONS]
 | ------------------- | -------------------------------------------- | ----------------------------------------- |
 | `--parquet`         | Export to Parquet                            | —                                         |
 | `--csv`             | Export to CSV                                | —                                         |
-| `--output <path>`   | Output file or directory                     | Same dir as input, with matching extension|
+| `--output <path>`   | Output file or directory (long form only — there is no `-o`) | Same dir as input, with matching extension|
 | *(no format flag)*  | Export to Arrow IPC (`.arrow`)               | Arrow                                     |
 
 - Specify at most one of `--parquet` or `--csv`.
