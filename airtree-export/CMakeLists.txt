@@ -38,20 +38,6 @@ target_link_libraries(airtree-export
 )
 
 
-# TODO : KEEPING THIS FOR NOW
-# REMOVE THIS LEGACY EXPORT ONCE 10 bit COMPACT HAS BEEN IMPLEMENTED
-add_executable(legacyExport ${SRC_DIR}/LegacyExport.cpp)
-target_link_libraries(legacyExport
-    PUBLIC
-    arrow::arrow_static
-    parquet::parquet
-    PRIVATE
-    airtree::airtree-util
-    airtree::airtree-core
-    airtree::airtree-query
-)
-
-
 ### TESTS
 if(AIRTREE_ENABLE_TESTING)
 add_executable(ut_testexport tests/TestExport.cpp)
