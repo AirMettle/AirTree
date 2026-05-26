@@ -10,6 +10,9 @@
 - [Installing the Built Package](#installing-the-built-package)
 - [What Gets Installed](#what-gets-installed)
 - [Putting AirTree on Your `PATH`](#putting-airtree-on-your-path)
+- [Verifying the Install](#verifying-the-install)
+- [Uninstalling](#uninstalling)
+- [Troubleshooting](#troubleshooting)
 
 AirTree is built from source via a single driver script that handles
 dependency installation, configuration, compilation, testing, and packaging.
@@ -181,6 +184,72 @@ sudo ln -s /opt/airmettle/airtree/<version>/bin/airtree-merge /usr/local/bin/
 
 You can also override the prefix at configure time with
 `-DCMAKE_INSTALL_PREFIX=/usr/local` if you prefer a system-wide install.
+
+## Verifying the Install
+
+Once `airtree` is on your `PATH`:
+
+```bash
+airtree --version
+# AirMettle AirTree v1.3.0-SNAPSHOT
+
+airtree generate csv -i examples/sales.csv -o /tmp/price.airtree -s 1DxP -c price
+airtree query percentile -i /tmp/price.airtree -o /tmp/median.csv -p 50.0
+cat /tmp/median.csv
+# percentile,value
+# 50,13.7509765625
+```
+
+If both commands run without errors, the install is good.
+
+## Uninstalling
+
+```bash
+# Ubuntu / Debian
+sudo dpkg -r airtree
+
+# CentOS / RHEL / Fedora
+sudo rpm -e airtree
+
+# Per-user (tarball install)
+rm -rf ~/.local/airtree
+```
+
+The system-package commands remove the binaries and headers but leave the
+versioned prefix directory itself. Delete it manually if you want a fully
+clean state: `sudo rm -rf /opt/airmettle/airtree/<version>`.
+
+## Troubleshooting
+
+**`./tools/build/build.sh` says "Platform not supported."**
+Your OS / version isn't covered by the auto-setup scripts. See
+[Supported Platforms](#supported-platforms). You can still build by installing
+the dependencies manually (`gcc`, `cmake>=3.22`, `ninja`, `python3.12`,
+`git`, `curl`, `unzip`) and running `./tools/build/build.sh airtree` to skip
+the setup stage.
+
+**Dependency download hangs or fails partway.**
+Third-party C++ deps (Arrow, Boost, OpenSSL, …) are downloaded on first
+build and cached under `<repo>/cmake-build-*/.airmettle/airtree-deps/`. If a
+download is interrupted, the partial cache entry can confuse the next build.
+Clear it with `./tools/build/build.sh clean_deps` and retry. Behind a corporate
+proxy: make sure `https_proxy` / `http_proxy` are exported in the shell you
+launch the build from.
+
+**`airtree: command not found` after `dpkg -i`.**
+The default install prefix is `/opt/airmettle/airtree/<version>/bin/`, which
+is not on `$PATH` by default. See
+[Putting AirTree on Your `PATH`](#putting-airtree-on-your-path).
+
+**macOS build fails with "GCC-14 not found".**
+The macOS build hard-requires GCC 14, not Apple Clang. Install it with
+`brew install gcc@14` and ensure `gcc-14` / `g++-14` are on `PATH`.
+
+**`Permission denied: /opt/airmettle/airtree`.**
+You ran the system-package install (`dpkg -i` / `rpm -i`) without `sudo`, or
+you tried `dpkg -i` in a container where `/opt` isn't writable. Either rerun
+with `sudo`, or use the per-user tarball install described
+[above](#per-user-install-no-sudo).
 
 ## Next Steps
 

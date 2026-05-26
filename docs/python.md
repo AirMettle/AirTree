@@ -20,5 +20,4 @@ In the meantime:
   df = table.to_pandas()
   ```
 
-This page will be updated when the bindings ship. Track progress in the issue
-tracker, or reach out to the AirMettle team if you want early access.
+This page will be updated when the bindings ship.
