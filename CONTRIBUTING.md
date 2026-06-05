@@ -61,7 +61,7 @@ Please **do not** report security vulnerabilities through public issues. See
 The license permits non-commercial use only, and **use by government
 institutions (including national laboratories) is treated as commercial use**.
 For commercial licensing, government use, enterprise support, or partnership
-inquiries, contact [info@airmettle.com](mailto:info@airmettle.com).
+inquiries, contact [support@airmettle.com](mailto:support@airmettle.com).
 
 ## Community expectations
 
