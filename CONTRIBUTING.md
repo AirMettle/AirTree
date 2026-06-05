@@ -63,7 +63,10 @@ institutions (including national laboratories) is treated as commercial use**.
 For commercial licensing, government use, enterprise support, or partnership
 inquiries, contact [info@airmettle.com](mailto:info@airmettle.com).
 
-## Code of Conduct
+## Community expectations
 
-Participation in this project's issues and discussions is governed by our
-[Code of Conduct](CODE_OF_CONDUCT.md).
+Please be respectful and professional in issues and discussions. We want this to
+be a welcoming space for everyone seeking help or reporting a problem.
+Harassment, abuse, personal attacks, and other disruptive behavior are not
+tolerated, and may result in comments being removed or the responsible accounts
+being blocked from the project.
