@@ -4,6 +4,13 @@ All notable changes to AirTree are listed here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-06-05
+
+### Added 
+- Add README.md for benchmark
+- Add more example files
+- Add Community helper documentations 
+
 ## [1.3.0] - 2026-05-26
 
 ### Added

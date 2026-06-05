@@ -130,7 +130,7 @@ As noted in the [LICENSE](LICENSE) file, this software is provided for
 **non-commercial use only**.
 
 For commercial licensing, support, or enterprise usage, please contact
-**sales@airmettle.com**.
+**support@airmettle.com**.
 
 Cloud services powered by this technology are launching in **June 2026**,
 starting with **Azure**.
