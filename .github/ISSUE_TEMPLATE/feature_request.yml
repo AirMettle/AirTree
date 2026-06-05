@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an improvement or new capability for AirTree.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. AirTree is developed internally by
+        AirMettle; we review feature requests but do not accept external code.
+        Describing the problem you are trying to solve helps us prioritize.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the use case or limitation you are running into.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution or capability
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds you have considered
+    validations:
+      required: false
