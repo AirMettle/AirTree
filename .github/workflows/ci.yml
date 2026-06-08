@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [develop]
+    branches: [develop, master]
   push:
-    branches: [develop]
+    branches: [develop, master]
   workflow_dispatch:
 
 permissions:
@@ -41,12 +41,10 @@ jobs:
           sudo apt-get clean
           df -h /
 
-      # Cache only the resolved dependency install tree, not AirTree's own build.
-      # Key rotates when a dep version/recipe/graph changes; on a near-miss the
-      # restore-keys prefix restores the last good tree and CMake's per-dep hash
-      # rebuilds only what actually changed.
-      - name: Cache dependencies
-        uses: actions/cache@v5
+      # Restore the dep install tree on every run
+      - name: Restore deps cache
+        id: deps_cache
+        uses: actions/cache/restore@v5
         with:
           path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
           key: deps-ubuntu22.04-${{ env.TOOLCHAIN }}-${{ hashFiles('cmake/Settings.cmake', 'cmake/third-party/**', 'cmake/DepsRegistry.cmake') }}
@@ -55,3 +53,10 @@ jobs:
 
       - name: Build
         run: bash tools/build/build.sh
+
+      - name: Save deps cache
+        if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && steps.deps_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
+          key: ${{ steps.deps_cache.outputs.cache-primary-key }}
