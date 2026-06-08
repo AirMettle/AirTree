@@ -23,13 +23,13 @@ env:
 
 jobs:
   build-test:
-    name: build + test (ubuntu-22.04, gcc-11)
+    name: ubuntu-22.04
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB.
-      - name: Reclaim disk for the cold dependency build
+      - name: Free disk space
         run: |
           sudo rm -rf \
             /usr/local/lib/android \
@@ -45,13 +45,13 @@ jobs:
       # Key rotates when a dep version/recipe/graph changes; on a near-miss the
       # restore-keys prefix restores the last good tree and CMake's per-dep hash
       # rebuilds only what actually changed.
-      - name: Cache third-party dependencies
-        uses: actions/cache@v4
+      - name: Cache dependencies
+        uses: actions/cache@v5
         with:
           path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
           key: deps-ubuntu22.04-${{ env.TOOLCHAIN }}-${{ hashFiles('cmake/Settings.cmake', 'cmake/third-party/**', 'cmake/DepsRegistry.cmake') }}
           restore-keys: |
             deps-ubuntu22.04-${{ env.TOOLCHAIN }}-
 
-      - name: Setup, build, unit + functional tests, package
-        run: bash tools/build/build.sh setup airtree
+      - name: Build
+        run: bash tools/build/build.sh
