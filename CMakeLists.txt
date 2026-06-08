@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" PROJECT_VERSION)
+file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" AIRTREE_FULL_VERSION)
 
-# Extract numeric version for CMake (remove any suffix like -SNAPSHOT)
-string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" PROJECT_VERSION_NUMERIC "${PROJECT_VERSION}")
+string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" PROJECT_VERSION_NUMERIC "${AIRTREE_FULL_VERSION}")
 
 project(AirTree VERSION ${PROJECT_VERSION_NUMERIC} LANGUAGES CXX)
-add_compile_definitions(VERSION_NUMBER="${PROJECT_VERSION}")
-message(STATUS "Building version ${PROJECT_VERSION_NUMERIC} of AirTree")
+add_compile_definitions(VERSION_NUMBER="${AIRTREE_FULL_VERSION}")
+message(STATUS "Building version ${AIRTREE_FULL_VERSION} of AirTree")
+string(REPLACE "-" "~" AIRTREE_DISTRO_VERSION "${AIRTREE_FULL_VERSION}")
 
 # Target to aggregate all dependencies builds
 add_custom_target(am_airtree_dependencies)
@@ -194,12 +194,12 @@ endif ()
 
 # Set default install prefix if not specified
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/opt/airmettle/airtree/${PROJECT_VERSION}" CACHE PATH "Install path prefix" FORCE)
+    set(CMAKE_INSTALL_PREFIX "/opt/airmettle/airtree/${AIRTREE_FULL_VERSION}" CACHE PATH "Install path prefix" FORCE)
 endif()
 
 # CPack configuration
 set(CPACK_PACKAGE_NAME "airtree")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION ${AIRTREE_FULL_VERSION})
 set(CPACK_PACKAGE_CONTACT "support@airmettle.com")
 set(CPACK_PACKAGE_DESCRIPTION "AirMettle AirTree - Hierarchical Multi Dimensional Histograms")
 set(CPACK_PACKAGE_VENDOR "AirMettle")
@@ -210,6 +210,8 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_DEBIAN_PACKAGE_VERSION "${AIRTREE_DISTRO_VERSION}")
+set(CPACK_RPM_PACKAGE_VERSION "${AIRTREE_DISTRO_VERSION}")
 
 include(CPack)
 include(InstallRequiredSystemLibraries)
