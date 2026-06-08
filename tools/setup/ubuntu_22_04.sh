@@ -95,8 +95,8 @@ run_step "[ airtree-setup ] Install python3.12" install_package python3.12
 run_step "[ airtree-setup ] Install python3.12-venv" install_package python3.12-venv
 run_step "[ airtree-setup ] Install python3.12-dev" install_package python3.12-dev
 
-# Installing docker
-run_step "[ airtree-setup ] Install Docker" "$TOOLS_DIR/setup/install_docker.sh"
+# Docker is unused by the build/tests — disabled pending full removal once CI confirms.
+# run_step "[ airtree-setup ] Install Docker" "$TOOLS_DIR/setup/install_docker.sh"
 
 run_step "[ airtree-setup ] Install ccache" install_package ccache
 run_step "[ airtree-setup ] Install ninja-build" install_package ninja-build
