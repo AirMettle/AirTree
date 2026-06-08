@@ -106,9 +106,6 @@ install_package python3.12
 install_package python3.12-venv
 install_package python3.12-dev
 
-# Installing docker
-run_step "[ airtree-setup ] Install Docker" "$TOOLS_DIR/setup/install_docker.sh"
-
 install_package ccache
 install_package ninja-build
 install_package pkg-config
