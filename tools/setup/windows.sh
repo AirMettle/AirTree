@@ -83,9 +83,4 @@ fi
 export CMAKE_TOOLCHAIN_FILE="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"
 echo "export CMAKE_TOOLCHAIN_FILE=\"$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake\"" >> /tmp/env.sh
 
-# Docker Desktop on Windows requires Hyper-V/WSL2 and system reboots, which breaks automated bash scripts.
-if ! command -v docker >/dev/null 2>&1; then
-  log "WARNING" "Docker is not installed. Please install Docker Desktop manually: https://docs.docker.com/desktop/install/windows-install/"
-fi
-
 log "INFO" "Windows setup completed successfully! MSVC configured at $(which cl.exe)"
