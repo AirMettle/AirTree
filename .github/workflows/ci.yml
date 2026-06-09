@@ -24,20 +24,32 @@ env:
 jobs:
   build-test:
     name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-22.04
+            runner: ubuntu-22.04
             cache_id: ubuntu22.04
           - os: ubuntu-22.04-arm
+            runner: ubuntu-22.04-arm
             cache_id: ubuntu22.04-arm
+          - os: centos-stream9
+            runner: ubuntu-latest
+            container: quay.io/centos/centos:stream9
+            cache_id: centos9
     steps:
+      # The minimal CentOS image lacks git/tar that checkout + cache need.
+      - name: Container prerequisites
+        if: ${{ matrix.container != '' }}
+        run: dnf install -y git tar gzip
       - uses: actions/checkout@v5
-      # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB.
+      # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB (native runners only).
       - name: Free disk space
+        if: ${{ matrix.container == '' }}
         run: |
           sudo rm -rf \
             /usr/local/lib/android \
@@ -90,7 +102,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$EVENT" = "push" ]; then branch="$PUSH_BRANCH"; sha="$PUSH_SHA"; else branch="$PR_BRANCH"; sha="$PR_SHA"; fi
-          if [ "$RESULT" = "success" ]; then emoji=":white_check_mark:"; status="passed"; color="#2eb67d"; else emoji=":red_circle:"; status="failed"; color="#e01e5a"; fi
+          if [ "$RESULT" = "success" ]; then emoji=":white_check_mark:"; status="passed"; color="#2eb67d"; else emoji=":x:"; status="failed"; color="#e01e5a"; fi
           started=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.run_started_at' 2>/dev/null || true)
           now=$(date -u +%s)
           if [ -n "$started" ] && start_ts=$(date -u -d "$started" +%s 2>/dev/null); then dur=$((now - start_ts)); duration="$((dur/60))m $((dur%60))s"; else duration="n/a"; fi
@@ -99,7 +111,7 @@ jobs:
           while IFS=$'\t' read -r concl name; do
             [ -z "$name" ] && continue
             case "$concl" in
-              success)   ic=":white_check_mark:";;
+              success)   ic=":large_green_circle:";;
               failure)   ic=":red_circle:";;
               cancelled) ic=":heavy_minus_sign:";;
               *)         ic=":grey_question:";;
