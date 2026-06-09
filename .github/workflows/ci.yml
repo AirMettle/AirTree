@@ -60,3 +60,75 @@ jobs:
         with:
           path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
           key: ${{ steps.deps_cache.outputs.cache-primary-key }}
+
+  notify:
+    needs: build-test
+    if: ${{ !cancelled() && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Gather run metadata
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs.build-test.result }}
+          EVENT: ${{ github.event_name }}
+          PUSH_BRANCH: ${{ github.ref_name }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PUSH_SHA: ${{ github.sha }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "push" ]; then branch="$PUSH_BRANCH"; sha="$PUSH_SHA"; else branch="$PR_BRANCH"; sha="$PR_SHA"; fi
+          if [ "$RESULT" = "success" ]; then emoji=":white_check_mark:"; status="passed"; color="#2eb67d"; else emoji=":red_circle:"; status="failed"; color="#e01e5a"; fi
+          started=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.run_started_at' 2>/dev/null || true)
+          now=$(date -u +%s)
+          if [ -n "$started" ] && start_ts=$(date -u -d "$started" +%s 2>/dev/null); then dur=$((now - start_ts)); duration="$((dur/60))m $((dur%60))s"; else duration="n/a"; fi
+          {
+            echo "emoji=$emoji"
+            echo "status=$status"
+            echo "color=$color"
+            echo "branch=$branch"
+            echo "sha=${sha:0:7}"
+            echo "duration=$duration"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Notify Slack
+        continue-on-error: true
+        uses: slackapi/slack-github-action@v3.0.3
+        with:
+          webhook: ${{ github.event_name == 'push' && secrets.SLACK_QA_CHANNEL || github.event_name == 'pull_request' && secrets.SLACK_BUILD_CHANNEL || '' }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "${{ steps.meta.outputs.emoji }} AirTree CI ${{ steps.meta.outputs.status }} on ${{ steps.meta.outputs.branch }}"
+            attachments:
+              - color: "${{ steps.meta.outputs.color }}"
+                blocks:
+                  - type: "header"
+                    text:
+                      type: "plain_text"
+                      emoji: true
+                      text: "${{ steps.meta.outputs.emoji }} AirTree CI — ${{ steps.meta.outputs.status }}"
+                  - type: "section"
+                    fields:
+                      - type: "mrkdwn"
+                        text: "*Branch*\n`${{ steps.meta.outputs.branch }}`"
+                      - type: "mrkdwn"
+                        text: "*Commit*\n`${{ steps.meta.outputs.sha }}`"
+                      - type: "mrkdwn"
+                        text: "*Duration*\n${{ steps.meta.outputs.duration }}"
+                      - type: "mrkdwn"
+                        text: "*Triggered by*\n${{ github.actor }}"
+                  - type: "actions"
+                    elements:
+                      - type: "button"
+                        text:
+                          type: "plain_text"
+                          text: "View CI run"
+                        url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  - type: "context"
+                    elements:
+                      - type: "mrkdwn"
+                        text: "run #${{ github.run_number }}"
