@@ -4,14 +4,25 @@ include_guard(GLOBAL)
 # after every CPACK_* var, project(), and all add_subdirectory() install rules.
 # Uses AIRTREE_FULL_VERSION / AIRTREE_DISTRO_VERSION from Version.cmake.
 
-find_program(LSB_RELEASE_COMMAND lsb_release)
-execute_process(COMMAND ${LSB_RELEASE_COMMAND} -is
-    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-if ("${LSB_RELEASE_ID_SHORT}" MATCHES "Debian" OR "${LSB_RELEASE_ID_SHORT}" MATCHES "Ubuntu")
+set(_distro_id "")
+if (EXISTS "/etc/os-release")
+  file(STRINGS "/etc/os-release" _os_release_id REGEX "^ID=")
+  string(REGEX REPLACE "^ID=\"?([^\"]*)\"?$" "\\1" _distro_id "${_os_release_id}")
+endif ()
+if (NOT _distro_id)
+  find_program(LSB_RELEASE_COMMAND lsb_release)
+  if (LSB_RELEASE_COMMAND)
+    execute_process(COMMAND ${LSB_RELEASE_COMMAND} -is
+        OUTPUT_VARIABLE _distro_id
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif ()
+endif ()
+string(TOLOWER "${_distro_id}" _distro_id)
+
+if (_distro_id MATCHES "debian|ubuntu")
   set(CPACK_GENERATOR "DEB;TGZ")
-elseif ("${LSB_RELEASE_ID_SHORT}" MATCHES "CentOS" OR "${LSB_RELEASE_ID_SHORT}" MATCHES "CentOSStream")
+elseif (_distro_id MATCHES "centos|rhel|redhat|fedora|rocky|almalinux")
   set(CPACK_GENERATOR "RPM;TGZ")
 endif ()
 
