@@ -9,26 +9,6 @@ import utils/build_utils.sh
 
 OS_NAME="$(uname | awk '{ print tolower($0) }')"
 
-# Determine whether to use sudo (CodeBuild containers typically run as root)
-determine_sudo() {
-    if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
-        echo ""
-        return
-    fi
-
-    if command -v sudo >/dev/null 2>&1; then
-        echo "sudo"
-    else
-        # If already root, no sudo needed; otherwise, bail out clearly
-        if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-            echo ""
-        else
-            log_error "sudo not found and not running as root. Install sudo or run as root."
-            exit 1
-        fi
-    fi
-}
-
 SUDO=$(determine_sudo)
 log_debug "Using sudo command: '${SUDO}'"
 
