@@ -23,9 +23,17 @@ env:
 
 jobs:
   build-test:
-    name: ubuntu-22.04
-    runs-on: ubuntu-22.04
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            cache_id: ubuntu22.04
+          - os: ubuntu-22.04-arm
+            cache_id: ubuntu22.04-arm
     steps:
       - uses: actions/checkout@v5
       # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB.
@@ -47,9 +55,9 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
-          key: deps-ubuntu22.04-${{ env.TOOLCHAIN }}-${{ hashFiles('cmake/Settings.cmake', 'cmake/third-party/**', 'cmake/DepsRegistry.cmake') }}
+          key: deps-${{ matrix.cache_id }}-${{ env.TOOLCHAIN }}-${{ hashFiles('cmake/Settings.cmake', 'cmake/third-party/**', 'cmake/DepsRegistry.cmake') }}
           restore-keys: |
-            deps-ubuntu22.04-${{ env.TOOLCHAIN }}-
+            deps-${{ matrix.cache_id }}-${{ env.TOOLCHAIN }}-
 
       - name: Build
         run: bash tools/build/build.sh
