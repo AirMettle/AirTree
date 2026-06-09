@@ -2,6 +2,10 @@
 
 set -eou pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+. "$ROOT_DIR/tools/utils/import.sh"
+import utils/common_func.sh
+
 OS=$(echo $(uname) | awk '{ print tolower($0) }')
 ARCH=$(echo $(uname -m) | awk '{ print tolower($0) }')
 
@@ -43,10 +47,12 @@ fi
 
 echo "Installing dependencies on $OS $DISTRO ($VERSION_ID) $ARCH ..."
 
+SUDO=$(determine_sudo)
+
 # Helper function to install a package and check for errors
 install_package() {
   local package=$1
-  sudo yum install -y "$package"
+  $SUDO yum install -y "$package"
   if [[ $? -ne 0 ]]; then
     echo "Failed to install $package."
     exit 1
@@ -54,7 +60,7 @@ install_package() {
 }
 
 
-sudo yum update -y
+$SUDO yum update -y
 install_package gcc # FIX ME: version lock this
 install_package g++ # FIX ME: version lock this
 install_package epel-release

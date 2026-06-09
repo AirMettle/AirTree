@@ -27,13 +27,7 @@ fi
 
 log "INFO" "Installing dependencies on $OS $DISTRO ($VERSION) $ARCH ..."
 
-if [ "$(which sudo)" != "" ]; then
-    SUDO=sudo
-else
-    # If sudo doesn't exist, assume we don't need it.
-    # The AWS build environment doesn't have it.
-    SUDO=
-fi
+SUDO=$(determine_sudo)
 
 # Helper function to install a package and check for errors
 install_package() {

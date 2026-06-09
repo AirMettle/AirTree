@@ -27,17 +27,7 @@ fi
 
 log "INFO" "Installing dependencies on $OS $DISTRO ($VERSION) $ARCH ..."
 
-# Determine whether to use sudo (CodeBuild containers typically run as root)
-if command -v sudo >/dev/null 2>&1; then
-  SUDO="sudo"
-else
-  # If already root, no sudo needed; otherwise, bail out clearly
-  if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-    SUDO=""
-  else
-    error_exit "sudo not found and not running as root. Install sudo or run as root."
-  fi
-fi
+SUDO=$(determine_sudo)
 
 # Avoid interactive prompts during apt operations
 export DEBIAN_FRONTEND=noninteractive
