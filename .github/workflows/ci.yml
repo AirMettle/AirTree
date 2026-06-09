@@ -94,6 +94,19 @@ jobs:
           started=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.run_started_at' 2>/dev/null || true)
           now=$(date -u +%s)
           if [ -n "$started" ] && start_ts=$(date -u -d "$started" +%s 2>/dev/null); then dur=$((now - start_ts)); duration="$((dur/60))m $((dur%60))s"; else duration="n/a"; fi
+          # Per-OS results: each completed build leg (the notify job is still running, so its conclusion is null and it drops out).
+          results=""
+          while IFS=$'\t' read -r concl name; do
+            [ -z "$name" ] && continue
+            case "$concl" in
+              success)   ic=":white_check_mark:";;
+              failure)   ic=":red_circle:";;
+              cancelled) ic=":heavy_minus_sign:";;
+              *)         ic=":grey_question:";;
+            esac
+            results="${results:+$results · }$ic $name"
+          done < <(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" --jq '.jobs[] | select(.conclusion != null) | "\(.conclusion)\t\(.name)"' 2>/dev/null || true)
+          [ -z "$results" ] && results=":grey_question: (see run)"
           {
             echo "emoji=$emoji"
             echo "status=$status"
@@ -101,6 +114,7 @@ jobs:
             echo "branch=$branch"
             echo "sha=${sha:0:7}"
             echo "duration=$duration"
+            echo "results=$results"
           } >> "$GITHUB_OUTPUT"
 
       - name: Notify Slack
@@ -119,6 +133,10 @@ jobs:
                       type: "plain_text"
                       emoji: true
                       text: "${{ steps.meta.outputs.emoji }} AirTree CI — ${{ steps.meta.outputs.status }}"
+                  - type: "section"
+                    text:
+                      type: "mrkdwn"
+                      text: "*Results*\n${{ steps.meta.outputs.results }}"
                   - type: "section"
                     fields:
                       - type: "mrkdwn"
