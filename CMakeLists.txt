@@ -81,11 +81,11 @@ else ()
 endif ()
 
 # Detect architecture and define preprocessor directives
-if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64")
+if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
     add_compile_definitions(x86_ARCH)
     set(ARCH "x86_64")
     message(STATUS "Detected architecture: x86_64. Defining x86_ARCH.")
-elseif (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64")
+elseif (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
     add_compile_definitions(ARM_ARCH)
     set(ARCH "aarch64")
     message(STATUS "Detected architecture: arm64. Defining ARM_ARCH.")

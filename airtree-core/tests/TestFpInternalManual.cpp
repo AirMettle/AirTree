@@ -8,6 +8,9 @@
 #include <iostream>
 #include <sys/types.h>
 #include <airtree/core/AirTreeCore_internal.hpp>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 class BitManipulationTest : public ::testing::Test {
 protected:
@@ -44,10 +47,9 @@ protected:
     // Calculate the position of the first significant bit using assembly or
     // intrinsic
 #ifdef _MSC_VER
-#include <intrin.h>
-  unsigned long index;
-  _BitScanReverse64(&index, maskedNumber);
-  firstOnePos = index;
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
 #elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
 #elif defined(ARM_ARCH)
