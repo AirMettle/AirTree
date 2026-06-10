@@ -41,15 +41,20 @@ jobs:
             runner: ubuntu-latest
             container: quay.io/centos/centos:stream9
             cache_id: centos9
+          - os: windows-2022
+            runner: windows-2022
+            cache_id: windows2022
+            # Out-of-tree on Windows (MSVC MAX_PATH), see cmake/Settings.cmake
+            deps_path: C:\airtree-deps
     steps:
       # The minimal CentOS image lacks git/tar that checkout + cache need.
       - name: Container prerequisites
         if: ${{ matrix.container != '' }}
         run: dnf install -y git tar gzip
       - uses: actions/checkout@v5
-      # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB (native runners only).
+      # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB (native Linux runners only).
       - name: Free disk space
-        if: ${{ matrix.container == '' }}
+        if: ${{ matrix.container == '' && runner.os == 'Linux' }}
         run: |
           sudo rm -rf \
             /usr/local/lib/android \
@@ -61,12 +66,28 @@ jobs:
           sudo apt-get clean
           df -h /
 
+      # windows.sh requires cl.exe in PATH; this loads the VS 2022 x64 environment.
+      - name: MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # MSVC tools are not long-path aware (deps use a short root for that), but
+      # git needs this for deep submodule checkouts (e.g. boringssl under openssl).
+      - name: Enable long paths
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+          git config --system core.longpaths true
+
       # Restore the dep install tree on every run
       - name: Restore deps cache
         id: deps_cache
         uses: actions/cache/restore@v5
         with:
-          path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
+          path: ${{ matrix.deps_path || format('cmake-build-{0}-{1}-{2}/.airmettle/airtree-deps', env.TOOLCHAIN, env.BUILD_TYPE, env.SANITIZER) }}
           key: deps-${{ matrix.cache_id }}-${{ env.TOOLCHAIN }}-${{ hashFiles('cmake/Settings.cmake', 'cmake/third-party/**', 'cmake/DepsRegistry.cmake') }}
           restore-keys: |
             deps-${{ matrix.cache_id }}-${{ env.TOOLCHAIN }}-
@@ -78,7 +99,7 @@ jobs:
         if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && steps.deps_cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
-          path: cmake-build-${{ env.TOOLCHAIN }}-${{ env.BUILD_TYPE }}-${{ env.SANITIZER }}/.airmettle/airtree-deps
+          path: ${{ matrix.deps_path || format('cmake-build-{0}-{1}-{2}/.airmettle/airtree-deps', env.TOOLCHAIN, env.BUILD_TYPE, env.SANITIZER) }}
           key: ${{ steps.deps_cache.outputs.cache-primary-key }}
 
   notify:
