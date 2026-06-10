@@ -11,12 +11,22 @@ BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 SANITIZER="${SANITIZER:-nosan}"
 
 # Toolchain selector — maps to cmake/Toolchain_<name>.cmake (hyphens become underscores).
-# Values: gnu-11, gnu-9
+# Values: gnu-11, gnu-9, msvc (forced on Windows)
 TOOLCHAIN="${TOOLCHAIN:-gnu-11}"
 
 # CMake generator.
 # Values: Ninja, Unix Makefiles
 GENERATOR="${GENERATOR:-Ninja}"
+
+# Windows always builds with MSVC + Ninja, overriding any env request. This must
+# happen here, where TOOLCHAIN is first resolved, so every script (parent or
+# child process) derives the same cmake-build-msvc-* directory name.
+case "$(uname | tr '[:upper:]' '[:lower:]')" in
+  *mingw* | *msys* | *cygwin*)
+    TOOLCHAIN="msvc"
+    GENERATOR="Ninja"
+    ;;
+esac
 
 # Log level for shell scripts.
 # Values: 0 (DEBUG), 1 (INFO), 2 (SUCCESS), 3 (WARNING), 4 (ERROR), 5 (SILENT)
