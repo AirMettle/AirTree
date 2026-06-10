@@ -17,7 +17,8 @@ function(external_configure_boost _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _BOOST_SYS
     file(WRITE "${_EP_BUILD_DIR}/user-config.jam" "using msvc : 14.3 : cl.exe : <setup>\"\" ;\n")
     set(_BOOTSTRAP_CMD bootstrap.bat msvc)
     set(_B2_EXE b2.exe)
-    set(_B2_OS_ARGS toolset=msvc-14.3 address-model=64 architecture=x86 --user-config=${_EP_BUILD_DIR}/user-config.jam)
+    # --abbreviate-paths keeps b2's bin.v2 object paths under MAX_PATH
+    set(_B2_OS_ARGS toolset=msvc-14.3 address-model=64 architecture=x86 --abbreviate-paths --user-config=${_EP_BUILD_DIR}/user-config.jam)
   else()
     set(_BOOTSTRAP_CMD ./bootstrap.sh --prefix=${_INSTALL_DIR})
     set(_B2_EXE ./b2)

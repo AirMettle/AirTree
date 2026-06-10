@@ -14,7 +14,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         add_compile_options(-Werror)
     endif()
 elseif(MSVC)
-    add_compile_options(/W4)
+    # /wd4244 /wd4267: narrowing-conversion warnings have no GCC/Clang
+    # equivalent in -Wall -Wextra, so suppress for parity across platforms.
+    add_compile_options(/W4 /wd4244 /wd4267)
     if(AIRTREE_WARNINGS_AS_ERRORS)
         add_compile_options(/WX)
     endif()
@@ -59,7 +61,13 @@ else()
 endif()
 
 ### Config-keyed dependency directory
-set(AIRMETTLE_AIRTREE_DEPENDENCY_ROOT "${CMAKE_BINARY_DIR}/.airmettle/airtree-deps" CACHE PATH "Root directory for AirMettle AirTree dependencies")
+if(WIN32)
+    # Short out-of-tree root: MSVC tools are not long-path aware and the deep
+    # in-tree layout overflows MAX_PATH (fatal C1083) in several deps.
+    set(AIRMETTLE_AIRTREE_DEPENDENCY_ROOT "C:/airtree-deps" CACHE PATH "Root directory for AirMettle AirTree dependencies")
+else()
+    set(AIRMETTLE_AIRTREE_DEPENDENCY_ROOT "${CMAKE_BINARY_DIR}/.airmettle/airtree-deps" CACHE PATH "Root directory for AirMettle AirTree dependencies")
+endif()
 
 # Detect platform: distro + major version
 if(EXISTS "/etc/os-release")
@@ -75,6 +83,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     string(REGEX REPLACE "^([0-9]+).*" "\\1" _DISTRO_MAJOR "${_macos_version}")
+elseif(WIN32)
+    set(_DISTRO_NAME "win")
+    string(REGEX REPLACE "^([0-9]+).*" "\\1" _DISTRO_MAJOR "${CMAKE_SYSTEM_VERSION}")
 else()
     set(_DISTRO_NAME "unknown")
     set(_DISTRO_MAJOR "0")

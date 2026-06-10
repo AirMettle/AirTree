@@ -33,7 +33,7 @@ fi
 install_package() {
   local package=$1
   local version_flag=${2:-}
-  run_step "[ airtree-setup ] Install $package" choco install "$package" $version_flag -y --no-progress
+  run_step --retries 3 --retry-delay 15 "[ airtree-setup ] Install $package" choco install "$package" $version_flag -y --no-progress
 }
 
 install_package "wget"
@@ -80,7 +80,5 @@ fi
 # If we do end up needing it, we should also add it to the ubuntu setup scripts for consistency.
 # run_step "[ airtree-setup ] Install snappy via vcpkg" "$VCPKG_DIR/vcpkg.exe" install snappy:x64-windows
 
-export CMAKE_TOOLCHAIN_FILE="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"
-echo "export CMAKE_TOOLCHAIN_FILE=\"$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake\"" >> /tmp/env.sh
 
 log "INFO" "Windows setup completed successfully! MSVC configured at $(which cl.exe)"
