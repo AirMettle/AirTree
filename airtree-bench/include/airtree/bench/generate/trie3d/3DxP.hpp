@@ -73,14 +73,14 @@ protected:
 
 
     for (auto _ : state) {
-      auto serializedTrie = execSerialize_3D_3x10(
+      auto serialized = execSerialize_3D_3x10(
           airTree3DxP_root.get(), curr_trie_size, specialCounts, true);
 
-      benchmark::DoNotOptimize(serializedTrie.data());
+      benchmark::DoNotOptimize(serialized.data());
       benchmark::ClobberMemory();
 
       // Update counter inside loop so it registers properly
-      state.counters["Size"] = serializedTrie.size();
+      state.counters["Size"] = serialized.size();
     }
   }
 

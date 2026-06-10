@@ -65,14 +65,14 @@ protected:
         *specialCounts, curr_trie_size, fpharray, true);
 
     for (auto _ : state) {
-      auto serializedTrie = execSerialization_TrieNode16(
+      auto serialized = execSerialization_TrieNode16(
           airTree1DxF_root, *specialCounts, curr_trie_size, true);
 
-      benchmark::DoNotOptimize(serializedTrie.data());
+      benchmark::DoNotOptimize(serialized.data());
       benchmark::ClobberMemory();
 
       // Update counter inside loop so it registers properly
-      state.counters["Size"] = serializedTrie.size();
+      state.counters["Size"] = serialized.size();
     }
   }
 

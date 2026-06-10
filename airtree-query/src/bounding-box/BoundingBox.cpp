@@ -19,7 +19,7 @@ BoundingBox::BoundingBox(std::vector<char> buffer) {
   dims_ = reader.getDims();
   bit_length_ = reader.getBitLength();
   trie_node_ = reader.getType();
-  bin_count_ = 1 << bit_length_;
+  bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_unique<airtree::query::meta::Histogram>(bit_length_);
 }
 

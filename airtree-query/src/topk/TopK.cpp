@@ -31,7 +31,7 @@ TopK::TopK(std::vector<char> buffer) : offset_(0), buffer_(std::move(buffer)) {
   trie_node_ = reader.getType();
   header_ = reader.getHeader();
 
-  bin_count_ = 1 << bit_length_;
+  bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_shared<airtree::query::meta::Histogram>(bit_length_);
 }
 

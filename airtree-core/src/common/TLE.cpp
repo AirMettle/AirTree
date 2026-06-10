@@ -26,7 +26,8 @@ TLE setTLEComponents_32(uint32_t fpNumber) {
 
   // Handle normal numbers
   bool isExponentLessThan127 = exponent < 127;
-  int index = (signBit << 1) | isExponentLessThan127;
+  int index = static_cast<int>((signBit << 1)
+                               | static_cast<uint32_t>(isExponentLessThan127));
   static const int results[] = {2, 3, 6, 5};
   tle.encoding = results[index];
   return tle;
@@ -54,7 +55,8 @@ TLE setTLEComponents(uint64_t fpNumber) {
 
   // Handle normal numbers
   bool isExponentLessThan1023 = exponent < 1023;
-  int index = (signBit << 1) | isExponentLessThan1023;
+  int index = static_cast<int>((signBit << 1)
+                               | static_cast<uint64_t>(isExponentLessThan1023));
   static const int results[] = {2, 3, 6, 5};
   tle.encoding = results[index];
   return tle;

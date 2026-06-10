@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <airtree/core/common/BitInterleave.hpp>
 #include <airtree/core/Logger.hpp>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 using namespace airtree::core;
 
@@ -74,9 +77,13 @@ unsigned int createInternalAndInterleave_2D(uint64_t fpNumber1,
   // Calculate the position of the first significant bit using assembly or
   // intrinsic
   uint64_t firstOnePos1;
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+  unsigned long index1;
+  _BitScanReverse64(&index1, maskedNumber1);
+  firstOnePos1 = index1;
+#elif defined(x86_ARCH)
   __asm__("bsrq %1, %0" : "=r"(firstOnePos1) : "r"(maskedNumber1) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
   __asm__("clz %0, %1" : "=r"(firstOnePos1) : "r"(maskedNumber1) : "cc");
   firstOnePos1 = 63 - firstOnePos1;
 #endif
@@ -85,9 +92,13 @@ unsigned int createInternalAndInterleave_2D(uint64_t fpNumber1,
   uint64_t precisionBits1 = ((maskedNumber1 >> (firstOnePos1 - 6)) & 0x3F);
 
   uint64_t firstOnePos2;
-#ifdef x86_ARCH
+#ifdef _MSC_VER
+  unsigned long index2;
+  _BitScanReverse64(&index2, maskedNumber2);
+  firstOnePos2 = index2;
+#elif defined(x86_ARCH)
   __asm__("bsrq %1, %0" : "=r"(firstOnePos2) : "r"(maskedNumber2) : "cc");
-#elif ARM_ARCH
+#elif defined(ARM_ARCH)
   __asm__("clz %0, %1" : "=r"(firstOnePos2) : "r"(maskedNumber2) : "cc");
   firstOnePos2 = 63 - firstOnePos2;
 #endif
