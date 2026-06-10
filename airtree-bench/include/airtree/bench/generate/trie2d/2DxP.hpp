@@ -70,14 +70,14 @@ protected:
         fpharray1, fpharray2, curr_trie_size, specialCounts, true);
 
     for (auto _ : state) {
-      auto serializedTrie = execSerialize_2D_2x10(
+      auto serialized = execSerialize_2D_2x10(
           airTree2DxP_root.get(), curr_trie_size, specialCounts, true);
 
-      benchmark::DoNotOptimize(serializedTrie.data());
+      benchmark::DoNotOptimize(serialized.data());
       benchmark::ClobberMemory();
 
       // Update counter inside loop so it registers properly
-      state.counters["Size"] = serializedTrie.size();
+      state.counters["Size"] = serialized.size();
     }
   }
 

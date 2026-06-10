@@ -53,7 +53,7 @@ void serialize_1DxP_l1(const TrieNode_20_Level1 *node,
   // Convert populated bitset to compact BooleanArray
   BooleanArray compact_array = BooleanArray(BINS_64 / 64);
   for (size_t i = 0; i < BINS_64; i++) {
-    if (node->populated[i] > 0) {
+    if (node->populated[i]) {
       compact_array.set(i, true);
     }
   }

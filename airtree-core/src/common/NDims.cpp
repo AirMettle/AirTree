@@ -14,7 +14,9 @@ int getNumDims2D(unsigned int combinedTLE) {
   bool isTle2Special = (tle2 == 0 || tle2 == 1 || tle2 == 4 || tle2 == 7);
 
   // Compute ndims based on the special conditions
-  int ndims = (~((isTle1Special << 1) | isTle2Special)) & 0x3;
+  int ndims = (~((static_cast<int>(isTle1Special) << 1)
+                 | static_cast<int>(isTle2Special)))
+              & 0x3;
 
   return ndims;
 }
@@ -31,8 +33,10 @@ int getNumDims3D(unsigned int combinedTLE) {
   bool isTle3Special = (tle3 == 0 || tle3 == 1 || tle3 == 4 || tle3 == 7);
 
   // Compute ndims based on the special conditions
-  int ndims =
-      (~((isTle1Special << 2) | (isTle2Special << 1) | isTle3Special)) & 0x7;
+  int ndims = (~((static_cast<int>(isTle1Special) << 2)
+                 | (static_cast<int>(isTle2Special) << 1)
+                 | static_cast<int>(isTle3Special)))
+              & 0x7;
 
   return ndims;
 }
@@ -51,8 +55,10 @@ int getNumDims4D(unsigned int combinedTLE) {
   bool isTle4Special = (tle4 == 0 || tle4 == 1 || tle4 == 4 || tle4 == 7);
 
   // Compute ndims based on the special conditions
-  int ndims = (~((isTle1Special << 3) | (isTle2Special << 2)
-                 | (isTle3Special << 1) | isTle4Special << 0))
+  int ndims = (~((static_cast<int>(isTle1Special) << 3)
+                 | (static_cast<int>(isTle2Special) << 2)
+                 | (static_cast<int>(isTle3Special) << 1)
+                 | static_cast<int>(isTle4Special)))
               & 0xF;
 
   return ndims;

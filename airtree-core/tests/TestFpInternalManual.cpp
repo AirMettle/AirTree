@@ -26,7 +26,7 @@ protected:
   int zeroCount;
   uint64_t precisionBits;
 
-  void runBitManipulation(bool default_mode) {
+  void runBitManipulation(bool defaultMode) {
     std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
     // Extract and calculate necessary bits directly from the floating-point
     // number
@@ -37,7 +37,7 @@ protected:
         placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
 
 
-    if (default_mode && placed_signedExponentBit) {
+    if (defaultMode && placed_signedExponentBit) {
       adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
     }
 
