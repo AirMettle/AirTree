@@ -46,6 +46,11 @@ jobs:
             cache_id: windows2022
             # Out-of-tree on Windows (MSVC MAX_PATH), see cmake/Settings.cmake
             deps_path: C:\airtree-deps
+          - os: macos-26
+            runner: macos-26
+            cache_id: macos26
+            # settings.sh forces clang-20 on macOS, so the build dir differs from env.TOOLCHAIN
+            deps_path: cmake-build-clang-20-RelWithDebInfo-nosan/.airmettle/airtree-deps
     steps:
       # The minimal CentOS image lacks git/tar that checkout + cache need.
       - name: Container prerequisites
@@ -81,6 +86,11 @@ jobs:
         run: |
           reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
           git config --system core.longpaths true
+
+      # import.sh needs bash 4+ (associative arrays); macOS ships bash 3.2.
+      - name: Modern bash
+        if: runner.os == 'macOS'
+        run: brew install bash
 
       # Restore the dep install tree on every run
       - name: Restore deps cache

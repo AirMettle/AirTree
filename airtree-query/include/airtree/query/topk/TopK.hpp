@@ -62,7 +62,6 @@ public:
 private:
   template <typename NodeType> TopKResultVector fetchTopK(double k);
 
-  size_t offset_ = 0;
   uint16_t dims_;
   uint16_t bit_length_;
   uint64_t bin_count_;

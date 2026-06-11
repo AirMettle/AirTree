@@ -83,8 +83,8 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
           temp_node_level2.reset();
         } else if (pop1_level1.test(j) && pop2_level1.test(j)) {
           temp_node_level2 = mergeTrieNode20_Level2(
-              std::move(deserialize_1DxP_l2(buffer1, offset1)),
-              std::move(deserialize_1DxP_l2(buffer2, offset2)));
+              deserialize_1DxP_l2(buffer1, offset1),
+              deserialize_1DxP_l2(buffer2, offset2));
           serialize_1DxP_l2(temp_node_level2.get(), mergedBuffer);
           temp_node_level2.reset();
         }

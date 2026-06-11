@@ -259,8 +259,8 @@ std::vector<char> Merge4DxP::merge(const std::vector<char> &buffer1,
                   temp_node_level4.reset();
                 } else if (pop1_level3.test(l) && pop2_level3.test(l)) {
                   auto temp_node_level4 = mergeNode4D_4x10_l3(
-                      std::move(deserialize_4DxP_l3(buffer1, offset1, level)),
-                      std::move(deserialize_4DxP_l3(buffer2, offset2, level)));
+                      deserialize_4DxP_l3(buffer1, offset1, level),
+                      deserialize_4DxP_l3(buffer2, offset2, level));
                   serialize_4DxP_l3(temp_node_level4.get(), mergedBuffer);
                   temp_node_level4.reset();
                 }
