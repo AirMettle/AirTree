@@ -52,10 +52,12 @@ jobs:
             # settings.sh forces clang-20 on macOS, so the build dir differs from env.TOOLCHAIN
             deps_path: cmake-build-clang-20-RelWithDebInfo-nosan/.airmettle/airtree-deps
     steps:
-      # The minimal CentOS image lacks git/tar that checkout + cache need.
+      # The minimal CentOS image lacks git/tar that checkout + cache need. zstd
+      # must be present at restore time: the cache version is computed from the
+      # available compressor, and saves happen after the build installs zstd.
       - name: Container prerequisites
         if: ${{ matrix.container != '' }}
-        run: dnf install -y git tar gzip
+        run: dnf install -y git tar gzip zstd
       - uses: actions/checkout@v5
       # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB (native Linux runners only).
       - name: Free disk space
