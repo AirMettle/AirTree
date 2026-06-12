@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+. "$ROOT_DIR/tools/utils/import.sh"
+import utils/common_func.sh
+
 #Parse flags
 
 VERBOSE=false
@@ -20,7 +24,8 @@ cd "$REPO_ROOT"
 if ! command -v clang-format &>/dev/null; then
   echo "clang-format not found. Attempting to install…"
   if command -v apt-get &>/dev/null; then
-    sudo apt-get update && sudo apt-get install -y clang-format
+    SUDO=$(determine_sudo)
+    $SUDO apt-get update && $SUDO apt-get install -y clang-format
   elif command -v brew &>/dev/null; then
     brew install clang-format
   else

@@ -9,26 +9,6 @@ import utils/build_utils.sh
 
 OS_NAME="$(uname | awk '{ print tolower($0) }')"
 
-# Determine whether to use sudo (CodeBuild containers typically run as root)
-determine_sudo() {
-    if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
-        echo ""
-        return
-    fi
-
-    if command -v sudo >/dev/null 2>&1; then
-        echo "sudo"
-    else
-        # If already root, no sudo needed; otherwise, bail out clearly
-        if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-            echo ""
-        else
-            log_error "sudo not found and not running as root. Install sudo or run as root."
-            exit 1
-        fi
-    fi
-}
-
 SUDO=$(determine_sudo)
 log_debug "Using sudo command: '${SUDO}'"
 
@@ -57,6 +37,15 @@ find_system_python() {
             command -v python3
         else
             find /c/Python31* /c/tools/python31* "/c/Program Files/Python31*" -maxdepth 1 -name "python.exe" 2>/dev/null | head -1 || true
+        fi
+    elif [[ "$OS_NAME" == "darwin" ]]; then
+        # BSD find lacks -executable; python@3.12 may be keg-only (not in PATH)
+        if command -v python3.12 >/dev/null 2>&1; then
+            command -v python3.12
+        else
+            local _brew_py
+            _brew_py="$(brew --prefix python@3.12 2>/dev/null)/bin/python3.12"
+            if [[ -x "$_brew_py" ]]; then echo "$_brew_py"; fi
         fi
     else
         find /bin /usr/bin /usr/local/bin -executable -name python3.12 2>/dev/null | head -1 || true

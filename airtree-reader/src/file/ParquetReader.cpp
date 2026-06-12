@@ -68,6 +68,8 @@ ParquetFileParser::parse(const std::string &file_path,
 
   std::shared_ptr<arrow::Table> table;
   auto status = reader->ReadTable(&table);
+  // Close eagerly
+  (void)infile->Close();
   if (!status.ok()) {
     SPDLOG_LOGGER_ERROR(logger(), "Error reading table from Parquet file: {}",
                         status.message());

@@ -212,3 +212,21 @@ error_exit() {
     log_error "$1"
     exit 1
 }
+
+# Use sudo when present; skip it as root or on Windows shells; bail otherwise.
+determine_sudo() {
+    local os_name
+    os_name="$(uname | awk '{ print tolower($0) }')"
+    if [[ "$os_name" == *"mingw"* || "$os_name" == *"msys"* || "$os_name" == *"cygwin"* ]]; then
+        echo ""
+        return
+    fi
+    if command -v sudo >/dev/null 2>&1; then
+        echo "sudo"
+    elif [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+        echo ""
+    else
+        log_error "sudo not found and not running as root. Install sudo or run as root."
+        exit 1
+    fi
+}

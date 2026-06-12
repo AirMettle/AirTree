@@ -4,6 +4,16 @@ All notable changes to AirTree are listed here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-06-12
+
+- Fixed version handling for debian/rpm packages 
+- add support for windows-22 via msvc compiler
+- add support for macOS-26 via clang compiler 
+- Fixed Warning as Errors on both windows-22 and macOS-26, making the codebase more robust
+- Added example CMakeLists.txt in example/ for reference 
+- enable ci/cd for ubuntu22.04 , ubuntu22.04-arm , centos-stream9 , windows-22 , macOS-26
+
+
 ## [1.4.0] - 2026-06-05
 
 ### Added 

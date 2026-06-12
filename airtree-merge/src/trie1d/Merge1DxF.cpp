@@ -50,8 +50,8 @@ std::vector<char> Merge1DxF::merge(const std::vector<char> &buffer1,
                && pop2.test(i)) { // Both buffers have a level1 node at index i.
       if (offset1 < buffer1.size() && offset2 < buffer2.size()) {
         temp_node = mergeTrieNode16Level1(
-            std::move(deserialize_1DxF_l1(buffer1, offset1)),
-            std::move(deserialize_1DxF_l1(buffer2, offset2)));
+            deserialize_1DxF_l1(buffer1, offset1),
+            deserialize_1DxF_l1(buffer2, offset2));
         serialize_1DxF_l1(temp_node.get(), mergedBuffer);
         temp_node.reset();
       }

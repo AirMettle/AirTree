@@ -1,22 +1,19 @@
 <!--
-  Please read before opening this pull request.
+  External contributors: AirTree is source-available, not open-source — changes are
+  made by AirMettle internally, so external pull requests can't be merged and this PR
+  will be closed. Please open an issue instead:
+  https://github.com/AirMettle/AirTree/issues/new/choose
+  See CONTRIBUTING.md for the policy.
 -->
 
-## AirTree does not accept external pull requests
+## Summary
+<!-- What changed and why. -->
 
-Thank you for wanting to help improve AirTree.
+## Changes
+-
 
-AirTree is **source-available, not open-source**: all changes — including
-documentation fixes — are made by AirMettle internally, so we are unable to
-review or merge external pull requests, and this PR will be closed.
+## Testing
+<!-- How this was verified: CI, local build, manual steps. -->
 
-This is not a reflection on your change. The fastest way to get a bug fixed or
-an improvement considered is to **open an issue** instead:
-
-- Bug report or documentation problem:
-  https://github.com/AirMettle/AirTree/issues/new/choose
-- Feature request:
-  https://github.com/AirMettle/AirTree/issues/new/choose
-
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full policy and the reasons
-behind it. Thank you for understanding.
+## Related issue
+<!-- Closes #NNN -->

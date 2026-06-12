@@ -33,26 +33,52 @@ fi
 install_package() {
   local package=$1
   local version_flag=${2:-}
-  run_step "[ airtree-setup ] Install $package" choco install "$package" $version_flag -y --no-progress
+  run_step --retries 4 --retry-delay 30 "[ airtree-setup ] Install $package" choco install "$package" $version_flag -y --no-progress
 }
 
-install_package "wget"
-install_package "curl"
-install_package "unzip"
+# Install via choco only when the tool is missing. GitHub-hosted runners
+# preinstall most of these, and the community choco feed rate-limits CI IPs
+# aggressively (503s), so every skipped install matters.
+ensure_package() {
+  local cmd=$1 package=$2
+  if command -v "$cmd" >/dev/null 2>&1; then
+    log "INFO" "$package already available ($(command -v "$cmd")). Skipping choco install."
+  else
+    install_package "$package"
+  fi
+}
+
+ensure_package wget wget
+ensure_package curl curl
+ensure_package unzip unzip
 # Can't install git via Chocolatey using git bash on windows since we are already running git bash :). I'm going to
 # skip this and add it as a hard requirement for windows users to have git installed and in their PATH.
 # install_package "git"
-install_package "cppcheck"
-install_package "ninja"
-install_package "sccache"
-install_package "winflexbison3"
-install_package "pkgconfiglite"
-install_package "strawberryperl"
-install_package "nasm"
+ensure_package cppcheck cppcheck
+ensure_package ninja ninja
+ensure_package sccache sccache
+ensure_package win_flex winflexbison3
+ensure_package pkg-config pkgconfiglite
+ensure_package nasm nasm
 
+# OpenSSL's VC-WIN64A build needs a native (non-MSYS) perl; git-bash's own
+# perl reports $^O=msys and doesn't count, but a Strawberry install dir does.
+if [ -x "/c/Strawberry/perl/bin/perl.exe" ] \
+    || { command -v perl >/dev/null 2>&1 && [ "$(perl -e 'print $^O')" = "MSWin32" ]; }; then
+  log "INFO" "Native perl already available. Skipping choco install."
+else
+  install_package "strawberryperl"
+fi
+
+# Any cmake 3.22+ works (project minimum); 4.x is rejected since some
+# third-party deps still declare pre-3.5 minimums that 4.x refuses to build.
 CMAKE_REQUIRED="3.27.9"
-install_package "cmake" "--version $CMAKE_REQUIRED --force"
-export PATH="/c/Program Files/CMake/bin:$PATH"
+if command -v cmake >/dev/null 2>&1 && cmake --version | head -1 | grep -qE ' 3\.(2[2-9]|[3-9][0-9])'; then
+  log "INFO" "$(cmake --version | head -1) already available. Skipping pinned install."
+else
+  install_package "cmake" "--version $CMAKE_REQUIRED --force"
+  export PATH="/c/Program Files/CMake/bin:$PATH"
+fi
 
 if command -v python >/dev/null 2>&1 || command -v py >/dev/null 2>&1; then
   log "INFO" "Python already installed on system. Skipping Chocolatey install."
@@ -80,12 +106,5 @@ fi
 # If we do end up needing it, we should also add it to the ubuntu setup scripts for consistency.
 # run_step "[ airtree-setup ] Install snappy via vcpkg" "$VCPKG_DIR/vcpkg.exe" install snappy:x64-windows
 
-export CMAKE_TOOLCHAIN_FILE="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"
-echo "export CMAKE_TOOLCHAIN_FILE=\"$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake\"" >> /tmp/env.sh
-
-# Docker Desktop on Windows requires Hyper-V/WSL2 and system reboots, which breaks automated bash scripts.
-if ! command -v docker >/dev/null 2>&1; then
-  log "WARNING" "Docker is not installed. Please install Docker Desktop manually: https://docs.docker.com/desktop/install/windows-install/"
-fi
 
 log "INFO" "Windows setup completed successfully! MSVC configured at $(which cl.exe)"

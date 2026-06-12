@@ -164,8 +164,8 @@ std::vector<char> Merge3DxF::merge(const std::vector<char> &buffer1,
               temp_node_level3.reset();
             } else if (pop1_level2.test(k) && pop2_level2.test(k)) {
               auto temp_node_level3 = mergeTrieNode16Level1(
-                  std::move(deserialize_3DxF_l2(buffer1, offset1, level)),
-                  std::move(deserialize_3DxF_l2(buffer2, offset2, level)));
+                  deserialize_3DxF_l2(buffer1, offset1, level),
+                  deserialize_3DxF_l2(buffer2, offset2, level));
               serialize_1DxF_l1(temp_node_level3.get(), mergedBuffer);
               temp_node_level3.reset();
             }

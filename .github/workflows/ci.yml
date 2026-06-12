@@ -1,0 +1,203 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Cache third-party deps via actions/cache
+  AIRTREE_DEPS_CACHE_ENABLED: "OFF"
+  BUILD_TYPE: RelWithDebInfo
+  TOOLCHAIN: gnu-11
+  SANITIZER: nosan
+
+jobs:
+  build-test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            runner: ubuntu-22.04
+            cache_id: ubuntu22.04
+          - os: ubuntu-22.04-arm
+            runner: ubuntu-22.04-arm
+            cache_id: ubuntu22.04-arm
+          - os: centos-stream9
+            runner: ubuntu-latest
+            container: quay.io/centos/centos:stream9
+            cache_id: centos9
+          - os: windows-2022
+            runner: windows-2022
+            cache_id: windows2022
+            # Out-of-tree on Windows (MSVC MAX_PATH), see cmake/Settings.cmake
+            deps_path: C:\airtree-deps
+          - os: macos-26
+            runner: macos-26
+            cache_id: macos26
+            # settings.sh forces clang-20 on macOS, so the build dir differs from env.TOOLCHAIN
+            deps_path: cmake-build-clang-20-RelWithDebInfo-nosan/.airmettle/airtree-deps
+    steps:
+      # The minimal CentOS image lacks git/tar that checkout + cache need.
+      - name: Container prerequisites
+        if: ${{ matrix.container != '' }}
+        run: dnf install -y git tar gzip
+      - uses: actions/checkout@v5
+      # preinstalled SDKs we never use to take / from ~20 GB free to ~45-55 GB (native Linux runners only).
+      - name: Free disk space
+        if: ${{ matrix.container == '' && runner.os == 'Linux' }}
+        run: |
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/share/dotnet \
+            /opt/ghc /usr/local/.ghcup \
+            /usr/share/swift \
+            /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          sudo apt-get clean
+          df -h /
+
+      # windows.sh requires cl.exe in PATH; this loads the VS 2022 x64 environment.
+      - name: MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # MSVC tools are not long-path aware (deps use a short root for that), but
+      # git needs this for deep submodule checkouts (e.g. boringssl under openssl).
+      - name: Enable long paths
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+          git config --system core.longpaths true
+
+      # import.sh needs bash 4+ (associative arrays); macOS ships bash 3.2.
+      - name: Modern bash
+        if: runner.os == 'macOS'
+        run: brew install bash
+
+      # Restore the dep install tree on every run
+      - name: Restore deps cache
+        id: deps_cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ matrix.deps_path || format('cmake-build-{0}-{1}-{2}/.airmettle/airtree-deps', env.TOOLCHAIN, env.BUILD_TYPE, env.SANITIZER) }}
+          key: deps-${{ matrix.cache_id }}-${{ env.TOOLCHAIN }}-${{ hashFiles('cmake/Settings.cmake', 'cmake/third-party/**', 'cmake/DepsRegistry.cmake') }}
+          restore-keys: |
+            deps-${{ matrix.cache_id }}-${{ env.TOOLCHAIN }}-
+
+      - name: Build
+        run: bash tools/build/build.sh
+
+      - name: Save deps cache
+        if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && steps.deps_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ matrix.deps_path || format('cmake-build-{0}-{1}-{2}/.airmettle/airtree-deps', env.TOOLCHAIN, env.BUILD_TYPE, env.SANITIZER) }}
+          key: ${{ steps.deps_cache.outputs.cache-primary-key }}
+
+  notify:
+    needs: build-test
+    if: ${{ !cancelled() && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Gather run metadata
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ needs.build-test.result }}
+          EVENT: ${{ github.event_name }}
+          PUSH_BRANCH: ${{ github.ref_name }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PUSH_SHA: ${{ github.sha }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "push" ]; then branch="$PUSH_BRANCH"; sha="$PUSH_SHA"; else branch="$PR_BRANCH"; sha="$PR_SHA"; fi
+          if [ "$RESULT" = "success" ]; then emoji=":white_check_mark:"; status="passed"; color="#2eb67d"; else emoji=":x:"; status="failed"; color="#e01e5a"; fi
+          started=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq '.run_started_at' 2>/dev/null || true)
+          now=$(date -u +%s)
+          if [ -n "$started" ] && start_ts=$(date -u -d "$started" +%s 2>/dev/null); then dur=$((now - start_ts)); duration="$((dur/60))m $((dur%60))s"; else duration="n/a"; fi
+          # Per-OS results: each completed build leg (the notify job is still running, so its conclusion is null and it drops out).
+          results=""
+          while IFS=$'\t' read -r concl name; do
+            [ -z "$name" ] && continue
+            case "$concl" in
+              success)   ic=":large_green_circle:";;
+              failure)   ic=":red_circle:";;
+              cancelled) ic=":heavy_minus_sign:";;
+              *)         ic=":grey_question:";;
+            esac
+            results="${results:+$results · }$ic $name"
+          done < <(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" --jq '.jobs[] | select(.conclusion != null) | "\(.conclusion)\t\(.name)"' 2>/dev/null || true)
+          [ -z "$results" ] && results=":grey_question: (see run)"
+          {
+            echo "emoji=$emoji"
+            echo "status=$status"
+            echo "color=$color"
+            echo "branch=$branch"
+            echo "sha=${sha:0:7}"
+            echo "duration=$duration"
+            echo "results=$results"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Notify Slack
+        continue-on-error: true
+        uses: slackapi/slack-github-action@v3.0.3
+        with:
+          webhook: ${{ github.event_name == 'push' && secrets.SLACK_QA_CHANNEL || github.event_name == 'pull_request' && secrets.SLACK_BUILD_CHANNEL || '' }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "${{ steps.meta.outputs.emoji }} AirTree CI ${{ steps.meta.outputs.status }} on ${{ steps.meta.outputs.branch }}"
+            attachments:
+              - color: "${{ steps.meta.outputs.color }}"
+                blocks:
+                  - type: "header"
+                    text:
+                      type: "plain_text"
+                      emoji: true
+                      text: "${{ steps.meta.outputs.emoji }} AirTree CI — ${{ steps.meta.outputs.status }}"
+                  - type: "section"
+                    text:
+                      type: "mrkdwn"
+                      text: "*Results*\n${{ steps.meta.outputs.results }}"
+                  - type: "section"
+                    fields:
+                      - type: "mrkdwn"
+                        text: "*Branch*\n`${{ steps.meta.outputs.branch }}`"
+                      - type: "mrkdwn"
+                        text: "*Commit*\n`${{ steps.meta.outputs.sha }}`"
+                      - type: "mrkdwn"
+                        text: "*Duration*\n${{ steps.meta.outputs.duration }}"
+                      - type: "mrkdwn"
+                        text: "*Triggered by*\n${{ github.actor }}"
+                  - type: "actions"
+                    elements:
+                      - type: "button"
+                        text:
+                          type: "plain_text"
+                          text: "View CI run"
+                        url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  - type: "context"
+                    elements:
+                      - type: "mrkdwn"
+                        text: "run #${{ github.run_number }}"

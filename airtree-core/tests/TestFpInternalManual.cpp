@@ -8,6 +8,9 @@
 #include <iostream>
 #include <sys/types.h>
 #include <airtree/core/AirTreeCore_internal.hpp>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 class BitManipulationTest : public ::testing::Test {
 protected:
@@ -23,7 +26,7 @@ protected:
   int zeroCount;
   uint64_t precisionBits;
 
-  void runBitManipulation(bool default_mode) {
+  void runBitManipulation(bool defaultMode) {
     std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
     // Extract and calculate necessary bits directly from the floating-point
     // number
@@ -34,7 +37,7 @@ protected:
         placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
 
 
-    if (default_mode && placed_signedExponentBit) {
+    if (defaultMode && placed_signedExponentBit) {
       adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
     }
 
@@ -44,10 +47,9 @@ protected:
     // Calculate the position of the first significant bit using assembly or
     // intrinsic
 #ifdef _MSC_VER
-#include <intrin.h>
-  unsigned long index;
-  _BitScanReverse64(&index, maskedNumber);
-  firstOnePos = index;
+    unsigned long index;
+    _BitScanReverse64(&index, maskedNumber);
+    firstOnePos = index;
 #elif defined(x86_ARCH)
     __asm__("bsrq %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
 #elif defined(ARM_ARCH)
