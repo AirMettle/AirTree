@@ -58,7 +58,6 @@ public:
 
 private:
   std::vector<uint64_t> array_;
-  uint64_t count_;
 };
 
 

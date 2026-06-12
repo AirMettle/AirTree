@@ -41,7 +41,8 @@ unsigned int createInternal8Bit_32(uint32_t fpNumber, bool default_mode) {
 #elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
 #elif defined(ARM_ARCH)
-    __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
+    // %w forces 32-bit registers; required by clang, same codegen on gcc
+    __asm__("clz %w0, %w1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif
 
@@ -184,7 +185,8 @@ unsigned int createInternal10Bit_32(uint32_t fpNumber, bool default_mode) {
 #elif defined(x86_ARCH)
     __asm__("bsrl %1, %0" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
 #elif defined(ARM_ARCH)
-    __asm__("clz %0, %1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
+    // %w forces 32-bit registers; required by clang, same codegen on gcc
+    __asm__("clz %w0, %w1" : "=r"(firstOnePos) : "r"(maskedNumber) : "cc");
     firstOnePos = 31 - firstOnePos;
 #endif
 

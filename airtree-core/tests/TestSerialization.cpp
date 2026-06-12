@@ -25,8 +25,6 @@ const FPHArray array2 =
 const FPHArray array3 =
     buildFPHArray(dim4_data.data(), static_cast<int>(dim4_data.size()));
 
-const bool default_mode = true;
-
 
 class SerializationTest : public ::testing::Test {
 protected:

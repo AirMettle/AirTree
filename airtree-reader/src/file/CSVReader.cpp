@@ -75,6 +75,8 @@ InputDataVector CSVFileParser::parse(const std::string &file_path,
 
   // Read the table
   auto table_result = reader->Read();
+  // Close eagerly
+  (void)infile->Close();
   if (!table_result.ok()) {
     SPDLOG_LOGGER_ERROR(logger(), "Error reading table from CSV file: {}",
                         table_result.status().message());

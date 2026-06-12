@@ -81,7 +81,6 @@ private:
   template <typename NodeType> MinMaxResultVector calculateMinValue();
   template <typename NodeType> MinMaxResultVector calculateMaxValue();
 
-  size_t offset_ = 0;
   uint16_t dims_;
   uint16_t bit_length_;
   uint64_t bin_count_;

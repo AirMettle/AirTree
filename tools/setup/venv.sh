@@ -38,6 +38,15 @@ find_system_python() {
         else
             find /c/Python31* /c/tools/python31* "/c/Program Files/Python31*" -maxdepth 1 -name "python.exe" 2>/dev/null | head -1 || true
         fi
+    elif [[ "$OS_NAME" == "darwin" ]]; then
+        # BSD find lacks -executable; python@3.12 may be keg-only (not in PATH)
+        if command -v python3.12 >/dev/null 2>&1; then
+            command -v python3.12
+        else
+            local _brew_py
+            _brew_py="$(brew --prefix python@3.12 2>/dev/null)/bin/python3.12"
+            if [[ -x "$_brew_py" ]]; then echo "$_brew_py"; fi
+        fi
     else
         find /bin /usr/bin /usr/local/bin -executable -name python3.12 2>/dev/null | head -1 || true
     fi

@@ -94,8 +94,8 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
             temp_node_level2.reset();
           } else if (pop1_level1.test(j) && pop2_level1.test(j)) {
             temp_node_level2 = mergeTrieNode2D10_Level1(
-                std::move(deserialize_2DxP_l1(buffer1, offset1)),
-                std::move(deserialize_2DxP_l1(buffer2, offset2)));
+                deserialize_2DxP_l1(buffer1, offset1),
+                deserialize_2DxP_l1(buffer2, offset2));
             serialize_2DxP_l1(temp_node_level2.get(), mergedBuffer);
             temp_node_level2.reset();
           }

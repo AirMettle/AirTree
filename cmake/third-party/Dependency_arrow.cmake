@@ -24,6 +24,15 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
       list(APPEND ARROW_EXTRA_ARGS "-DCMAKE_SYSTEM_PROCESSOR=AMD64")
   endif()
 
+  # Xcode 26's libtool -V reports "cctools_ld-NNNN"; arrow 20.0.0 greps for
+  # "cctools-" and rejects Apple's own libtool. Loosen the regex the way
+  # upstream did (apache/arrow#49369).
+  set(ARROW_PATCH_COMMAND "")
+  if(APPLE)
+      set(ARROW_PATCH_COMMAND PATCH_COMMAND perl -pi -e "s/cctools-\\(/cctools.+(/"
+          <SOURCE_DIR>/cpp/cmake_modules/BuildUtils.cmake)
+  endif()
+
   if(AIRMETTLE_AIRTREE_USE_SHARED_LIBS)
       set(ARROW_BUILD_SHARED ON)
       set(ARROW_BUILD_STATIC OFF)
@@ -47,6 +56,7 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
     GIT_SUBMODULES_RECURSE 1
     SOURCE_DIR ${_EP_BUILD_DIR}/build/src/${_EP_BASE}  # Root directory of Arrow repo
     SOURCE_SUBDIR "cpp"  # Specify the 'cpp' subdirectory
+    ${ARROW_PATCH_COMMAND}
     CMAKE_ARGS
     ${ARROW_EXTRA_ARGS}
     -DCMAKE_INSTALL_LIBDIR=lib

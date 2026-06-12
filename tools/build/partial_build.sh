@@ -117,6 +117,17 @@ if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwi
     fi
 fi
 
+# On macOS (TOOLCHAIN forced to clang-20 in settings.sh), point CC/CXX at the
+# same Homebrew LLVM so ExternalProject deps don't fall back to Apple clang.
+if [[ "$OS_NAME" == "darwin" ]]; then
+    _LLVM20_PREFIX="$(brew --prefix llvm@20 2>/dev/null || true)"
+    if [[ -x "$_LLVM20_PREFIX/bin/clang" ]]; then
+        export CC="$_LLVM20_PREFIX/bin/clang"
+        export CXX="$_LLVM20_PREFIX/bin/clang++"
+        log_info "Using Homebrew LLVM 20 for CC/CXX ($_LLVM20_PREFIX)"
+    fi
+fi
+
 CMAKE_TOOLCHAIN_FILE="${_CMAKE_SOURCE_DIR}/cmake/Toolchain_${TOOLCHAIN//-/_}.cmake"
 
 # Configure cmake

@@ -37,11 +37,10 @@ AirTree::AirTree(const std::string &config_name,
                  const std::string &input_data_file,
                  const std::vector<std::string> &column_list,
                  const std::string &result_file,
-                 airtree::reader::file::SUPPORTED_FILE_TYPE file_type,
                  airtree::reader::file::SUPPORTED_DATA_TYPE data_type,
                  bool run_e2e)
     : columns_(column_list), config_name_(config_name),
-      input_file_(input_data_file), data_type_(data_type), file_type_(file_type),
+      input_file_(input_data_file), data_type_(data_type),
       result_file_(result_file), run_e2e_(run_e2e) {}
 
 std::string AirTree::get_valid_config_names() {

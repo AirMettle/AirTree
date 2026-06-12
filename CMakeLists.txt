@@ -38,48 +38,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_arrow.cmake)
 # include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_hdf5.cmake)
 # include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_netcdf4.cmake)
 
-if (APPLE)
-    # For macOS, ensure that GCC-14 is used
-    message(STATUS "Setting GCC 14 for macOS")
-    # Find GCC and G++ version 14
-    find_program(GCC_PATH gcc-14)
-    find_program(GPP_PATH g++-14)
-    # If GCC or G++ are not found, throw an error
-    if (NOT GCC_PATH OR NOT GPP_PATH)
-        message(FATAL_ERROR "GCC-14 and/or G++-14 not found! Ensure GCC is installed and available in your PATH.")
-    endif ()
-    # Set the compilers
-    set(CMAKE_C_COMPILER "${GCC_PATH}")
-    set(CMAKE_CXX_COMPILER "${GPP_PATH}")
-    message(STATUS "Using GCC as C compiler: ${CMAKE_C_COMPILER}")
-    message(STATUS "Using G++ as C++ compiler: ${CMAKE_CXX_COMPILER}")
-elseif (UNIX AND NOT APPLE)
-    # For Ubuntu (assuming default GCC/G++ installations)
-    message(STATUS "Setting default GCC/G++ for Ubuntu")
-    # Find default GCC and G++
-    find_program(GCC_PATH gcc)
-    find_program(GPP_PATH g++)
-    # If GCC or G++ are not found, throw an error
-    if (NOT GCC_PATH OR NOT GPP_PATH)
-        message(FATAL_ERROR "GCC and/or G++ not found! Ensure GCC is installed and available in your PATH.")
-    endif ()
-    # Set the compilers
-    # set(CMAKE_C_COMPILER "${GCC_PATH}")
-    # set(CMAKE_CXX_COMPILER "${GPP_PATH}")
-    # message(STATUS "Using GCC as C compiler: ${CMAKE_C_COMPILER}")
-    # message(STATUS "Using G++ as C++ compiler: ${CMAKE_CXX_COMPILER}")
-elseif (WIN32)
-    message(STATUS "Using default MSVC compiler for Windows.")
-    find_program(MSVC_CL cl)
-    find_program(MSVC_LINK link)
-    if (NOT MSVC_CL OR NOT MSVC_LINK)
-        message(FATAL_ERROR "MSVC compiler tools not found! Ensure Visual Studio Build Tools are installed and available in your PATH.")
-    endif ()
-    message(STATUS "Using MSVC CL as C/C++ compiler: ${MSVC_CL}")
-else ()
-    message(FATAL_ERROR "Unsupported OS or platform.")
-endif ()
-
 # Detect architecture and define preprocessor directives
 if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
     add_compile_definitions(x86_ARCH)

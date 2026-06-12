@@ -214,7 +214,6 @@ private:
   void initEdgeBox3D(BoundingBoxBinIndices3D &edge,
                      BoundingBoxBinIndices3D &safe) const;
 
-  std::size_t offset_ = 0;
   int dims_ = 0;       // Number of dimensions
   int bit_length_ = 0; // Bit length of each dimension
   int bin_count_ = 0;  // Number of bins in the histogram

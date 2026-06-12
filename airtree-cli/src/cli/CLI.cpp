@@ -364,7 +364,6 @@ int main(int argc, char *argv[]) {
       ->required();
   parquet->callback([&]() {
     AirTree airtree_cli(config_name, input_data_file, column_list, result_file,
-                        SUPPORTED_FILE_TYPE::AT_PARQUET,
                         SUPPORTED_DATA_TYPE::AT_IGNORE, false);
     airtree_cli.parquet_handler();
   });
@@ -404,7 +403,7 @@ int main(int argc, char *argv[]) {
       data_type_enum = SUPPORTED_DATA_TYPE::AT_IGNORE;
     }
     AirTree airtree_cli(config_name, input_data_file, {}, result_file,
-                        SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum, false);
+                        data_type_enum, false);
     airtree_cli.binary_handler();
   });
 
@@ -428,8 +427,7 @@ int main(int argc, char *argv[]) {
       ->required();
   csv->callback([&]() {
     AirTree airtree_cli(config_name, input_data_file, csv_column_list,
-                        result_file, SUPPORTED_FILE_TYPE::AT_CSV,
-                        SUPPORTED_DATA_TYPE::AT_IGNORE, false);
+                        result_file, SUPPORTED_DATA_TYPE::AT_IGNORE, false);
     airtree_cli.csv_handler();
   });
 
