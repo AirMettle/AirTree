@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [develop, master]
+    branches: [develop, main]
   push:
-    branches: [develop, master]
+    branches: [develop, main]
   workflow_dispatch:
 
 permissions:
@@ -106,7 +106,7 @@ jobs:
         run: bash tools/build/build.sh
 
       - name: Save deps cache
-        if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master') && steps.deps_cache.outputs.cache-hit != 'true'
+        if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && steps.deps_cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
           path: ${{ matrix.deps_path || format('cmake-build-{0}-{1}-{2}/.airmettle/airtree-deps', env.TOOLCHAIN, env.BUILD_TYPE, env.SANITIZER) }}
