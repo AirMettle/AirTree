@@ -1,6 +1,7 @@
 #!/bin/bash
 
-#this script downloads dataset files from https://github.com/hpdps-group/FCBench#datasets
+#this script downloads dataset files from gdown https://drive.google.com/drive/folders/1jdnzwvT1hya8XYdEJ7QuqUw3ALbQozc7
+#More infomormation about data at: https://github.com/hpdps-group/FCBench#datasets
 
 set -euo pipefail
 
