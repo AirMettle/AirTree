@@ -52,6 +52,23 @@ TEST_F(SerializationTest, VerifiesSerializationAndDeserialization) {
   }
 }
 
+TEST_F(SerializationTest, RoundTripsLargeCountsNeedingOver26Bits) {
+  uint32_t counts[8] = {70000000u,  80000000u,  90000000u,  100000000u,
+                        110000000u, 120000000u, 130000000u, 66089635u};
+  std::vector<char> buffer = serializeCounts(counts, 8);
+  size_t offset = 0;
+  std::vector<uint32_t> out = deserializeCounts(buffer, offset, 8);
+
+  ASSERT_EQ(out.size(), static_cast<size_t>(8));
+  uint64_t in_sum = 0, out_sum = 0;
+  for (int i = 0; i < 8; i++) {
+    EXPECT_EQ(counts[i], out[i]) << "count mismatch at bucket " << i;
+    in_sum += counts[i];
+    out_sum += out[i];
+  }
+  EXPECT_EQ(in_sum, out_sum) << "total count must be preserved on round-trip";
+}
+
 bool compareNodesl3(const std::unique_ptr<Node4D_4x10_l3> &node1,
                     const std::unique_ptr<Node4D_4x10_l3> &node2) {
   for (size_t i = 0; i < BINS_1024; i++) {
