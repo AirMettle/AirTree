@@ -11,7 +11,7 @@ using namespace airtree::core;
 
 // Helper functions to compute minimum Bits used for count
 // serialization/deserialization
-int minimumBits(int maxNumber) {
+int minimumBits(uint32_t maxNumber) {
   if (maxNumber == 0)
     return 1;
 
@@ -25,20 +25,19 @@ int minimumBits(int maxNumber) {
 
 std::vector<char> serializeCounts(const uint32_t counts[], size_t len) {
   std::vector<char> buffer;
-  int maxCount = *std::max_element(counts, counts + len);
+  uint32_t maxCount = *std::max_element(counts, counts + len);
   int minBits = minimumBits(maxCount);
   buffer.push_back(
       static_cast<char>(minBits)); // Store minBits as a single byte
 
-  int bitBuffer = 0; // Temporary buffer for bits
-  int bitCount = 0;  // Counter for bits in bitBuffer
+  uint64_t bitBuffer = 0; // Temporary buffer for bits
+  int bitCount = 0;       // Counter for bits in bitBuffer
 
   for (size_t i = 0; i < len; i++) {
     if (counts[i] > 0) {
-      bitBuffer |=
-          counts[i]
-          << bitCount;     // Shift count left by bitCount and OR into bitBuffer
-      bitCount += minBits; // Increment bitCount
+      bitBuffer |= static_cast<uint64_t>(counts[i])
+                   << bitCount; // Shift count left by bitCount into bitBuffer
+      bitCount += minBits;      // Increment bitCount
 
       while (bitCount >= 8) { // While bitBuffer has at least one byte
         buffer.push_back(
@@ -69,9 +68,7 @@ std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
       buffer[offset++]); // Read the number of bits used per count
 
   std::vector<uint32_t> counts(len, 0);
-  [[maybe_unused]] int currentBit =
-      0;                  // Current bit position in the entire stream
-  uint32_t bitBuffer = 0; // Buffer to accumulate bits
+  uint64_t bitBuffer = 0; // Buffer to accumulate bits
   int bitsInBuffer = 0;   // Number of valid bits currently in bitBuffer
 
   for (size_t i = 0; i < len; i++) {
@@ -85,14 +82,16 @@ std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
             "Buffer underflow while trying to read new byte at index {}", i);
         return {};
       }
-      bitBuffer |= (static_cast<unsigned char>(buffer[offset++])
+      bitBuffer |= (static_cast<uint64_t>(
+                        static_cast<unsigned char>(buffer[offset++]))
                     << bitsInBuffer); // Shift new byte into bitBuffer
       bitsInBuffer += 8;              // We've added 8 new bits to the buffer
     }
 
     // Extract the count from bitBuffer
-    currentCount =
-        bitBuffer & ((1 << minBits) - 1); // Mask out the bits we need
+    currentCount = static_cast<uint32_t>(
+        bitBuffer
+        & ((static_cast<uint64_t>(1) << minBits) - 1)); // Mask needed bits
     bitBuffer >>= minBits; // Remove the bits we've just processed
     bitsInBuffer -=
         minBits; // Update the count of valid bits remaining in bitBuffer
