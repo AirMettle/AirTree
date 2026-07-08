@@ -1,4 +1,4 @@
-# AirTree Bench
+# AirTree Benchmark
 
 **Benchmarking for Hierarchical Multi-Dimensional Histograms.**
 
