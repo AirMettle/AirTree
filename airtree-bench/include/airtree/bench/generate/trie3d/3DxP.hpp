@@ -8,9 +8,53 @@
 #include <benchmark/benchmark.h>
 #include <cstdint>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 namespace airtree::bench::generate::trie3D {
+
+inline constexpr double megaByteConversion = 1'000'000.0;
+
+inline uint64_t calculateTotalInputBytes(const FPHArray &fpharray) {
+  return static_cast<uint64_t>(fpharray.length) *
+         static_cast<uint64_t>(getFPHTypeSize(fpharray.type));
+}
+
+template <typename T>
+uint64_t countDistinctValues(const std::vector<T> &data) {
+  return static_cast<uint64_t>(
+      std::unordered_set<T>(data.begin(), data.end()).size());
+}
+
+inline uint64_t countPreciseBins3DxP(const TLE_3D_3x10 *root) {
+  if (!root) {
+    return 0;
+  }
+
+  uint64_t precise_bins = 0;
+  for (unsigned int i = 0; i < BINS_512; ++i) {
+    if (!root->populated.test(i) || !root->nodes[i]) {
+      continue;
+    }
+    for (unsigned int j = 0; j < BINS_1024; ++j) {
+      if (!root->nodes[i]->populated.test(j) || !root->nodes[i]->nodes[j]) {
+        continue;
+      }
+      for (unsigned int k = 0; k < BINS_1024; ++k) {
+        if (!root->nodes[i]->nodes[j]->populated.test(k) ||
+            !root->nodes[i]->nodes[j]->nodes[k]) {
+          continue;
+        }
+        for (unsigned int l = 0; l < BINS_1024; ++l) {
+          if (root->nodes[i]->nodes[j]->nodes[k]->counts[l] > 0) {
+            ++precise_bins;
+          }
+        }
+      }
+    }
+  }
+  return precise_bins;
+}
 
 class AirTreeBench3DxP : public benchmark::Fixture {
 protected:
@@ -35,6 +79,14 @@ protected:
     const auto &fpharray1 = BenchmarkData<T>::fpharrays[0];
     const auto &fpharray2 = BenchmarkData<T>::fpharrays[1];
     const auto &fpharray3 = BenchmarkData<T>::fpharrays[2];
+    const uint64_t dataset_size_bytes =
+        calculateTotalInputBytes(fpharray1) + calculateTotalInputBytes(fpharray2) +
+        calculateTotalInputBytes(fpharray3);
+    const uint64_t dataset_value_count = static_cast<uint64_t>(fpharray1.length);
+    const uint64_t distinct_values =
+        countDistinctValues(BenchmarkData<T>::raw_data[0]) +
+        countDistinctValues(BenchmarkData<T>::raw_data[1]) +
+        countDistinctValues(BenchmarkData<T>::raw_data[2]);
 
     for (auto _ : state) {
       state.PauseTiming();
@@ -48,13 +100,26 @@ protected:
       benchmark::DoNotOptimize(airTree3DxP_root);
     }
 
-    state.counters["Speed"] =
-        benchmark::Counter(state.iterations() * fpharray1.length
-                               * getFPHTypeSize(fpharray1.type) * 3,
-                           benchmark::Counter::kIsRate);
+    const uint64_t total_input_bytes =
+        static_cast<uint64_t>(state.iterations()) * dataset_size_bytes;
+    const uint64_t precise_bins = countPreciseBins3DxP(airTree3DxP_root.get());
+    const double avg_bytes_per_bin =
+        precise_bins > 0
+            ? static_cast<double>(curr_trie_size) /
+                  static_cast<double>(precise_bins)
+            : 0.0;
+    state.SetBytesProcessed(total_input_bytes);
+    state.counters["Insertion Speed (MB/s)"] = benchmark::Counter(
+        static_cast<double>(total_input_bytes) / megaByteConversion,
+        benchmark::Counter::kIsRate);
     state.counters["Points_Per_Second"] = benchmark::Counter(
         state.iterations() * fpharray1.length, benchmark::Counter::kIsRate);
-    state.counters["Size of trie in-mem (bytes)"] = curr_trie_size;
+    state.counters["Dataset Size MB"] = dataset_size_bytes / megaByteConversion;
+    state.counters["Dataset Value Count"] = dataset_value_count;
+    state.counters["Distinct Values"] = distinct_values;
+    state.counters["Precise Bins"] = precise_bins;
+    state.counters["Avg Bytes/Bin"] = avg_bytes_per_bin;
+    state.counters["Trie Size (Bytes)"] = curr_trie_size;
   }
 
   template <typename T> void runSerialize(benchmark::State &state) {
