@@ -15,6 +15,28 @@ function(external_configure_curl _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_LIB
   list(APPEND _BYPRODUCTS "${_SHARED_LIB}")
   list(APPEND _BYPRODUCTS "${_STATIC_LIB}")
 
+  # On macOS, curl's CMake AUTO-DETECTS optional features from whatever libraries
+  # happen to be installed on the build host, and compiles them into libcurl.a — so
+  # the static-lib consumers (airtree-stream) then fail to resolve those external
+  # symbols. This makes the build non-reproducible: a bare dev machine builds curl
+  # without them, but a CI runner with e.g. libssh2 preinstalled does not. Force every
+  # such optional feature OFF so libcurl.a is deterministic and self-contained (only
+  # openssl + zlib, already linked): nghttp2 (HTTP/2), OpenLDAP (ldap/lber), libssh2
+  # (SCP/SFTP), and GSSAPI (Kerberos) — airtree-stream needs none of them. (curl's
+  # macos.c always references SystemConfiguration/CoreFoundation regardless; those
+  # frameworks are linked on the consumer side in configure_curl below.) APPLE-guarded
+  # so the Linux build — and its dependency cache hash — is unchanged.
+  set(_CURL_EXTRA_ARGS "")
+  if(APPLE)
+    list(APPEND _CURL_EXTRA_ARGS
+      -DUSE_NGHTTP2=OFF
+      -DCURL_DISABLE_LDAP=ON
+      -DCURL_DISABLE_LDAPS=ON
+      -DCURL_USE_LIBSSH2=OFF
+      -DCURL_USE_LIBSSH=OFF
+      -DCURL_USE_GSSAPI=OFF)
+  endif()
+
   ExternalProject_Add(
     ${_EP_BASE}
     PREFIX ${_EP_BUILD_DIR}
@@ -35,6 +57,7 @@ function(external_configure_curl _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_LIB
     -DHAVE_BROTLI=OFF
     -DUSE_LIBPSL=OFF
     -DUSE_LIBIDN2=OFF
+    ${_CURL_EXTRA_ARGS}
     INSTALL_BYPRODUCTS ${_BYPRODUCTS}
     BUILD_COMMAND cmake --build . --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE} -- -j${NPROC}
     INSTALL_COMMAND cmake --build . --target install
@@ -76,6 +99,12 @@ function(configure_curl)
 
   set(_DEPS "")
   list(APPEND _DEPS openssl::openssl openssl::crypto zlib::zlib lz4::lz4)
+  if(APPLE)
+    # libcurl.a's macos.c (Curl_macos_init) references SystemConfiguration
+    # (SCDynamicStoreCopyProxies) and CoreFoundation (CFRelease). Static consumers
+    # must link these frameworks; this propagates to every curl::curl user.
+    list(APPEND _DEPS "-framework SystemConfiguration" "-framework CoreFoundation")
+  endif()
 
   add_library(curl::curl_shared SHARED IMPORTED GLOBAL)
   set_target_properties(curl::curl_shared PROPERTIES IMPORTED_LOCATION "${_SHARED_LIB}")
