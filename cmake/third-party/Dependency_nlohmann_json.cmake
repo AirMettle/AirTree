@@ -23,6 +23,9 @@ function(external_configure_nlohmann_json _EP_BASE _EP_BUILD_DIR _INSTALL_DIR)
     -DCMAKE_BUILD_TYPE=${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=${_INSTALL_DIR}
     -DBUILD_SHARED_LIBS=OFF
+    # We only consume the headers; nlohmann's own test suite fails to build under
+    # clang/libc++ (std::basic_ostringstream<std::uint8_t> — char_traits<unsigned char>
+    # was removed in newer libc++). Never build a dependency's tests.
     -DJSON_BuildTests=OFF
     BUILD_COMMAND cmake --build . --config ${AIRMETTLE_AIRTREE_DEPS_BUILD_TYPE} -- -j${NPROC}
     INSTALL_COMMAND cmake --build . --target install

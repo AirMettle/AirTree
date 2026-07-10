@@ -35,10 +35,17 @@ function(external_configure_openssl _EP_BASE _EP_BUILD_DIR _INSTALL_DIR _STATIC_
     endif()
       
     message(STATUS "Using Windows Perl for OpenSSL: ${WINDOWS_PERL_EXE}")
-    
-    set(OPENSSL_CONFIGURE_CMD ${WINDOWS_PERL_EXE} Configure VC-WIN64A no-asm no-shared no-tests --prefix=${_INSTALL_DIR} --openssldir=${_INSTALL_DIR}/ssl)      
-    set(OPENSSL_BUILD_CMD nmake)
-    set(OPENSSL_INSTALL_CMD nmake install)
+
+    get_filename_component(_MSVC_TOOLSET_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    if(_MSVC_TOOLSET_BIN_DIR AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.25)
+      set(_OPENSSL_ENV_WRAP ${CMAKE_COMMAND} -E env --modify "PATH=path_list_prepend:${_MSVC_TOOLSET_BIN_DIR}")
+    else()
+      set(_OPENSSL_ENV_WRAP "")
+    endif()
+
+    set(OPENSSL_CONFIGURE_CMD ${WINDOWS_PERL_EXE} Configure VC-WIN64A no-asm no-shared no-tests --prefix=${_INSTALL_DIR} --openssldir=${_INSTALL_DIR}/ssl)
+    set(OPENSSL_BUILD_CMD ${_OPENSSL_ENV_WRAP} nmake)
+    set(OPENSSL_INSTALL_CMD ${_OPENSSL_ENV_WRAP} nmake install)
   else()
     set(OPENSSL_CONFIGURE_CMD ./Configure ${_OPENSSL_DEBUG_FLAG} --prefix=${_INSTALL_DIR} --openssldir=${_INSTALL_DIR}/ssl --libdir=lib no-tests)
     set(OPENSSL_BUILD_CMD make)
