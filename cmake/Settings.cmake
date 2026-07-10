@@ -85,7 +85,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     string(REGEX REPLACE "^([0-9]+).*" "\\1" _DISTRO_MAJOR "${_macos_version}")
 elseif(WIN32)
     set(_DISTRO_NAME "win")
-    string(REGEX REPLACE "^([0-9]+).*" "\\1" _DISTRO_MAJOR "${CMAKE_SYSTEM_VERSION}")
+    # Fixed empty major: msvc<major> in the config ID already captures the
+    # toolchain, and CMAKE_SYSTEM_VERSION is empty under a toolchain file that
+    # sets CMAKE_SYSTEM_NAME (cross mode) but populated in native configures —
+    # deriving from it would split the dep cache between build legs.
+    set(_DISTRO_MAJOR "")
 else()
     set(_DISTRO_NAME "unknown")
     set(_DISTRO_MAJOR "0")
