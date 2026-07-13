@@ -37,47 +37,47 @@ mkdir -p "$OUTPUT_DIR"
 parquet_schemas=( "1DxF" "1DxP" "2DxF" "2DxP" "3DxF" "3DxP" "4DxF" "4DxP")
 binary_schemas=( "1DxT" "1DxF" "1DxP")
 
-for schema in "${binary_schemas[@]}"; do
+# for schema in "${binary_schemas[@]}"; do
     
-    dim="${schema:0:1}"
+#     dim="${schema:0:1}"
 
-    echo "Starting benchmark generation for all .bin files..."
+#     echo "Starting benchmark generation for all .bin files..."
 
-    for file in "$BENCH_DATA_DIR"/*.bin; do
-        if [ -f "$file" ]; then
-            filename=$(basename "$file")
-            dataset_name="${filename%.bin}"
-            output_csv="${OUTPUT_DIR}/${dataset_name}_${schema}_${TIMESTAMP}.csv"
+#     for file in "$BENCH_DATA_DIR"/*.bin; do
+#         if [ -f "$file" ]; then
+#             filename=$(basename "$file")
+#             dataset_name="${filename%.bin}"
+#             output_csv="${OUTPUT_DIR}/${dataset_name}_${schema}_${TIMESTAMP}.csv"
         
-            echo "=================================================="
-            echo "Processing: $filename"
+#             echo "=================================================="
+#             echo "Processing: $filename"
         
-            # Log the current configuration
-            log_info "Running $schema ($dim dimensions) with columns: ${active_columns[*]}"
-            log_info "Writing results to: $output_csv"
+#             # Log the current configuration
+#             log_info "Running $schema ($dim dimensions) with columns: ${active_columns[*]}"
+#             log_info "Writing results to: $output_csv"
         
-            "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
-            --benchmark_out_format=csv \
-            generate binary \
-            --input "$file" \
-            --schema "$schema" \
-            --data-type float \
-            --columns "${active_columns[@]}"
+#             "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
+#             --benchmark_out_format=csv \
+#             generate binary \
+#             --input "$file" \
+#             --schema "$schema" \
+#             --data-type float \
+#             --columns "${active_columns[@]}"
         
-            # Check if command failed
-            if [ $? -ne 0 ]; then
-            log_error "Benchmark failed for schema $schema on file $filename"
-            exit 1
-            fi
+#             # Check if command failed
+#             if [ $? -ne 0 ]; then
+#             log_error "Benchmark failed for schema $schema on file $filename"
+#             exit 1
+#             fi
         
-            log_info "Benchmark for schema $schema completed successfully: $output_csv"
-        fi
+#             log_info "Benchmark for schema $schema completed successfully: $output_csv"
+#         fi
 
-    done
-done
+#     done
+# done
 
 #correlated columns from FRED-MD
-all_MD_columns=( "RPI" "W875RX1" "RETAILx" "INDRPO" )
+all_MD_columns=( "RPI" "W875RX1" "RETAILx" "INDPRO" )
 
 #correlated columns from FRED-QD
 all_QD_columns=( "GDPC1" "DPIC96" "PCECC96" "OUTNFB")

@@ -1,7 +1,15 @@
 #!/bin/bash
 
-#this script downloads dataset files from https://drive.google.com/drive/folders/1jdnzwvT1hya8XYdEJ7QuqUw3ALbQozc7
-#More infomormation about data at: https://github.com/hpdps-group/FCBench#datasets
+#this script downloads dataset files from:
+# https://drive.google.com/drive/folders/1jdnzwvT1hya8XYdEJ7QuqUw3ALbQozc7
+#  -More infomormation about data at: https://github.com/hpdps-group/FCBench#datasets
+# https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+# https://www.stlouisfed.org/research/economists/mccracken/fred-databases
+
+# Dataset original formats:
+# -FCBench: binary
+# -yellow_tripdata: parquet
+# -FRED: CSV converted to parquet via csv_to_parquet.py
 
 set -euo pipefail
 
@@ -101,15 +109,24 @@ for index in "${!dataset_names[@]}"; do
     fi
 done
 
-#csv_to_parquet.py 
+#download nyc yellow taxi trip data for 2025
+for month in {01..12}; do
+    url="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-${month}.parquet"
+    echo "Downloading yellow_tripdata_2025-${month}.parquet ..."
+    curl -L -o "$BENCH_DATA_DIR/yellow_tripdata_2025-${month}.parquet" "$url"
+done
+
+#format or combine datasets 
 if python3 -c "import pandas" &> /dev/null; then
     python3 csv_to_parquet.py "$BENCH_DATA_DIR"
+    python3 combine_taxi_datasets.py "$BENCH_DATA_DIR"
 else
     sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
     sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         python3-pip python3-dev
     pip3 install --no-cache-dir pandas pyarrow
     python3 csv_to_parquet.py "$BENCH_DATA_DIR"
+    python3 combine_taxi_datasets.py "$BENCH_DATA_DIR"
 
 fi
 
