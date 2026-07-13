@@ -22,10 +22,10 @@ num_brain=1D2WEJonO3GWQwAQxSokO6Pn4kffalhCy
 phone_gyro=18WPrgYKUKg1vOuKatDgAQu7_2iDQ6EnK
 wesad_chest=1v1Mz4ka_kmwFF5Bcb7QXg8pAYZ43_Ptv
 jane_street=19JQgBJaLeHBaCV6G-Tcpqye8BQVWlqFt
-nyc_taxi=1ODXvl_gsohxv4z29aNfL0gk458fiZYYO
 
-dataset_ids=( "$msg_bt" "$astro_mhd" "$astro_pt" "$num_control" "$num_brain" "$phone_gyro" "$wesad_chest" "$jane_street" "$nyc_taxi" ) 
-dataset_names=( "msg_bt" "astro_mhd" "astro_pt" "num_control" "num_brain" "phone_gyro" "wesad_chest" "jane_street" "nyc_taxi" )
+
+dataset_ids=( "$msg_bt" "$astro_mhd" "$astro_pt" "$num_control" "$num_brain" "$phone_gyro" "$wesad_chest" "$jane_street" ) 
+dataset_names=( "msg_bt" "astro_mhd" "astro_pt" "num_control" "num_brain" "phone_gyro" "wesad_chest" "jane_street" )
 
 ensure_gdown() {
     if command -v gdown >/dev/null 2>&1; then
@@ -73,7 +73,7 @@ source "$VENV_DIR/bin/activate"
 BENCH_DATA_DIR="$1"
 mkdir -p "$BENCH_DATA_DIR"
 
-#check if gdown is installed or install (reccomended tool for downloading datasets from google drive)
+#check if gdown is installed or install
 ensure_gdown
 
 #downloads:
@@ -96,6 +96,7 @@ else
     echo "download failed."
 fi
 
+#download all .bin datasets from FCBench
 for index in "${!dataset_names[@]}"; do
     id=${dataset_ids[$index]}
     name=${dataset_names[$index]}
