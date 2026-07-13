@@ -116,20 +116,17 @@ protected:
         *specialCounts, curr_trie_size, fpharray, true);
 
     for (auto _ : state) {
-      auto serializedTrie = execSerialization_TrieNode13(
+      auto serializedTrieLocal = execSerialization_TrieNode13(
           airTree1DxT_root, *specialCounts, curr_trie_size, true);
 
-      benchmark::DoNotOptimize(serializedTrie.data());
+      benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
 
       // Update counter inside loop so it registers properly
-      state.counters["Size"] = serializedTrie.size();
+      state.counters["Size"] = serializedTrieLocal.size();
     }
   }
 
-  void TearDown([[maybe_unused]] const ::benchmark::State &state) override {
-    // serializedTrie.clear();
-  }
 };
 
 } // namespace airtree::bench::generate::trie1D

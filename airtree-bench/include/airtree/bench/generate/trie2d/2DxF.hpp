@@ -137,18 +137,17 @@ protected:
         fpharray1, fpharray2, curr_trie_size, specialCounts, true);
 
     for (auto _ : state) {
-      auto serializedTrie = execSerialize_2D(
+      auto serializedTrieLocal = execSerialize_2D(
           airTree2DxF_root.get(), curr_trie_size, specialCounts, true);
 
-      benchmark::DoNotOptimize(serializedTrie.data());
+      benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
 
       // Update counter inside loop so it registers properly
-      state.counters["Size"] = serializedTrie.size();
+      state.counters["Size"] = serializedTrieLocal.size();
     }
   }
 
-  void TearDown([[maybe_unused]] const ::benchmark::State &state) override {}
 };
 
 } // namespace airtree::bench::generate::trie2D
