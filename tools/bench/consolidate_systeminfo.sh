@@ -26,7 +26,7 @@ tempfile="${consolidated}.tmp"
 found=false
 
 for schema in "${schemas[@]}"; do
-    for file in "$DIR"/*_"${schema}"_*.csv; do
+    for file in "$DIR"/*_"${schema}"*.csv; do
         if [ ! -f "$file" ]; then
             continue
         fi
@@ -34,7 +34,7 @@ for schema in "${schemas[@]}"; do
         found=true
 
         filename=$(basename "$file")
-        dataset_name=$(echo "$filename" | sed "s/_${schema}_.*$//")
+        dataset_name=$(echo "$filename" | sed "s/_${schema}.*$//")
         row_label="${dataset_name}_${schema}_benchmark"
 
         awk -v label="$row_label" '

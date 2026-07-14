@@ -29,7 +29,7 @@ for schema in "${schemas[@]}"; do
     found=false
     header_line=""
 
-    for file in "$DIR"/*_"${schema}"_*.csv; do
+    for file in "$DIR"/*_"${schema}"*.csv; do
         if [ ! -f "$file" ]; then
             continue
         fi
@@ -37,7 +37,7 @@ for schema in "${schemas[@]}"; do
         found=true
 
         filename=$(basename "$file")
-        dataset_name=$(echo "$filename" | sed "s/_${schema}_.*$//")
+        dataset_name=$(echo "$filename" | sed "s/_${schema}.*$//")
 
         # Capture header only from the first file
         if [ -z "$header_line" ]; then

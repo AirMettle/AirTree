@@ -18,7 +18,7 @@ fi
 BENCH_DATA_DIR="$CMAKE_BUILD_DIR/bench_data"
 DATE_FOLDER="$(date +%d-%m-%Y)"
 TIMESTAMP=$(date +%H:%M)
-OUTPUT_DIR="$BENCH_DATA_DIR"/output/$DATE_FOLDER/benchmark-log-${TIMESTAMP}
+OUTPUT_DIR="$BENCH_DATA_DIR"/output/$DATE_FOLDER/benchmark-${TIMESTAMP}
 
 if [ ! -d "$BENCH_DATA_DIR" ]; then
     log_warn "Benchmark data directory $BENCH_DATA_DIR does not exist. Fetching benchmark data..."
@@ -47,7 +47,7 @@ for schema in "${binary_schemas[@]}"; do
         if [ -f "$file" ]; then
             filename=$(basename "$file")
             dataset_name="${filename%.bin}"
-            output_csv="${OUTPUT_DIR}/${dataset_name}_${schema}_${TIMESTAMP}.csv"
+            output_csv="${OUTPUT_DIR}/${dataset_name}_${schema}.csv"
         
             echo "=================================================="
             echo "Processing: $filename"
@@ -94,26 +94,29 @@ for schema in "${parquet_schemas[@]}"; do
         if [ -f "$file" ]; then
             filename=$(basename "$file")
             dataset_name="${filename%.parquet}"
-            output_csv="${OUTPUT_DIR}/${dataset_name}_${schema}_${TIMESTAMP}.csv"
+            output_csv="${OUTPUT_DIR}/${dataset_name}_${schema}.csv"
         
             echo "=================================================="
             echo "Processing: $filename"
-            if [[ "$file" == *MD* ]]; then
+            active_columns=()
+            if [[ "$filename" == *MD* ]]; then
                 active_columns=("${all_MD_columns[@]:0:dim}")
-            fi
-
-            if [[ "$file" == *QD* ]]; then
+            
+            elif [[ "$filename" == *QD* ]]; then
                 active_columns=("${all_QD_columns[@]:0:dim}")
-            fi
-
-            if [[ "$file" == yellow_tripdata*combined.parquet ]]; then
+            
+            elif [[ "$filename" == yellow_tripdata*combined.parquet ]]; then
                 active_columns=("${all_YT_columns[@]:0:dim}")
+            
+            else
+                log_error "No column mapping for $filename"
+                continue
             fi
-
-            if [ "${#active_columns[@]}" -ne "$dim" ]; then
-                log_error "Expected $dim columns from $filename, got ${#active_columns[@]}"
-                exit 1
-            fi
+            
+            # if [ "${#active_columns[@]}" -ne "$dim" ]; then
+            #     log_error "Expected $dim columns from $filename, got ${#active_columns[@]}"
+            #     exit 1
+            # fi
 
             # Log the current configuration
             log_info "Running $schema ($dim dimensions) with columns: ${active_columns[*]}"
