@@ -1,5 +1,8 @@
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 add_library(libairtree-export STATIC
     ${SRC_DIR}/Logger.cpp
     ${SRC_DIR}/AirTreeExporter.cpp
@@ -18,6 +21,7 @@ target_link_libraries(libairtree-export
     airtree::airtree-util
     airtree::airtree-core
     airtree::airtree-query
+    Threads::Threads
 )
 
 target_include_directories(libairtree-export
@@ -35,6 +39,7 @@ target_link_libraries(airtree-export
     PRIVATE
     airtree::libairtree-export
     airtree::airtree-util
+    Threads::Threads
 )
 
 
@@ -48,7 +53,8 @@ target_link_libraries(ut_testexport
     airtree::airtree-query
     airtree::libairtree-export
     gtest::gtest
-    gtest::gtest_main)
+    gtest::gtest_main
+    Threads::Threads)
 add_test(NAME ut_testexport COMMAND ut_testexport)
 endif()
 

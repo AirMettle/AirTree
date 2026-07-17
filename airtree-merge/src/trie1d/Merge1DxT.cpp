@@ -48,8 +48,8 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
     } else if (pop1.test(i) && pop2.test(i)) { // both have a level1 node
       if (offset1 < buffer1.size() && offset2 < buffer2.size()) {
         temp_node = mergeTrieNode13Level1(
-            std::move(deserialize_1DxT_l1(buffer1, offset1)),
-            std::move(deserialize_1DxT_l1(buffer2, offset2)));
+            deserialize_1DxT_l1(buffer1, offset1),
+            deserialize_1DxT_l1(buffer2, offset2));
         serialize_1DxT_l1(temp_node.get(), mergedBuffer);
         temp_node.reset();
       }

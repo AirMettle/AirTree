@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a problem or unexpected behavior in AirTree.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. AirTree is developed
+        internally by AirMettle and we do not accept code pull requests, so a
+        clear, reproducible report is the fastest path to a fix.
+  - type: input
+    id: version
+    attributes:
+      label: AirTree version
+      description: Output of `airtree --version`.
+      placeholder: e.g. 1.3.0
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and architecture
+      placeholder: e.g. Ubuntu 22.04 x86_64, macOS 14 arm64
+    validations:
+      required: true
+  - type: dropdown
+    id: schema
+    attributes:
+      label: Schema / config involved
+      description: If applicable, which histogram schema were you using?
+      options:
+        - Not applicable / unsure
+        - 1DxT
+        - 1DxF
+        - 1DxP
+        - 2DxF
+        - 2DxP
+        - 3DxF
+        - 3DxP
+        - 4DxF
+        - 4DxP
+    validations:
+      required: false
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, including the command(s) you ran and the shape of your input data.
+      placeholder: |
+        1. Generated a histogram with `airtree generate csv ...`
+        2. Ran `airtree query ...`
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include exact error text or output.
+    validations:
+      required: true
+  - type: textarea
+    id: build
+    attributes:
+      label: How did you build or install AirTree?
+      description: e.g. built from source with ./tools/build/build.sh, installed the .deb package, etc.
+    validations:
+      required: false

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and usage help
+    url: mailto:support@airmettle.com
+    about: For usage questions and general help, please email AirMettle support.
+  - name: Security vulnerability
+    url: https://github.com/AirMettle/AirTree/security/policy
+    about: Do not report security issues in public issues. Please follow our security policy.
+  - name: Commercial, government, or enterprise use
+    url: mailto:support@airmettle.com
+    about: Non-commercial use only; government use is treated as commercial. Contact sales for licensing.

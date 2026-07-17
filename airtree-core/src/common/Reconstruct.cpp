@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cstdint>
 #include <cstring>
 #include <airtree/core/common/Reconstruct.hpp>
 #include <string>

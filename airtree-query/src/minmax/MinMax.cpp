@@ -25,7 +25,7 @@ MinMax::MinMax(std::vector<char> buffer) {
 
   header_ = reader.getHeader();
 
-  bin_count_ = 1 << bit_length_;
+  bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_unique<airtree::query::meta::Histogram>(bit_length_);
 }
 

@@ -20,7 +20,7 @@ void HistogramMetadata::setInternalRepresentation(uint64_t representation) {
 
 Histogram::Histogram(uint64_t bitLength) : bitLength_(bitLength) {
   // Initialize bins with default values
-  bins_.resize(1u << bitLength);
+  bins_.resize(1ULL << bitLength);
   for (uint64_t i = 0; i < bins_.size(); ++i) {
     double binValue = reConstruct<double>(i, bitLength);
     auto binMetadata = HistogramMetadata();
@@ -52,7 +52,7 @@ size_t Histogram::getBinIndex(double value) const {
 }
 
 uint64_t Histogram::getBinCount() const {
-  return (1 << bitLength_);
+  return (1ULL << bitLength_);
 }
 
 std::vector<std::pair<double, HistogramMetadata>> Histogram::getBins() const {

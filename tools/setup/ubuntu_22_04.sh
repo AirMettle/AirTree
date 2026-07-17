@@ -27,13 +27,7 @@ fi
 
 log "INFO" "Installing dependencies on $OS $DISTRO ($VERSION) $ARCH ..."
 
-if [ "$(which sudo)" != "" ]; then
-    SUDO=sudo
-else
-    # If sudo doesn't exist, assume we don't need it.
-    # The AWS build environment doesn't have it.
-    SUDO=
-fi
+SUDO=$(determine_sudo)
 
 # Helper function to install a package and check for errors
 install_package() {
@@ -94,9 +88,6 @@ run_step "[ airtree-setup ] Update package list" $SUDO apt-get update
 run_step "[ airtree-setup ] Install python3.12" install_package python3.12
 run_step "[ airtree-setup ] Install python3.12-venv" install_package python3.12-venv
 run_step "[ airtree-setup ] Install python3.12-dev" install_package python3.12-dev
-
-# Installing docker
-run_step "[ airtree-setup ] Install Docker" "$TOOLS_DIR/setup/install_docker.sh"
 
 run_step "[ airtree-setup ] Install ccache" install_package ccache
 run_step "[ airtree-setup ] Install ninja-build" install_package ninja-build

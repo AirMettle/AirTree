@@ -4,6 +4,36 @@ All notable changes to AirTree are listed here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-02
+
+### Fixed
+- Count serialization overflow: bit-packed count streams now accumulate
+  through 64-bit buffers (previously 32-bit), so bins with large counts
+  no longer corrupt on serialize/deserialize. `minimumBits` and the
+  max-count scan are now unsigned to match the 32-bit count range.
+
+### CI
+- CentOS container installs `zstd` alongside git/tar/gzip, so the
+  dependency cache resolves to the right compressor and restores at the
+  start of the job.
+
+## [1.5.0] - 2026-06-12
+
+- Fixed version handling for debian/rpm packages 
+- add support for windows-22 via msvc compiler
+- add support for macOS-26 via clang compiler 
+- Fixed Warning as Errors on both windows-22 and macOS-26, making the codebase more robust
+- Added example CMakeLists.txt in example/ for reference 
+- enable ci/cd for ubuntu22.04 , ubuntu22.04-arm , centos-stream9 , windows-22 , macOS-26
+
+
+## [1.4.0] - 2026-06-05
+
+### Added 
+- Add README.md for benchmark
+- Add more example files
+- Add Community helper documentations 
+
 ## [1.3.0] - 2026-05-26
 
 ### Added
