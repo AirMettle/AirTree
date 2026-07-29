@@ -34,9 +34,13 @@ for schema in "${schemas[@]}"; do
             continue
         fi
 
+        filename=$(basename "$file")
+        # Skip query metrics and already-consolidated files
+        [[ "$filename" == query_* ]] && continue
+        [[ "$filename" == consolidated_* ]] && continue
+        
         found=true
 
-        filename=$(basename "$file")
         dataset_name=$(echo "$filename" | sed "s/_${schema}.*$//")
 
         # Capture header only from the first file

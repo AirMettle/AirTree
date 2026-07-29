@@ -31,6 +31,15 @@ add_executable(airtree_bench
     ${BENCHMARK_DIR}/src/Main.cpp
     ${BENCHMARK_DIR}/src/Logger.cpp
     include/airtree/bench/BenchmarkConfigs.hpp
+   
+    ${BENCHMARK_DIR}/include/airtree/bench/BenchPaths.hpp
+    ${BENCHMARK_DIR}/include/airtree/bench/query/QueryFixtureBase.hpp
+    ${BENCHMARK_DIR}/src/query/topk/TopKBench.cpp
+    ${BENCHMARK_DIR}/src/query/minmax/MinMaxBench.cpp
+    ${BENCHMARK_DIR}/src/query/percentile/PercentileBench.cpp
+    ${BENCHMARK_DIR}/src/query/grid/GridBench.cpp
+    ${BENCHMARK_DIR}/src/query/boundingbox/BoundingBoxBench.cpp
+    
 )
 
 if(TARGET am_airtree_dependencies)
@@ -47,6 +56,7 @@ target_link_libraries(airtree_bench PRIVATE
     airtree::airtree-util 
     airtree::airtree-reader
     airtree::airtree-core 
+    airtree::airtree-query
     spdlog::spdlog
     # netcdf::netcdf  
     # hdf5::hdf5_hl 
