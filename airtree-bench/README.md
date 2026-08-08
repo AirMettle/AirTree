@@ -2,9 +2,14 @@
 
 **Benchmarking for Hierarchical Multi-Dimensional Histograms.**
 
-`airtree_bench` is a C++ benchmarking utility built on [Google Benchmark](https://github.com/google/benchmark). It measures trie **create/insert** and **serialize** throughput across all supported AirTree histogram schemas. Input data is loaded fully into memory before timing begins.
+`airtree_bench` is a C++ benchmarking utility built on [Google Benchmark](https://github.com/google/benchmark). It measures:
+
+1. **Generate** — trie **create/insert** and **serialize** throughput across supported AirTree histogram schemas. Input data is loaded fully into memory before timing begins.
+2. **Query** — existing `airtree-query` APIs on pre-built `.airtree` files (TopK, MinMax, Percentile, Grid, BoundingBox), with stable `query_id` counters for consolidated reporting.
 
 Results are printed to the terminal by default. To write CSV output, pass Google Benchmark flags through the executable (for example, `--benchmark_out=results.csv --benchmark_out_format=csv`).
+
+The end-to-end pipeline in `tools/bench/generate.sh` runs generate, writes selected histograms to disk, runs query benches against those files, then consolidates generate and query CSVs.
 
 ---
 
@@ -23,12 +28,15 @@ These are the schemas `airtree_bench` can benchmark. Input types reflect what th
 
 - **Binary input** (`generate binary`) — 1D schemas only; requires `-d/--data-type` (`int32`, `int64`, `float`, `double`).
 - **Parquet input** (`generate parquet`) — all schemas; requires `-c/--columns` with a space-separated list whose length matches the schema dimension.
+- **Query input** (`query`) — a `.airtree` file plus a schema that has a registered query suite (see [Query suites by schema](#query-suites-by-schema)).
 
 See [CLI Reference → Histogram Schemas](https://github.com/AirMettle/AirTree/blob/main/docs/cli.md#histogram-schemas) for guidance on choosing a variant (Tiny vs Fast vs Precise).
 
 ---
 
 ## What Gets Measured
+
+### Generate
 
 For each schema and detected data type, Google Benchmark runs:
 
@@ -37,7 +45,50 @@ For each schema and detected data type, Google Benchmark runs:
 | `CreateAndInsert` | Build the in-memory trie from loaded data |
 | `Serialize` | Serialize the trie to a buffer |
 
-Reported counters include throughput (`Points_Per_Second`, `Speed` on 1D schemas) and trie size where applicable.
+Reported counters include throughput (`Points_Per_Second`, insertion speed) and trie size where applicable.
+
+Optional **`--write-airtree <path>`** writes the serialized histogram once after the timed serialize work (untimed side effect). `generate.sh` uses this to produce `.airtree` inputs for the query phase.
+
+### Query
+
+Query fixtures load a pre-serialized `.airtree` buffer (untimed) and time individual `airtree-query` calls. Common counters:
+
+| Counter | Description |
+| ------- | ----------- |
+| `query_id` | Stable integer identity for the query variant (see [Query ID table](#query-id-table)) |
+| `result_size_B` | Size in bytes of the timed call’s return value |
+| `BufferSize` | Size of the loaded `.airtree` buffer |
+| `Param_k` / `Param_p` / `Param_steps` / `Dims` | Query-specific parameters where applicable |
+
+#### Query suites by schema
+
+| Schema | Allowed `--queries` values |
+| ------ | -------------------------- |
+| `1DxT`, `1DxF`, `1DxP` | `topk`, `minmax`, `percentile` |
+| `2DxP`, `3DxP` | `grid`, `boundingbox` |
+| `4DxP` | `grid` |
+
+Other schemas (for example Fast multi-D) have generate benches only; they have no query suite in this build.
+
+#### Query ID table
+
+Each timed query variant records a fixed `query_id` (defined in `QueryFixtureBase.hpp`). Consolidated query CSVs key rows on `Data_set`, `Schema`, and `query_id`.
+
+| `query_id` | Enum / fixture name | What is timed | Parameters / notes |
+| ---------- | ------------------- | ------------- | ------------------ |
+| `0` | `TopK_k1` | `TopK::getTopK(1)` | `Param_k=1` |
+| `1` | `TopK_k5` | `TopK::getTopK(5)` | `Param_k=5` |
+| `2` | `TopK_k15` | `TopK::getTopK(15)` | `Param_k=15` |
+| `3` | `MinMax_getMin` | `MinMax::getMin()` | — |
+| `4` | `MinMax_getMax` | `MinMax::getMax()` | — |
+| `5` | `MinMax_getMinValue` | `MinMax::getMinValue()` | — |
+| `6` | `MinMax_getMaxValue` | `MinMax::getMaxValue()` | — |
+| `7` | `Percentile_p50` | `Percentile::getPercentile(50)` | `Param_p=50` |
+| `8` | `Percentile_p90` | `Percentile::getPercentile(90)` | `Param_p=90` |
+| `9` | `Grid_steps8` | `GridQuery::getGrid(...)` | 8 linear steps per axis over full extent; `Param_steps=8`, `Dims` = 2/3/4 |
+| `10` | `BoundingBox_mid50` | `BoundingBox::getCounts(...)` | Fixed mid-50% box on a nominal `[0,100]` span per axis (`[25,75]`); `Dims` = 2/3 |
+
+Google Benchmark names look like `AirTreeQuery1DxF_TopK/TopK_k5` or `AirTreeQuery2DxP_Grid/Grid_steps8`. The numeric `query_id` is the stable join key across schemas and runs.
 
 ---
 
@@ -45,7 +96,7 @@ Reported counters include throughput (`Points_Per_Second`, `Speed` on 1D schemas
 
 After building, the binary is at `<cmake-build-dir>/airtree-bench/airtree_bench`.
 
-### Parquet (all schemas)
+### Generate — Parquet (all schemas)
 
 ```bash
 airtree_bench generate parquet \
@@ -54,22 +105,45 @@ airtree_bench generate parquet \
   -c fare_amount tip_amount
 ```
 
-### Binary (1D only)
+Optionally persist the histogram for later query benches:
+
+```bash
+airtree_bench generate parquet \
+  -i /path/to/input.parquet \
+  -s 1DxF \
+  -c trip_distance \
+  --write-airtree /path/to/out.airtree
+```
+
+### Generate — Binary (1D only)
 
 ```bash
 airtree_bench generate binary \
   -i /path/to/input.bin \
   -s 1DxF \
-  -d double
+  -d float
 ```
 
-Extra arguments are forwarded to Google Benchmark (filters, repetitions, output format, etc.).
+### Query — existing `.airtree`
+
+```bash
+airtree_bench query \
+  -i /path/to/hist.airtree \
+  -s 1DxF \
+  -q topk minmax percentile
+```
+
+- `-s/--schema` must match a schema that has a query suite (see table above).
+- `-q/--queries` is optional; if omitted, all queries allowed for that schema run.
+- Google Benchmark flags (for example `--benchmark_out=... --benchmark_out_format=csv`) must appear **before** the `query` subcommand.
+
+Extra arguments after the subcommand are forwarded to Google Benchmark where applicable (filters, repetitions, output format, etc.).
 
 ---
 
 ## Helper Scripts
 
-Scripts live in `tools/bench/` and automate a full benchmark run against the NYC Taxi dataset.
+Scripts live in `tools/bench/` and automate full benchmark runs against the shared bench datasets.
 
 ### `generate.sh`
 
@@ -79,25 +153,71 @@ End-to-end benchmark driver. From the repo root:
 bash tools/bench/generate.sh
 ```
 
-The script:
+Output is written under:
 
-1. Runs `tools/build/partial_build.sh` to build `airtree_bench`.
-2. Ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `data.sh` to fetch the dataset.
-3. Loops over all nine schemas: `1DxT`, `1DxF`, `1DxP`, `2DxF`, `2DxP`, `3DxF`, `3DxP`, `4DxF`, `4DxP`.
-4. For each schema, selects the first *N* columns by dimension from:
-   `trip_distance`, `fare_amount`, `tip_amount`, `congestion_surcharge`.
-5. Invokes `airtree_bench generate parquet` against `yellow_tripdata_2024-01.parquet`.
-6. Prints all metrics to the terminal.
-
-### `data.sh`
-
-Downloads benchmark data into a destination directory:
-
-```bash
-bash tools/bench/data.sh <destination_directory>
+```text
+$CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/
 ```
 
-Fetches `yellow_tripdata_2024-01.parquet` (NYC Taxi Data, January 2024) from the TLC public dataset.
+#### Pipeline stages
+
+1. **Build** — runs `tools/build/partial_build.sh` to build `airtree_bench`.
+2. **Datasets** — ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `get_bench_datasets.sh` to fetch and prepare inputs.
+3. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and writes `<dataset>_<schema>.csv`.
+   - For `jane_street` + `1DxT`, also writes `airtree_files/jane_street_1DxT.airtree` via `--write-airtree`.
+4. **Generate (parquet)** — for each `*.parquet` in `bench_data` and schemas `1DxF` … `4DxP`, runs `generate parquet` with dataset-specific correlated columns:
+   | Dataset pattern | Columns (first *N* for *N*-D) |
+   | --------------- | ----------------------------- |
+   | `*MD*` (FRED-MD) | `RPI`, `W875RX1`, `RETAILx`, `INDPRO` |
+   | `*QD*` (FRED-QD) | `GDPC1`, `DPIC96`, `PCECC96`, `OUTNFB` |
+   | `yellow_tripdata*combined.parquet` | `trip_distance`, `fare_amount`, `total_amount`, `tip_amount` |
+   - For yellow combined + schemas `1DxF`, `1DxP`, `2DxP`, `3DxP`, `4DxP`, also writes `airtree_files/yellow_tripdata_<schema>.airtree`.
+5. **Query** — loads those `.airtree` files and runs query benches to `query_<dataset>_<schema>.csv`:
+   | Histogram | Queries |
+   | --------- | ------- |
+   | `yellow_tripdata_1DxF`, `yellow_tripdata_1DxP` | `topk` `minmax` `percentile` |
+   | `yellow_tripdata_2DxP`, `yellow_tripdata_3DxP` | `grid` `boundingbox` |
+   | `yellow_tripdata_4DxP` | `grid` |
+   | `jane_street_1DxT` | `topk` `minmax` `percentile` |
+6. **Consolidate** — post-processes CSVs in the same output directory:
+   - `consolidate_bench_data.sh` → `consolidated_<schema>_data.csv` (generate metrics)
+   - `consolidate_query_bench_data.sh` → `consolidated_query_<schema>_data.csv` and `consolidated_query_all_data.csv`
+   - `consolidate_systeminfo.sh` → `systeminfo.csv`
+
+#### Consolidated query CSVs
+
+`consolidate_query_bench_data.sh` rewrites each `query_*.csv` so rows are keyed by dataset, schema, and `query_id` (the Google Benchmark `name` column is dropped). Output files:
+
+| File | Contents |
+| ---- | -------- |
+| `consolidated_query_<schema>_data.csv` | All query rows for one schema |
+| `consolidated_query_all_data.csv` | Union of all query schemas |
+
+Header shape (counters may vary by suite):
+
+```text
+Data_set,Schema,query_id,iterations,real_time,cpu_time,...,BufferSize,result_size_B,...
+```
+
+Use the [Query ID table](#query-id-table) to map `query_id` back to the timed operation.
+
+### `get_bench_datasets.sh`
+
+Downloads and prepares benchmark inputs into a destination directory:
+
+```bash
+bash tools/bench/get_bench_datasets.sh <destination_directory>
+```
+
+Sources include FCBench binary datasets (via Google Drive / `gdown`), NYC TLC yellow trip data (combined into `yellow_tripdata_2025_combined.parquet`), and FRED-MD / FRED-QD (CSV converted to Parquet). Helper Python scripts in the same directory (`csv_to_parquet.py`, `combine_taxi_datasets.py`) perform format conversion.
+
+### Other consolidators
+
+| Script | Role |
+| ------ | ---- |
+| `consolidate_bench_data.sh` | Merge per-dataset generate CSVs into `consolidated_<schema>_data.csv` |
+| `consolidate_query_bench_data.sh` | Merge `query_*.csv` into per-schema and all-query consolidated files |
+| `consolidate_systeminfo.sh` | Extract system / environment info into `systeminfo.csv` |
 
 ---
 
@@ -105,8 +225,17 @@ Fetches `yellow_tripdata_2024-01.parquet` (NYC Taxi Data, January 2024) from the
 
 | Path | Purpose |
 | ---- | ------- |
-| `airtree-bench/src/Main.cpp` | CLI entry point and Google Benchmark integration |
-| `airtree-bench/src/generate/` | Per-schema benchmark fixtures |
-| `airtree-bench/include/airtree/bench/` | Shared benchmark headers and configs |
-| `tools/bench/generate.sh` | Automated full-schema benchmark run |
-| `tools/bench/data.sh` | Dataset download helper |
+| `airtree-bench/src/Main.cpp` | CLI entry point (`generate` / `query`) and Google Benchmark integration |
+| `airtree-bench/src/generate/` | Per-schema generate (create/insert/serialize) fixtures |
+| `airtree-bench/src/query/topk/` | TopK query fixtures (`1DxT` / `1DxF` / `1DxP`) |
+| `airtree-bench/src/query/minmax/` | MinMax query fixtures |
+| `airtree-bench/src/query/percentile/` | Percentile query fixtures |
+| `airtree-bench/src/query/grid/` | Grid query fixtures (`2DxP` / `3DxP` / `4DxP`) |
+| `airtree-bench/src/query/boundingbox/` | Bounding-box query fixtures (`2DxP` / `3DxP`) |
+| `airtree-bench/include/airtree/bench/query/QueryFixtureBase.hpp` | Shared query fixture base, `QueryId` enum, counters |
+| `airtree-bench/include/airtree/bench/BenchPaths.hpp` | Shared write path and preloaded query buffer |
+| `tools/bench/generate.sh` | Full generate + query + consolidate pipeline |
+| `tools/bench/get_bench_datasets.sh` | Dataset download / prep |
+| `tools/bench/consolidate_bench_data.sh` | Generate CSV consolidation |
+| `tools/bench/consolidate_query_bench_data.sh` | Query CSV consolidation |
+| `tools/bench/consolidate_systeminfo.sh` | System info consolidation |

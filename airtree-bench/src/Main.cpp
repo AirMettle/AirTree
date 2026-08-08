@@ -10,6 +10,10 @@
 #include <airtree/reader/file/Reader.hpp>
 #include <airtree/bench/Logger.hpp>
 #include <benchmark/benchmark.h>
+#include <airtree/bench/BenchPaths.hpp>
+#include <airtree/bench/query/QueryFixtureBase.hpp>
+#include <set>
+#include <sstream>
 
 using namespace airtree::reader::file;
 using namespace airtree::bench::configs;
@@ -99,6 +103,51 @@ std::string benchmark_filter_for(const std::string &config_name,
   return "AirTreeBench" + config_name + "/.*" + data_type;
 }
 
+// Allowed query names per schema (current airtree-query only).
+std::set<std::string> allowed_queries_for_schema(const std::string &schema) {
+  if (schema == "1DxT" || schema == "1DxF" || schema == "1DxP") {
+    return {"topk", "minmax", "percentile"};
+  }
+  if (schema == "2DxP" || schema == "3DxP") {
+    return {"grid", "boundingbox"};
+  }
+  if (schema == "4DxP") {
+    return {"grid"};
+  }
+  return {};
+}
+
+std::string query_benchmark_filter(const std::string &schema,
+                                   const std::vector<std::string> &queries) {
+  // Map query name -> fixture name fragment under AirTreeQuery{schema}_*
+  // Registered names look like: AirTreeQuery1DxF_TopK/TopK_k5
+  std::vector<std::string> parts;
+  for (const auto &q : queries) {
+    if (q == "topk") {
+      parts.push_back("AirTreeQuery" + schema + "_TopK/.*");
+    } else if (q == "minmax") {
+      parts.push_back("AirTreeQuery" + schema + "_MinMax/.*");
+    } else if (q == "percentile") {
+      parts.push_back("AirTreeQuery" + schema + "_Percentile/.*");
+    } else if (q == "grid") {
+      parts.push_back("AirTreeQuery" + schema + "_Grid/.*");
+    } else if (q == "boundingbox") {
+      parts.push_back("AirTreeQuery" + schema + "_BoundingBox/.*");
+    }
+  }
+  if (parts.empty()) {
+    return "AirTreeQuery" + schema + "_.*";
+  }
+  std::ostringstream oss;
+  for (size_t i = 0; i < parts.size(); ++i) {
+    if (i > 0) {
+      oss << "|";
+    }
+    oss << parts[i];
+  }
+  return oss.str();
+}
+
 int main(int argc, char *argv[]) {
 
   CLI::App app{"AirMettle - AirTree CLI"};
@@ -115,7 +164,9 @@ int main(int argc, char *argv[]) {
   std::string histogram_file;
   std::string config_name;
   [[maybe_unused]] bool e2e = false;
-
+  
+  std::string write_airtree_path;
+  
   auto generate =
       app.add_subcommand("generate", "Generate the histogram buffer");
 
@@ -140,7 +191,11 @@ int main(int argc, char *argv[]) {
                    "int64, float, double.")
       ->required()
       ->check(data_type_validator);
-
+  
+  binary->add_option(
+      "--write-airtree", write_airtree_path,
+      "If set, write the serialized histogram once (untimed) to this path");
+  
   binary->callback([&]() {
     airtree::reader::file::SUPPORTED_DATA_TYPE data_type_enum;
     if (data_type == "int32") {
@@ -154,6 +209,8 @@ int main(int argc, char *argv[]) {
     } else {
       data_type_enum = airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE;
     }
+
+    airtree::bench::BenchPaths::write_airtree_path = write_airtree_path;
 
     read_input_file(
         input_data_file, airtree::reader::file::SUPPORTED_FILE_TYPE::AT_BINARY, data_type_enum);
@@ -196,6 +253,11 @@ int main(int argc, char *argv[]) {
   parquet
       ->add_option("-c,--columns", column_list, "Space separated column names")
       ->required();
+ 
+  parquet->add_option(
+      "--write-airtree", write_airtree_path,
+      "If set, write the serialized histogram once (untimed) to this path");
+  
   parquet->parse_complete_callback([&]() {
     if (config_name.empty() || !std::isdigit(config_name[0])) {
       return;
@@ -211,6 +273,9 @@ int main(int argc, char *argv[]) {
     }
   });
   parquet->callback([&]() {
+  
+    airtree::bench::BenchPaths::write_airtree_path = write_airtree_path;
+   
     read_input_file(input_data_file, airtree::reader::file::SUPPORTED_FILE_TYPE::AT_PARQUET,
                     airtree::reader::file::SUPPORTED_DATA_TYPE::AT_IGNORE,
                     column_list);
@@ -248,6 +313,84 @@ int main(int argc, char *argv[]) {
     ::benchmark::Shutdown();
   });
 
+  auto query =
+      app.add_subcommand("query",
+                         "Benchmark existing airtree-query APIs on a .airtree "
+                         "file");
+
+  std::string query_input;
+  std::string query_schema;
+  std::vector<std::string> query_list;
+
+  query->add_option("-i,--input", query_input, "Path to .airtree")
+      ->required()
+      ->check(CLI::ExistingFile);
+  query
+      ->add_option("-s,--schema", query_schema,
+                   "Schema of the buffer (must match supported suite)")
+      ->required();
+  query->add_option(
+      "-q,--queries", query_list,
+      "Subset: topk,minmax,percentile,grid,boundingbox (must be allowed for "
+      "schema)");
+
+  query->callback([&]() {
+    auto allowed = allowed_queries_for_schema(query_schema);
+    if (allowed.empty()) {
+      throw CLI::ValidationError(
+          "--schema",
+          "Schema '" + query_schema
+              + "' has no supported query suite in this bench build.");
+    }
+
+    std::vector<std::string> selected = query_list;
+    if (selected.empty()) {
+      selected.assign(allowed.begin(), allowed.end());
+    } else {
+      for (const auto &q : selected) {
+        if (allowed.find(q) == allowed.end()) {
+          throw CLI::ValidationError(
+              "--queries",
+              "Query '" + q + "' is not supported for schema '" + query_schema
+                  + "'.");
+        }
+      }
+    }
+
+    airtree::bench::BenchPaths::query_schema = query_schema;
+    airtree::bench::BenchPaths::query_buffer =
+        airtree::bench::query::loadAirtreeFile(query_input);
+    if (airtree::bench::BenchPaths::query_buffer.empty()) {
+      throw CLI::ValidationError("--input", "Loaded .airtree buffer is empty");
+    }
+
+    SPDLOG_LOGGER_INFO(logger(), "Loaded .airtree ({} bytes) for schema {}",
+                       airtree::bench::BenchPaths::query_buffer.size(),
+                       query_schema);
+
+    std::vector<std::string> gb_args;
+    gb_args.push_back(argv[0]);
+    gb_args.push_back("--benchmark_filter="
+                      + query_benchmark_filter(query_schema, selected));
+    std::vector<std::string> remaining_args = app.remaining();
+    for (const auto &arg : remaining_args) {
+      gb_args.push_back(arg);
+    }
+
+    std::vector<char *> gb_argv;
+    for (auto &str : gb_args) {
+      gb_argv.push_back(str.data());
+    }
+
+    int gb_argc = static_cast<int>(gb_argv.size());
+
+    ::benchmark::Initialize(&gb_argc, gb_argv.data());
+    if (::benchmark::ReportUnrecognizedArguments(gb_argc, gb_argv.data()))
+      return;
+    ::benchmark::RunSpecifiedBenchmarks();
+    ::benchmark::Shutdown();
+  });
+  
   CLI11_PARSE(app, argc, argv);
 
   return 0;

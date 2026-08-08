@@ -4,6 +4,8 @@
 #define AIRTREE_BENCH_GENERATE_TRIE3D_3DXP_HPP
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/io/AirTreeWriter.hpp>
+#include <airtree/bench/BenchPaths.hpp>
 #include <airtree/bench/BenchmarkData.hpp>
 #include <benchmark/benchmark.h>
 #include <cstdint>
@@ -147,6 +149,16 @@ protected:
       // Update counter inside loop so it registers properly
       state.counters["Size"] = serializedTrieLocal.size();
     }
+
+    // Untimed materialize: write serialized histogram once if requested.
+    if (!BenchPaths::write_airtree_path.empty()) {
+      auto buffer = execSerialize_3D_3x10(
+          airTree3DxP_root.get(), curr_trie_size, specialCounts, true);
+      airtree::core::io::AirTreeWriter::Write(buffer,
+                                              BenchPaths::write_airtree_path);
+      BenchPaths::write_airtree_path.clear();
+    }
+    
   }
 
 };

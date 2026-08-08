@@ -15,6 +15,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+SCRIPT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 BENCH_DATA_DIR="$CMAKE_BUILD_DIR/bench_data"
 DATE_FOLDER="$(date +%d-%m-%Y)"
 TIMESTAMP=$(date +%H:%M)
@@ -33,6 +35,9 @@ else
 fi
 
 mkdir -p "$OUTPUT_DIR"
+
+mkdir -p "$OUTPUT_DIR/airtree_files"
+AIRTREE_DIR="$OUTPUT_DIR/airtree_files"
 
 parquet_schemas=( "1DxF" "1DxP" "2DxF" "2DxP" "3DxF" "3DxP" "4DxF" "4DxP")
 binary_schemas=( "1DxT" "1DxF" "1DxP")
@@ -56,13 +61,20 @@ for schema in "${binary_schemas[@]}"; do
             log_info "Running $schema ($dim dimensions) with columns: ${active_columns[*]}"
             log_info "Writing results to: $output_csv"
         
+            
+            write_args=()
+            if [[ "$dataset_name" == "jane_street" && "$schema" == "1DxT" ]]; then
+                write_args=(--write-airtree "$AIRTREE_DIR/jane_street_1DxT.airtree")
+            fi
+            
+
             "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
             --benchmark_out_format=csv \
             generate binary \
             --input "$file" \
             --schema "$schema" \
             --data-type float \
-            --columns "${active_columns[@]}"
+            "${write_args[@]}"
         
             # Check if command failed
             if [ $? -ne 0 ]; then
@@ -113,14 +125,23 @@ for schema in "${parquet_schemas[@]}"; do
                 continue
             fi
             
-            # if [ "${#active_columns[@]}" -ne "$dim" ]; then
-            #     log_error "Expected $dim columns from $filename, got ${#active_columns[@]}"
-            #     exit 1
-            # fi
+            if [ "${#active_columns[@]}" -ne "$dim" ]; then
+                log_error "Expected $dim columns from $filename, got ${#active_columns[@]}"
+                exit 1
+            fi
 
             # Log the current configuration
             log_info "Running $schema ($dim dimensions) with columns: ${active_columns[*]}"
             log_info "Writing results to: $output_csv"
+
+            write_args=()
+            if [[ "$filename" == yellow_tripdata*combined.parquet ]]; then
+                case "$schema" in
+                    1DxF|1DxP|2DxP|3DxP|4DxP)
+                        write_args=(--write-airtree "$AIRTREE_DIR/yellow_tripdata_${schema}.airtree")
+                        ;;
+                esac
+            fi
      
             "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
             --benchmark_out_format=csv \
@@ -128,7 +149,8 @@ for schema in "${parquet_schemas[@]}"; do
             --input "$file" \
             --schema "$schema" \
             --data-type float \
-            --columns "${active_columns[@]}"
+            --columns "${active_columns[@]}" \
+            "${write_args[@]}"
         
             # Check if command failed
             if [ $? -ne 0 ]; then
@@ -145,12 +167,90 @@ done
 
 echo "Benchmarks completed."
 
-echo "consolidating benchmark statistics in consolidated_<schema>_data.csv"
 
-./consolidate_bench_data.sh "$OUTPUT_DIR"
+echo "Starting query benchmarks on $AIRTREE_DIR ..."
+
+# yellow 1D — TopK, MinMax, Percentile
+for schema in 1DxF 1DxP; do
+    hist="$AIRTREE_DIR/yellow_tripdata_${schema}.airtree"
+    if [ ! -f "$hist" ]; then
+        log_error "missing $hist"
+        exit 1
+    fi
+    query_csv="$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv"
+    log_info "Query phase: $hist -> $query_csv"
+    "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+        --benchmark_out="$query_csv" --benchmark_out_format=csv \
+        query --input "$hist" --schema "$schema" \
+        --queries topk minmax percentile
+    if [ $? -ne 0 ]; then
+        log_error "Query benchmark failed for $hist"
+        exit 1
+    fi
+done
+
+# yellow 2D/3D Precise — Grid + BoundingBox
+for schema in 2DxP 3DxP; do
+    hist="$AIRTREE_DIR/yellow_tripdata_${schema}.airtree"
+    if [ ! -f "$hist" ]; then
+        log_error "missing $hist"
+        exit 1
+    fi
+    query_csv="$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv"
+    log_info "Query phase: $hist -> $query_csv"
+    "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+        --benchmark_out="$query_csv" --benchmark_out_format=csv \
+        query --input "$hist" --schema "$schema" \
+        --queries grid boundingbox
+    if [ $? -ne 0 ]; then
+        log_error "Query benchmark failed for $hist"
+        exit 1
+    fi
+done
+
+# yellow 4D Precise — Grid only
+hist="$AIRTREE_DIR/yellow_tripdata_4DxP.airtree"
+if [ ! -f "$hist" ]; then
+    log_error "missing $hist"
+    exit 1
+fi
+query_csv="$OUTPUT_DIR/query_yellow_tripdata_4DxP.csv"
+log_info "Query phase: $hist -> $query_csv"
+"$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+    --benchmark_out="$query_csv" --benchmark_out_format=csv \
+    query --input "$hist" --schema 4DxP \
+    --queries grid
+if [ $? -ne 0 ]; then
+    log_error "Query benchmark failed for $hist"
+    exit 1
+fi
+
+# jane_street 1DxT
+hist="$AIRTREE_DIR/jane_street_1DxT.airtree"
+if [ ! -f "$hist" ]; then
+    log_error "missing $hist"
+    exit 1
+fi
+query_csv="$OUTPUT_DIR/query_jane_street_1DxT.csv"
+log_info "Query phase: $hist -> $query_csv"
+"$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+    --benchmark_out="$query_csv" --benchmark_out_format=csv \
+    query --input "$hist" --schema 1DxT \
+    --queries topk minmax percentile
+if [ $? -ne 0 ]; then
+    log_error "Query benchmark failed for $hist"
+    exit 1
+fi
+
+echo "Query benchmarks completed."
+
+echo "consolidating benchmark statistics in consolidated_<schema>_data.csv"
+bash "$SCRIPT_DIR"/consolidate_bench_data.sh "$OUTPUT_DIR"
+
+echo "consolidating query benchmark statistics in consolidated_query_<schema>_data.csv"
+bash "$SCRIPT_DIR"/consolidate_query_bench_data.sh "$OUTPUT_DIR"
 
 echo "consolidating system info in system_info.csv"
-
-./consolidate_systeminfo.sh "$OUTPUT_DIR"
+bash "$SCRIPT_DIR"/consolidate_systeminfo.sh "$OUTPUT_DIR"
 
 echo "Benchmark files saved in $OUTPUT_DIR"
