@@ -107,17 +107,24 @@ log_debug "Using $NUM_CORES cores for parallel build"
 log_info "Using PROJECT_ROOT=$PROJECT_ROOT"
 log_info "Configuring and building in root directory"
 
-# OS Detection to override the toolchain on Windows
+# On Windows (TOOLCHAIN forced to msvc in settings.sh), keep MSVC tools first in PATH
 OS_NAME="$(uname | awk '{ print tolower($0) }')"
 if [[ "$OS_NAME" == *"mingw"* || "$OS_NAME" == *"msys"* || "$OS_NAME" == *"cygwin"* ]]; then
-    log_info "Windows environment detected. Forcing MSVC toolchain."
-    TOOLCHAIN="msvc"
-    export GENERATOR="Ninja"
-
     if command -v cl.exe >/dev/null 2>&1; then
         MSVC_BIN_DIR="$(dirname "$(which cl.exe)")"
         export PATH="$MSVC_BIN_DIR:$PATH"
         log_info "Forced MSVC tools to the front of PATH"
+    fi
+fi
+
+# On macOS (TOOLCHAIN forced to clang-20 in settings.sh), point CC/CXX at the
+# same Homebrew LLVM so ExternalProject deps don't fall back to Apple clang.
+if [[ "$OS_NAME" == "darwin" ]]; then
+    _LLVM20_PREFIX="$(brew --prefix llvm@20 2>/dev/null || true)"
+    if [[ -x "$_LLVM20_PREFIX/bin/clang" ]]; then
+        export CC="$_LLVM20_PREFIX/bin/clang"
+        export CXX="$_LLVM20_PREFIX/bin/clang++"
+        log_info "Using Homebrew LLVM 20 for CC/CXX ($_LLVM20_PREFIX)"
     fi
 fi
 

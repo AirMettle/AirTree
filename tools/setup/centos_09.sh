@@ -2,6 +2,10 @@
 
 set -eou pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+. "$ROOT_DIR/tools/utils/import.sh"
+import utils/common_func.sh
+
 OS=$(echo $(uname) | awk '{ print tolower($0) }')
 ARCH=$(echo $(uname -m) | awk '{ print tolower($0) }')
 
@@ -20,7 +24,7 @@ else
   exit 1
 fi
 
-# Accept CentOS 7, 8, or 9 on x86_64
+# CentOS Stream 9 on x86_64 only
 if [[ "$ARCH" != "x86_64" ]]; then
   echo "This script is intended for x86_64 architecture only."
   exit 1
@@ -31,8 +35,8 @@ if [[ "$DISTRO" != "centos" ]]; then
   exit 1
 fi
 
-if [[ "$VERSION_ID" != "7" && "$VERSION_ID" != "8" && "$VERSION_ID" != "9" ]]; then
-  echo "This script is intended for CentOS 7, 8, or 9. Detected version: $VERSION_ID"
+if [[ "$VERSION_ID" != "9" ]]; then
+  echo "This script is intended for CentOS Stream 9. Detected version: $VERSION_ID"
   exit 1
 fi
 
@@ -43,10 +47,12 @@ fi
 
 echo "Installing dependencies on $OS $DISTRO ($VERSION_ID) $ARCH ..."
 
+SUDO=$(determine_sudo)
+
 # Helper function to install a package and check for errors
 install_package() {
   local package=$1
-  sudo yum install -y "$package"
+  $SUDO yum install -y "$package"
   if [[ $? -ne 0 ]]; then
     echo "Failed to install $package."
     exit 1
@@ -54,12 +60,30 @@ install_package() {
 }
 
 
-sudo yum update -y
+$SUDO yum update -y
 install_package gcc # FIX ME: version lock this
 install_package g++ # FIX ME: version lock this
 install_package epel-release
 install_package cmake
 install_package git
+install_package dnf-plugins-core
+$SUDO dnf config-manager --set-enabled crb
+install_package make
+install_package ninja-build
+install_package pkgconf-pkg-config
+install_package bison
+install_package flex
+install_package which
+install_package wget
+install_package unzip
+install_package tar
+install_package ccache
+install_package cppcheck
+install_package perl
+install_package rpm-build
+install_package python3.12
+install_package python3.12-devel
+install_package python3.12-pip
 
 # The following packages were installed previously. They
 # are probably no longer needed since we are building these

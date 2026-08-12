@@ -27,7 +27,6 @@ public:
   AirTree(const std::string &config_name, const std::string &input_data_file,
           const std::vector<std::string> &column_list,
           const std::string &result_file,
-          airtree::reader::file::SUPPORTED_FILE_TYPE file_type,
           airtree::reader::file::SUPPORTED_DATA_TYPE data_type, bool run_e2e);
   static std::string get_valid_config_names();
   static bool
@@ -62,7 +61,6 @@ private:
   std::string config_name_;
   std::string input_file_;
   airtree::reader::file::SUPPORTED_DATA_TYPE data_type_;
-  airtree::reader::file::SUPPORTED_FILE_TYPE file_type_;
   std::string result_file_;
   bool run_e2e_;
   std::vector<FPHArray> data_arrays_;

@@ -18,7 +18,7 @@ CDF::CDF(std::vector<char> &buffer) : buffer_(buffer) {
   bit_length_ = reader.getBitLength();
   trie_node_ = reader.getType();
   header_ = reader.getHeader();
-  bin_count_ = 1 << bit_length_;
+  bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_shared<airtree::query::meta::Histogram>(bit_length_);
 }
 

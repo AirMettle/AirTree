@@ -92,7 +92,7 @@ static constexpr size_t kOffNegInf        = 29; // 4 bytes
 static constexpr size_t kOffPosZero       = 33; // 4 bytes
 static constexpr size_t kOffNegZero       = 37; // 4 bytes
 static constexpr size_t kOffNan           = 41; // 4 bytes
-static constexpr size_t kOffChecksum      = 45; // 4 bytes
+[[maybe_unused]] static constexpr size_t kOffChecksum      = 45; // 4 bytes
 
 
 AirTreeHeader makeHeader(ConfigWire config,

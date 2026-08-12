@@ -1,13 +1,10 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" PROJECT_VERSION)
+include(${CMAKE_SOURCE_DIR}/cmake/Version.cmake)
 
-# Extract numeric version for CMake (remove any suffix like -SNAPSHOT)
-string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" PROJECT_VERSION_NUMERIC "${PROJECT_VERSION}")
-
-project(AirTree VERSION ${PROJECT_VERSION_NUMERIC} LANGUAGES CXX)
-add_compile_definitions(VERSION_NUMBER="${PROJECT_VERSION}")
-message(STATUS "Building version ${PROJECT_VERSION_NUMERIC} of AirTree")
+project(AirTree VERSION ${AIRTREE_VERSION_NUMERIC} LANGUAGES CXX)
+add_compile_definitions(VERSION_NUMBER="${AIRTREE_FULL_VERSION}")
+message(STATUS "Building version ${AIRTREE_FULL_VERSION} of AirTree")
 
 # Target to aggregate all dependencies builds
 add_custom_target(am_airtree_dependencies)
@@ -41,54 +38,12 @@ include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_arrow.cmake)
 # include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_hdf5.cmake)
 # include(${CMAKE_SOURCE_DIR}/cmake/third-party/Dependency_netcdf4.cmake)
 
-if (APPLE)
-    # For macOS, ensure that GCC-14 is used
-    message(STATUS "Setting GCC 14 for macOS")
-    # Find GCC and G++ version 14
-    find_program(GCC_PATH gcc-14)
-    find_program(GPP_PATH g++-14)
-    # If GCC or G++ are not found, throw an error
-    if (NOT GCC_PATH OR NOT GPP_PATH)
-        message(FATAL_ERROR "GCC-14 and/or G++-14 not found! Ensure GCC is installed and available in your PATH.")
-    endif ()
-    # Set the compilers
-    set(CMAKE_C_COMPILER "${GCC_PATH}")
-    set(CMAKE_CXX_COMPILER "${GPP_PATH}")
-    message(STATUS "Using GCC as C compiler: ${CMAKE_C_COMPILER}")
-    message(STATUS "Using G++ as C++ compiler: ${CMAKE_CXX_COMPILER}")
-elseif (UNIX AND NOT APPLE)
-    # For Ubuntu (assuming default GCC/G++ installations)
-    message(STATUS "Setting default GCC/G++ for Ubuntu")
-    # Find default GCC and G++
-    find_program(GCC_PATH gcc)
-    find_program(GPP_PATH g++)
-    # If GCC or G++ are not found, throw an error
-    if (NOT GCC_PATH OR NOT GPP_PATH)
-        message(FATAL_ERROR "GCC and/or G++ not found! Ensure GCC is installed and available in your PATH.")
-    endif ()
-    # Set the compilers
-    # set(CMAKE_C_COMPILER "${GCC_PATH}")
-    # set(CMAKE_CXX_COMPILER "${GPP_PATH}")
-    # message(STATUS "Using GCC as C compiler: ${CMAKE_C_COMPILER}")
-    # message(STATUS "Using G++ as C++ compiler: ${CMAKE_CXX_COMPILER}")
-elseif (WIN32)
-    message(STATUS "Using default MSVC compiler for Windows.")
-    find_program(MSVC_CL cl)
-    find_program(MSVC_LINK link)
-    if (NOT MSVC_CL OR NOT MSVC_LINK)
-        message(FATAL_ERROR "MSVC compiler tools not found! Ensure Visual Studio Build Tools are installed and available in your PATH.")
-    endif ()
-    message(STATUS "Using MSVC CL as C/C++ compiler: ${MSVC_CL}")
-else ()
-    message(FATAL_ERROR "Unsupported OS or platform.")
-endif ()
-
 # Detect architecture and define preprocessor directives
-if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64")
+if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
     add_compile_definitions(x86_ARCH)
     set(ARCH "x86_64")
     message(STATUS "Detected architecture: x86_64. Defining x86_ARCH.")
-elseif (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64")
+elseif (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
     add_compile_definitions(ARM_ARCH)
     set(ARCH "aarch64")
     message(STATUS "Detected architecture: arm64. Defining ARM_ARCH.")
@@ -177,40 +132,6 @@ if (AIRTREE_ENABLE_BENCHMARKS)
     add_subdirectory(airtree-bench)
 endif ()
 
-# Package
-find_program(LSB_RELEASE_COMMAND lsb_release)
-execute_process(COMMAND ${LSB_RELEASE_COMMAND} -is
-    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-string(TIMESTAMP CURRENT_DATE "%Y%m%d")
-string(TIMESTAMP SNAPSHOT_TIMESTAMP "%Y%m%d-%H%M%S")
-
-if ("${LSB_RELEASE_ID_SHORT}" MATCHES "Debian" OR "${LSB_RELEASE_ID_SHORT}" MATCHES "Ubuntu")
-  set(CPACK_GENERATOR "DEB;TGZ")
-elseif ("${LSB_RELEASE_ID_SHORT}" MATCHES "CentOS" OR "${LSB_RELEASE_ID_SHORT}" MATCHES "CentOSStream")
-  set(CPACK_GENERATOR "RPM;TGZ")
-endif ()
-
-# Set default install prefix if not specified
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/opt/airmettle/airtree/${PROJECT_VERSION}" CACHE PATH "Install path prefix" FORCE)
-endif()
-
-# CPack configuration
-set(CPACK_PACKAGE_NAME "airtree")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_CONTACT "support@airmettle.com")
-set(CPACK_PACKAGE_DESCRIPTION "AirMettle AirTree - Hierarchical Multi Dimensional Histograms")
-set(CPACK_PACKAGE_VENDOR "AirMettle")
-set(CPACK_WARN_ON_ABSOLUTE_INSTALL_DESTINATION TRUE)
-set(CPACK_STRIP_FILES TRUE)
-set(CPACK_PACKAGE_CHECKSUM SHA256)
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-
-include(CPack)
-include(InstallRequiredSystemLibraries)
+# Packaging / CPack config
+include(${CMAKE_SOURCE_DIR}/cmake/Packaging.cmake)
 

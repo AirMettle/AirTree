@@ -361,7 +361,7 @@ TEST(ReconstructionTestForFile, TestCase_vz) {
 }
 
 TEST(ReconstructionTestManual, TestCaseFloat) {
-  float orignalNumber = 1.113;
+  float orignalNumber = 1.113f;
   uint32_t fpNumber;
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
 

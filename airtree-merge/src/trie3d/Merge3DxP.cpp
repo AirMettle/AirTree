@@ -159,8 +159,8 @@ std::vector<char> Merge3DxP::merge(const std::vector<char> &buffer1,
               temp_node_level3.reset();
             } else if (pop1_level2.test(k) && pop2_level2.test(k)) {
               auto temp_node_level3 = mergeNode3D_3x10_l2(
-                  std::move(deserialize_3DxP_l2(buffer1, offset1)),
-                  std::move(deserialize_3DxP_l2(buffer2, offset2)));
+                  deserialize_3DxP_l2(buffer1, offset1),
+                  deserialize_3DxP_l2(buffer2, offset2));
               serialize_3DxP_l2(temp_node_level3.get(), mergedBuffer);
               temp_node_level3.reset();
             }

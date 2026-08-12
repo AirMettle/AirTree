@@ -16,7 +16,7 @@ query speed, and provides exact merging across shards or batches.
 | [Installation & Build](docs/install.md) | Supported platforms, prerequisites, build script, install layout |
 | [CLI Reference](docs/cli.md) | `airtree`, `airtree-export`, `airtree-merge` — every flag and example |
 | [C++ Library API](docs/cpp-api.md) | Generate, query, merge, export, and reader headers |
-| [Python Bindings](docs/python.md) | *Coming soon* |
+| [Python Bindings](docs/python.md) | Python API for generating, querying, merging, and exporting histograms |
 
 ## What's in the Box
 
@@ -130,7 +130,7 @@ As noted in the [LICENSE](LICENSE) file, this software is provided for
 **non-commercial use only**.
 
 For commercial licensing, support, or enterprise usage, please contact
-**sales@airmettle.com**.
+**support@airmettle.com**.
 
 Cloud services powered by this technology are launching in **June 2026**,
 starting with **Azure**.
