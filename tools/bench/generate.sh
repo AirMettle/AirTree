@@ -68,7 +68,7 @@ for schema in "${binary_schemas[@]}"; do
             fi
             
 
-            "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
+            taskset -c 0 "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
             --benchmark_out_format=csv \
             generate binary \
             --input "$file" \
@@ -143,7 +143,7 @@ for schema in "${parquet_schemas[@]}"; do
                 esac
             fi
      
-            "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
+            taskset -c 0 "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
             --benchmark_out_format=csv \
             generate parquet \
             --input "$file" \
@@ -179,7 +179,7 @@ for schema in 1DxF 1DxP; do
     fi
     query_csv="$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv"
     log_info "Query phase: $hist -> $query_csv"
-    "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+    taskset -c 0 "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
         --benchmark_out="$query_csv" --benchmark_out_format=csv \
         query --input "$hist" --schema "$schema" \
         --queries topk minmax percentile
@@ -198,7 +198,7 @@ for schema in 2DxP 3DxP; do
     fi
     query_csv="$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv"
     log_info "Query phase: $hist -> $query_csv"
-    "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+    taskset -c 0 "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
         --benchmark_out="$query_csv" --benchmark_out_format=csv \
         query --input "$hist" --schema "$schema" \
         --queries grid boundingbox
@@ -216,7 +216,7 @@ if [ ! -f "$hist" ]; then
 fi
 query_csv="$OUTPUT_DIR/query_yellow_tripdata_4DxP.csv"
 log_info "Query phase: $hist -> $query_csv"
-"$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+taskset -c 0 "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
     --benchmark_out="$query_csv" --benchmark_out_format=csv \
     query --input "$hist" --schema 4DxP \
     --queries grid
@@ -233,7 +233,7 @@ if [ ! -f "$hist" ]; then
 fi
 query_csv="$OUTPUT_DIR/query_jane_street_1DxT.csv"
 log_info "Query phase: $hist -> $query_csv"
-"$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+taskset -c 0 "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
     --benchmark_out="$query_csv" --benchmark_out_format=csv \
     query --input "$hist" --schema 1DxT \
     --queries topk minmax percentile
