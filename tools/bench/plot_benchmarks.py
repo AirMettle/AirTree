@@ -11,11 +11,20 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from bench_plot.load import load_generate, load_systeminfo
+from bench_plot.load import load_generate, load_query, load_systeminfo
 from bench_plot.plots import (
+    generate_1d_variant_tradeoff,
+    generate_cardinality,
     generate_create_vs_serialize,
+    generate_dim_scaling,
     generate_insert_mbps,
     generate_insert_points_per_sec,
+    generate_trie_vs_input,
+    query_1d_families,
+    query_heatmap,
+    query_latency_overview,
+    query_latency_vs_buffersize,
+    query_multid,
 )
 
 
@@ -58,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     run_dir = args.run_dir
     out_dir = args.out if args.out is not None else run_dir / "plots"
     generate_df = load_generate(run_dir)
+    query_df = load_query(run_dir)
     footer = _footer(run_dir)
 
     written: list[Path] = []
@@ -65,9 +75,23 @@ def main(argv: list[str] | None = None) -> int:
         generate_insert_points_per_sec,
         generate_insert_mbps,
         generate_create_vs_serialize,
+        generate_trie_vs_input,
+        generate_1d_variant_tradeoff,
+        generate_dim_scaling,
+        generate_cardinality,
     ):
         written.extend(
             plot(generate_df, out_dir, formats=args.formats, footer=footer)
+        )
+    for plot in (
+        query_latency_overview,
+        query_1d_families,
+        query_multid,
+        query_latency_vs_buffersize,
+        query_heatmap,
+    ):
+        written.extend(
+            plot(query_df, out_dir, formats=args.formats, footer=footer)
         )
     for path in written:
         print(path)
