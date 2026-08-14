@@ -253,4 +253,36 @@ bash "$SCRIPT_DIR"/consolidate_query_bench_data.sh "$OUTPUT_DIR"
 echo "consolidating system info in system_info.csv"
 bash "$SCRIPT_DIR"/consolidate_systeminfo.sh "$OUTPUT_DIR"
 
+echo "Generating plots in $OUTPUT_DIR/plots"
+# Plot deps live in the project venv, not system python3. Create the venv
+# and pip-install requirements-plot.txt when this machine has never plotted.
+PLOT_REQ="$SCRIPT_DIR/requirements-plot.txt"
+PLOT_PYTHON=""
+if [[ ! -x "$CMAKE_BUILD_DIR/venv/bin/python" ]]; then
+    log_info "No project venv at $CMAKE_BUILD_DIR/venv; creating via tools/setup/venv.sh"
+    if ! bash "$ROOT_DIR/tools/setup/venv.sh"; then
+        log_warn "Skipping plots: failed to create $CMAKE_BUILD_DIR/venv (bench CSVs are still valid)."
+    fi
+fi
+if [[ -x "$CMAKE_BUILD_DIR/venv/bin/python" ]]; then
+    PLOT_PYTHON="$CMAKE_BUILD_DIR/venv/bin/python"
+    if ! "$PLOT_PYTHON" -c "import matplotlib, seaborn, pandas" >/dev/null 2>&1; then
+        log_info "Installing plot deps into $CMAKE_BUILD_DIR/venv from $PLOT_REQ"
+        if ! "$PLOT_PYTHON" -m pip install -r "$PLOT_REQ"; then
+            log_warn "pip install of $PLOT_REQ failed; will skip plots if imports still fail."
+            log_warn "Retry: $PLOT_PYTHON -m pip install -r $PLOT_REQ"
+        fi
+    fi
+fi
+if [[ -n "$PLOT_PYTHON" ]] && "$PLOT_PYTHON" -c "import matplotlib, seaborn, pandas" >/dev/null 2>&1; then
+    log_info "Writing plots with $PLOT_PYTHON $SCRIPT_DIR/plot_benchmarks.py $OUTPUT_DIR --format png,svg"
+    "$PLOT_PYTHON" "$SCRIPT_DIR/plot_benchmarks.py" "$OUTPUT_DIR" --format png,svg
+    log_info "Plots written to $OUTPUT_DIR/plots"
+elif [[ -n "$PLOT_PYTHON" ]]; then
+    log_warn "Skipping plots: $PLOT_PYTHON still cannot import matplotlib, seaborn, and pandas (bench CSVs are still valid)."
+    log_warn "Or plot later: $PLOT_PYTHON $SCRIPT_DIR/plot_benchmarks.py $OUTPUT_DIR --format png,svg"
+else
+    log_warn "Or plot later: python3 $SCRIPT_DIR/plot_benchmarks.py $OUTPUT_DIR --format png,svg"
+fi
+
 echo "Benchmark files saved in $OUTPUT_DIR"

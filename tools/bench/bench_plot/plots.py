@@ -532,6 +532,171 @@ def generate_cardinality(
     return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
 
 
+def _1d_create_and_insert(generate_df):
+    insert = _create_and_insert(generate_df)
+    if insert.empty:
+        return insert
+    return insert[insert["Schema"].isin(_1D_SCHEMAS)].copy()
+
+
+def _1d_structure_bar(
+    generate_df,
+    *,
+    y: str,
+    ylabel: str,
+    title: str,
+    name: str,
+    out_dir: str | Path,
+    formats: tuple[str, ...],
+    footer: str,
+) -> list[Path]:
+    """Grouped 1DxT/F/P bar, log y, datasets ordered by 1D Dataset Size MB."""
+    one_d = _1d_create_and_insert(generate_df)
+    if one_d.empty:
+        return _skip(name, "no 1DxT / 1DxF / 1DxP CreateAndInsert rows")
+    missing = _require_columns(one_d, (y,))
+    if missing:
+        return _skip(name, missing)
+    one_d = one_d.dropna(subset=[y, "Schema", "Data_set"])
+    one_d = _positive(one_d, (y,))
+    if one_d.empty:
+        return _skip(name, f"no positive {y!r} values")
+
+    order = _dataset_order(one_d)
+    hue_order = schema_hue_order(one_d["Schema"])
+    width = max(10.0, 0.9 * len(order))
+    fig, ax = plt.subplots(figsize=(width, 5.5))
+    sns.barplot(
+        data=one_d,
+        x="Data_set",
+        y=y,
+        hue="Schema",
+        order=order,
+        hue_order=hue_order,
+        palette=schema_palette(hue_order),
+        errorbar=None,
+        ax=ax,
+    )
+    ax.set_yscale("log")
+    ax.set_xlabel("Dataset (ordered by 1D size)")
+    _rotate_xlabels(ax)
+    apply_style(fig, ax, title=title, ylabel=ylabel, footer=footer)
+    return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
+
+
+def generate_input_profile(
+    generate_df,
+    out_dir: str | Path,
+    formats: tuple[str, ...] = ("png",),
+    footer: str = "",
+) -> list[Path]:
+    """Three-panel 1D input facts: size, value count, distinct. One bar per dataset."""
+    name = "generate_input_profile"
+    cols = ("Dataset Size MB", "Dataset Value Count", "Distinct Values")
+    one_d = _1d_create_and_insert(generate_df)
+    if one_d.empty:
+        return _skip(name, "no 1DxT / 1DxF / 1DxP CreateAndInsert rows")
+    missing = _require_columns(one_d, cols)
+    if missing:
+        return _skip(name, missing)
+    one_d = one_d.dropna(subset=["Data_set", *cols])
+    one_d = _positive(one_d, cols)
+    if one_d.empty:
+        return _skip(name, f"no positive {list(cols)} values")
+
+    profile = (
+        one_d.groupby("Data_set", observed=True)[list(cols)].median().reset_index()
+    )
+    order = _dataset_order(profile)
+    width = max(14.0, 1.15 * len(order))
+    fig, axes = plt.subplots(1, 3, figsize=(width, 5.5), sharex=True)
+    panels = (
+        (axes[0], "Dataset Size MB", "Dataset size (MB)"),
+        (axes[1], "Dataset Value Count", "Dataset value count"),
+        (axes[2], "Distinct Values", "Distinct values"),
+    )
+    for ax, y, ylabel in panels:
+        sns.barplot(
+            data=profile,
+            x="Data_set",
+            y=y,
+            order=order,
+            errorbar=None,
+            color="#4C4C4C",
+            ax=ax,
+        )
+        ax.set_yscale("log")
+        ax.set_xlabel("Dataset (ordered by 1D size)")
+        _rotate_xlabels(ax)
+        apply_style(
+            fig, ax, title=ylabel, ylabel=ylabel, footer="", tighten=False
+        )
+
+    _finish_multipanel(
+        fig,
+        "1D input facts: size, row count, and distinct values",
+        footer,
+    )
+    return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
+
+
+def generate_trie_size(
+    generate_df,
+    out_dir: str | Path,
+    formats: tuple[str, ...] = ("png",),
+    footer: str = "",
+) -> list[Path]:
+    """Grouped bar, log y: 1DxT/F/P Trie Size (Bytes) by dataset."""
+    return _1d_structure_bar(
+        generate_df,
+        y="Trie Size (Bytes)",
+        ylabel="Trie size (bytes)",
+        title="Precise 1D tries are larger than Fast; Tiny stays a small constant",
+        name="generate_trie_size",
+        out_dir=out_dir,
+        formats=formats,
+        footer=footer,
+    )
+
+
+def generate_precise_bins(
+    generate_df,
+    out_dir: str | Path,
+    formats: tuple[str, ...] = ("png",),
+    footer: str = "",
+) -> list[Path]:
+    """Grouped bar, log y: 1DxT/F/P Precise Bins by dataset."""
+    return _1d_structure_bar(
+        generate_df,
+        y="Precise Bins",
+        ylabel="Precise bins",
+        title="Precise allocates far more 1D bins than Fast or Tiny on high-cardinality sets",
+        name="generate_precise_bins",
+        out_dir=out_dir,
+        formats=formats,
+        footer=footer,
+    )
+
+
+def generate_avg_bytes_per_bin(
+    generate_df,
+    out_dir: str | Path,
+    formats: tuple[str, ...] = ("png",),
+    footer: str = "",
+) -> list[Path]:
+    """Grouped bar, log y: 1DxT/F/P Avg Bytes/Bin by dataset."""
+    return _1d_structure_bar(
+        generate_df,
+        y="Avg Bytes/Bin",
+        ylabel="Avg bytes/bin",
+        title="High-cardinality 1D sets sit near 4 bytes/bin; FRED, yellow, and phone_gyro do not",
+        name="generate_avg_bytes_per_bin",
+        out_dir=out_dir,
+        formats=formats,
+        footer=footer,
+    )
+
+
 def query_latency_overview(
     query_df,
     out_dir: str | Path,

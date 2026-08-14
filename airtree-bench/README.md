@@ -9,7 +9,7 @@
 
 Results are printed to the terminal by default. To write CSV output, pass Google Benchmark flags through the executable (for example, `--benchmark_out=results.csv --benchmark_out_format=csv`).
 
-The end-to-end pipeline in `tools/bench/generate.sh` runs generate, writes selected histograms to disk, runs query benches against those files, then consolidates generate and query CSVs.
+The end-to-end pipeline in `tools/bench/generate.sh` runs generate, writes selected histograms to disk, runs query benches against those files, consolidates generate and query CSVs, then writes PNG plots when the plot stack is installed.
 
 ---
 
@@ -183,6 +183,7 @@ $CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/
    - `consolidate_bench_data.sh` → `consolidated_<schema>_data.csv` (generate metrics)
    - `consolidate_query_bench_data.sh` → `consolidated_query_<schema>_data.csv` and `consolidated_query_all_data.csv`
    - `consolidate_systeminfo.sh` → `systeminfo.csv`
+7. **Plots** — uses `$CMAKE_BUILD_DIR/venv/bin/python`. If that venv is missing, `generate.sh` creates it via `tools/setup/venv.sh`. If matplotlib / seaborn / pandas cannot be imported, it `pip install`s `tools/bench/requirements-plot.txt` into the venv, then runs `tools/bench/plot_benchmarks.py "$OUTPUT_DIR" --format png,svg` and writes `<run_dir>/plots/` (PNG, SVG, and `index.md`). A failed venv create or pip install: warn and continue (CSVs still count). A plotter crash after those imports succeed fails the run.
 
 #### Consolidated query CSVs
 
@@ -200,6 +201,59 @@ Data_set,Schema,query_id,iterations,real_time,cpu_time,...,BufferSize,result_siz
 ```
 
 Use the [Query ID table](#query-id-table) to map `query_id` back to the timed operation.
+
+### Plots
+
+`generate.sh` writes PNG and SVG figures plus `plots/index.md` into `<run_dir>/plots/` after consolidation. Plotting is a Python post-step on those CSVs (same family as the consolidators), not part of `airtree_bench`. On a fresh machine it creates `$CMAKE_BUILD_DIR/venv` if needed and installs `tools/bench/requirements-plot.txt` there. A failed install is a warning, not a failed bench.
+
+To plot an existing run by hand, from the repo root:
+
+```bash
+python tools/bench/plot_benchmarks.py <run_dir>
+```
+
+Prefer the project venv when plot deps live there:
+
+```bash
+$CMAKE_BUILD_DIR/venv/bin/python tools/bench/plot_benchmarks.py <run_dir>
+```
+
+Optional flags: `--out <dir>` (default `<run_dir>/plots`) and `--format png,svg` (comma-separated; default `png`). Open `plots/index.md` for the full catalog in one scroll.
+
+**Input files** in `<run_dir>`:
+
+- `consolidated_<schema>_data.csv` — generate (`CreateAndInsert` / `Serialize`)
+- `consolidated_query_<schema>_data.csv` — query (per-schema files; not `consolidated_query_all_data.csv`)
+- `systeminfo.csv` — optional figure footer (`Ran on …`)
+
+**Output:** `<run_dir>/plots/` (or `--out`).
+
+Figures (one line each):
+
+- `generate_insert_points_per_sec.png` — insert throughput (`Points_Per_Second`) by dataset × schema
+- `generate_insert_mbps.png` — same layout, y = `Insertion Speed (MB/s)`
+- `generate_create_vs_serialize.png` — CreateAndInsert vs Serialize `real_time` (ms)
+- `generate_trie_vs_input.png` — dataset size vs trie size
+- `generate_1d_variant_tradeoff.png` — 1DxT / 1DxF / 1DxP insert rate vs trie size
+- `generate_dim_scaling.png` — Fast vs Precise across 1D–4D (FRED + yellow combined)
+- `generate_cardinality.png` — Distinct Values vs Precise Bins
+- `generate_input_profile.png` — 1D input facts (dataset size, value count, distinct values)
+- `generate_trie_size.png` — 1DxT / 1DxF / 1DxP trie size
+- `generate_precise_bins.png` — 1DxT / 1DxF / 1DxP precise bins
+- `generate_avg_bytes_per_bin.png` — 1DxT / 1DxF / 1DxP average bytes per bin
+- `query_latency_overview.png` — query latency by [query_id](#query-id-table) label × schema
+- `query_1d_families.png` — TopK, MinMax, Percentile for 1DxT / 1DxF / 1DxP
+- `query_multid.png` — Grid and BoundingBox for 2DxP / 3DxP / 4DxP
+- `query_latency_vs_buffersize.png` — latency vs `.airtree` buffer size
+- `query_heatmap.png` — schema × query label latency heatmap
+
+Use the [Query ID table](#query-id-table) to map `query_id` / labels. Empty suites are skipped (logged), not drawn as zeros.
+
+`generate.sh` installs those deps on demand. To install by hand (or to plot an old run on a venv that never plotted):
+
+```bash
+$CMAKE_BUILD_DIR/venv/bin/python -m pip install -r tools/bench/requirements-plot.txt
+```
 
 ### `get_bench_datasets.sh`
 
@@ -234,7 +288,10 @@ Sources include FCBench binary datasets (via Google Drive / `gdown`), NYC TLC ye
 | `airtree-bench/src/query/boundingbox/` | Bounding-box query fixtures (`2DxP` / `3DxP`) |
 | `airtree-bench/include/airtree/bench/query/QueryFixtureBase.hpp` | Shared query fixture base, `QueryId` enum, counters |
 | `airtree-bench/include/airtree/bench/BenchPaths.hpp` | Shared write path and preloaded query buffer |
-| `tools/bench/generate.sh` | Full generate + query + consolidate pipeline |
+| `tools/bench/generate.sh` | Full generate + query + consolidate + plot pipeline |
+| `tools/bench/plot_benchmarks.py` | Plot catalog from consolidated CSVs |
+| `tools/bench/bench_plot/` | Loader, style, and plot functions |
+| `tools/bench/requirements-plot.txt` | Pinned pandas / matplotlib / seaborn |
 | `tools/bench/get_bench_datasets.sh` | Dataset download / prep |
 | `tools/bench/consolidate_bench_data.sh` | Generate CSV consolidation |
 | `tools/bench/consolidate_query_bench_data.sh` | Query CSV consolidation |

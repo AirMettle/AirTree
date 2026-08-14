@@ -34,6 +34,22 @@ QUERY_ID_LABELS: dict[int, str] = {
     10: "BoundingBox mid-50%",
 }
 
+# GB `name` suffix → official query_id. Older consolidators kept `name`
+# (AirTreeQuery1DxF_TopK/TopK_k1) instead of rewriting to query_id.
+QUERY_NAME_TO_ID: dict[str, int] = {
+    "TopK_k1": 0,
+    "TopK_k5": 1,
+    "TopK_k15": 2,
+    "MinMax_getMin": 3,
+    "MinMax_getMax": 4,
+    "MinMax_getMinValue": 5,
+    "MinMax_getMaxValue": 6,
+    "Percentile_p50": 7,
+    "Percentile_p90": 8,
+    "Grid_steps8": 9,
+    "BoundingBox_mid50": 10,
+}
+
 _QUERY_EMPTY_COLUMNS = [
     "Data_set",
     "Schema",
@@ -146,12 +162,43 @@ def _alias_result_size(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _name_suffix(name: object) -> str:
+    if pd.isna(name):
+        return ""
+    return str(name).rsplit("/", 1)[-1]
+
+
+def _query_id_from_name(name: object) -> float:
+    suffix = _name_suffix(name)
+    qid = QUERY_NAME_TO_ID.get(suffix)
+    return float(qid) if qid is not None else float("nan")
+
+
+def _ensure_query_id(df: pd.DataFrame, path: Path) -> pd.DataFrame:
+    if "query_id" in df.columns:
+        return df
+    if "name" not in df.columns:
+        raise LoadError(f"{path} missing columns: ['query_id']")
+    out = df.copy()
+    out["query_id"] = out["name"].map(_query_id_from_name)
+    return out
+
+
+def _query_labels(df: pd.DataFrame) -> pd.Series:
+    labels = df["query_id"].map(_query_label)
+    if "name" not in df.columns:
+        return labels
+    from_name = df["name"].map(_name_suffix)
+    return labels.where(df["query_id"].notna(), from_name)
+
+
 def load_query(run_dir: str | Path) -> pd.DataFrame:
     """Return query rows from consolidated_query_<schema>_data.csv files.
 
     Skips consolidated_query_all_data.csv. Adds query_label and real_time_ms.
-    Aliases result_size to result_size_B. Missing query files yield an empty
-    frame (no exception).
+    Aliases result_size to result_size_B. If query_id is missing, derive it
+    from a Google Benchmark `name` column (older consolidators). Missing
+    query files yield an empty frame (no exception).
     """
     run_dir = Path(run_dir)
     if not run_dir.is_dir():
@@ -163,12 +210,14 @@ def load_query(run_dir: str | Path) -> pd.DataFrame:
             continue
         _assert_consolidated_query(path)
         df = pd.read_csv(path)
-        required = {"Data_set", "Schema", "query_id"}
+        required = {"Data_set", "Schema"}
         missing = required - set(df.columns)
         if missing:
             raise LoadError(f"{path} missing columns: {sorted(missing)}")
-        out = _alias_result_size(df.copy())
-        out["query_label"] = out["query_id"].map(_query_label)
+        if "query_id" not in df.columns and "name" not in df.columns:
+            raise LoadError(f"{path} missing columns: ['query_id']")
+        out = _alias_result_size(_ensure_query_id(df.copy(), path))
+        out["query_label"] = _query_labels(out)
         if "time_unit" in out.columns and "real_time" in out.columns:
             factors = out["time_unit"].map(_ms_per_unit)
             out["real_time_ms"] = out["real_time"] * factors

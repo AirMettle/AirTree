@@ -11,14 +11,19 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+from bench_plot.index import write_index
 from bench_plot.load import load_generate, load_query, load_systeminfo
 from bench_plot.plots import (
     generate_1d_variant_tradeoff,
+    generate_avg_bytes_per_bin,
     generate_cardinality,
     generate_create_vs_serialize,
     generate_dim_scaling,
+    generate_input_profile,
     generate_insert_mbps,
     generate_insert_points_per_sec,
+    generate_precise_bins,
+    generate_trie_size,
     generate_trie_vs_input,
     query_1d_families,
     query_heatmap,
@@ -79,6 +84,10 @@ def main(argv: list[str] | None = None) -> int:
         generate_1d_variant_tradeoff,
         generate_dim_scaling,
         generate_cardinality,
+        generate_input_profile,
+        generate_trie_size,
+        generate_precise_bins,
+        generate_avg_bytes_per_bin,
     ):
         written.extend(
             plot(generate_df, out_dir, formats=args.formats, footer=footer)
@@ -93,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         written.extend(
             plot(query_df, out_dir, formats=args.formats, footer=footer)
         )
+    written.append(write_index(out_dir, written, footer=footer))
     for path in written:
         print(path)
     return 0
