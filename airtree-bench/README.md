@@ -161,29 +161,30 @@ $CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/
 
 #### Pipeline stages
 
-1. **Build** — runs `tools/build/partial_build.sh` to build `airtree_bench`.
-2. **Datasets** — ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `get_bench_datasets.sh` to fetch and prepare inputs.
-3. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and writes `<dataset>_<schema>.csv`.
+1. **Host setup** — runs `tools/setup/setup.sh` so a fresh machine gets the toolchain (gcc/g++, CMake, Ninja, Python 3.12 + venv) needed to build and plot.
+2. **Build** — runs `tools/build/partial_build.sh` to build `airtree_bench`.
+3. **Datasets** — `cd`s to `tools/bench`, then ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `get_bench_datasets.sh` to fetch and prepare inputs. Conversion helpers (`csv_to_parquet.py`, `combine_taxi_datasets.py`) are invoked by absolute path, so they work from any CWD.
+4. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and writes `<dataset>_<schema>.csv`.
    - For `jane_street` + `1DxT`, also writes `airtree_files/jane_street_1DxT.airtree` via `--write-airtree`.
-4. **Generate (parquet)** — for each `*.parquet` in `bench_data` and schemas `1DxF` … `4DxP`, runs `generate parquet` with dataset-specific correlated columns:
+5. **Generate (parquet)** — for each `*.parquet` in `bench_data` and schemas `1DxF` … `4DxP`, runs `generate parquet` with dataset-specific correlated columns:
    | Dataset pattern | Columns (first *N* for *N*-D) |
    | --------------- | ----------------------------- |
    | `*MD*` (FRED-MD) | `RPI`, `W875RX1`, `RETAILx`, `INDPRO` |
    | `*QD*` (FRED-QD) | `GDPC1`, `DPIC96`, `PCECC96`, `OUTNFB` |
    | `yellow_tripdata*combined.parquet` | `trip_distance`, `fare_amount`, `total_amount`, `tip_amount` |
    - For yellow combined + schemas `1DxF`, `1DxP`, `2DxP`, `3DxP`, `4DxP`, also writes `airtree_files/yellow_tripdata_<schema>.airtree`.
-5. **Query** — loads those `.airtree` files and runs query benches to `query_<dataset>_<schema>.csv`:
+6. **Query** — loads those `.airtree` files and runs query benches to `query_<dataset>_<schema>.csv`. A missing histogram or a failed query binary is a warning; that suite is skipped and the pipeline continues.
    | Histogram | Queries |
    | --------- | ------- |
    | `yellow_tripdata_1DxF`, `yellow_tripdata_1DxP` | `topk` `minmax` `percentile` |
    | `yellow_tripdata_2DxP`, `yellow_tripdata_3DxP` | `grid` `boundingbox` |
    | `yellow_tripdata_4DxP` | `grid` |
    | `jane_street_1DxT` | `topk` `minmax` `percentile` |
-6. **Consolidate** — post-processes CSVs in the same output directory:
+7. **Consolidate** — post-processes CSVs in the same output directory:
    - `consolidate_bench_data.sh` → `consolidated_<schema>_data.csv` (generate metrics)
    - `consolidate_query_bench_data.sh` → `consolidated_query_<schema>_data.csv` and `consolidated_query_all_data.csv`
    - `consolidate_systeminfo.sh` → `systeminfo.csv`
-7. **Plots** — uses `$CMAKE_BUILD_DIR/venv/bin/python`. If that venv is missing, `generate.sh` creates it via `tools/setup/venv.sh`. If matplotlib / seaborn / pandas cannot be imported, it `pip install`s `tools/bench/requirements-plot.txt` into the venv, then runs `tools/bench/plot_benchmarks.py "$OUTPUT_DIR" --format png,svg` and writes `<run_dir>/plots/` (PNG, SVG, and `index.md`). A failed venv create or pip install: warn and continue (CSVs still count). A plotter crash after those imports succeed fails the run.
+8. **Plots** — uses `$CMAKE_BUILD_DIR/venv/bin/python`. If that venv is missing, `generate.sh` creates it via `tools/setup/venv.sh` (Python 3.12 comes from stage 1). If matplotlib / seaborn / pandas cannot be imported, it `pip install`s `tools/bench/requirements-plot.txt` into the venv, then runs `tools/bench/plot_benchmarks.py "$OUTPUT_DIR" --format png,svg` and writes `<run_dir>/plots/` (PNG, SVG, and `index.md`). A failed venv create or pip install: warn and continue (CSVs still count). A plotter crash after those imports succeed fails the run.
 
 #### Consolidated query CSVs
 
