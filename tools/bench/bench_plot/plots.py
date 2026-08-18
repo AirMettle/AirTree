@@ -201,7 +201,7 @@ def generate_insert_points_per_sec(
         insert,
         y="Points_Per_Second",
         ylabel="Points per second",
-        title="Insert throughput falls orders of magnitude from FRED to large sets",
+        title="Points/Sec vs. Dataset",
         name=name,
         out_dir=out_dir,
         formats=formats,
@@ -230,7 +230,7 @@ def generate_insert_mbps(
         insert,
         y=col,
         ylabel="Insertion speed (MB/s)",
-        title="Insert MB/s also drops on large high-cardinality sets",
+        title="Insertion Speed vs. Dataset vs. Schema",
         name=name,
         out_dir=out_dir,
         formats=formats,
@@ -288,7 +288,7 @@ def generate_create_vs_serialize(
             fig, ax, title=label, ylabel="Wall time (ms)", footer="", tighten=False
         )
 
-    fig.suptitle("Serialize is cheap next to CreateAndInsert on large sets")
+    fig.suptitle("Create/Insert and Serialize vs. Time")
     if footer:
         fig.text(0.01, 0.01, footer, fontsize=8, ha="left", va="bottom")
         fig.tight_layout(rect=(0, 0.04, 1, 0.93))
@@ -339,7 +339,7 @@ def generate_trie_vs_input(
     apply_style(
         fig,
         ax,
-        title="Trie size tracks input size; Precise is larger than Fast at the same set",
+        title="Trie Size vs. Dataset Size vs. Schema",
         ylabel="Trie size (bytes)",
         footer=footer,
     )
@@ -476,7 +476,7 @@ def generate_dim_scaling(
 
     _finish_multipanel(
         fig,
-        "Insert throughput falls as dimensionality grows from 1D to 4D",
+        "Insert Throughput and Dimensionality",
         footer,
     )
     return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
@@ -524,7 +524,7 @@ def generate_cardinality(
     apply_style(
         fig,
         ax,
-        title="Precise Bins stay far below Distinct Values on high-cardinality sets",
+        title="Precise Bins vs. Distinct Values",
         ylabel="Precise bins",
         footer=footer,
     )
@@ -651,7 +651,7 @@ def generate_trie_size(
         generate_df,
         y="Trie Size (Bytes)",
         ylabel="Trie size (bytes)",
-        title="Precise 1D tries are larger than Fast; Tiny stays a small constant",
+        title="Tiny, Fast, and Precise vs. Trie Size",
         name="generate_trie_size",
         out_dir=out_dir,
         formats=formats,
@@ -670,7 +670,7 @@ def generate_precise_bins(
         generate_df,
         y="Precise Bins",
         ylabel="Precise bins",
-        title="Precise allocates far more 1D bins than Fast or Tiny on high-cardinality sets",
+        title="Precise, Fast, and Tiny vs. Precise Bins",
         name="generate_precise_bins",
         out_dir=out_dir,
         formats=formats,
@@ -689,7 +689,7 @@ def generate_avg_bytes_per_bin(
         generate_df,
         y="Avg Bytes/Bin",
         ylabel="Avg bytes/bin",
-        title="High-cardinality 1D sets sit near 4 bytes/bin; FRED, yellow, and phone_gyro do not",
+        title="Bytes Per Bin",
         name="generate_avg_bytes_per_bin",
         out_dir=out_dir,
         formats=formats,
@@ -736,7 +736,7 @@ def query_latency_overview(
     apply_style(
         fig,
         ax,
-        title="Query latency spans microseconds to a multi-D grid outlier",
+        title="Query Time",
         ylabel="Wall time (ms)",
         footer=footer,
     )
@@ -797,7 +797,7 @@ def query_1d_families(
 
     _finish_multipanel(
         fig,
-        "Precise 1D queries cost more than Tiny/Fast across TopK, MinMax, Percentile",
+        "Precise, Fast, and Tiny Queries",
         footer,
     )
     return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
@@ -911,7 +911,7 @@ def query_latency_vs_buffersize(
     apply_style(
         fig,
         ax,
-        title="Queries are slower on larger .airtree buffers; Grid sits above 1D families",
+        title="Query Time vs. Buffer Size",
         ylabel="Wall time (ms)",
         footer=footer,
     )
