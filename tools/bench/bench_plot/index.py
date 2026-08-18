@@ -8,6 +8,16 @@ from pathlib import Path
 FIGURES: tuple[tuple[str, str, str], ...] = (
     (
         "Generate",
+        "generate_input_profile",
+        "1D input facts (size, row count, distinct)",
+    ), 
+    (
+        "Generate",
+        "generate_trie_vs_input",
+        "Dataset size vs trie size",
+    ),
+    (
+        "Generate",
         "generate_insert_points_per_sec",
         "Insert throughput (`Points_Per_Second`) by dataset × schema",
     ),
@@ -23,16 +33,6 @@ FIGURES: tuple[tuple[str, str, str], ...] = (
     ),
     (
         "Generate",
-        "generate_trie_vs_input",
-        "Dataset size vs trie size",
-    ),
-    (
-        "Generate",
-        "generate_1d_variant_tradeoff",
-        "1DxT / 1DxF / 1DxP insert rate vs trie size",
-    ),
-    (
-        "Generate",
         "generate_dim_scaling",
         "Fast vs Precise insert rate across 1D–4D (FRED + yellow combined)",
     ),
@@ -43,8 +43,8 @@ FIGURES: tuple[tuple[str, str, str], ...] = (
     ),
     (
         "Generate",
-        "generate_input_profile",
-        "1D input facts (size, row count, distinct)",
+        "generate_1d_variant_tradeoff",
+        "1DxT / 1DxF / 1DxP insert rate vs trie size",
     ),
     (
         "Generate",
