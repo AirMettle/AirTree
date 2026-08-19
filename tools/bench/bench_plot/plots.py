@@ -399,7 +399,7 @@ def generate_1d_variant_tradeoff(
 
     _finish_multipanel(
         fig,
-        "Tiny / Fast / Precise trade insert rate for a larger trie on 1D",
+        "Schema / Dataset vs. Insert rate and Trie Size",
         footer,
     )
     return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
@@ -860,7 +860,7 @@ def query_multid(
 
     _finish_multipanel(
         fig,
-        "Grid cost grows with dimension; 4DxP has no BoundingBox",
+        "Grid and Bounding Box",
         footer,
     )
     return save_fig(fig, Path(out_dir) / f"{name}.png", formats)
@@ -972,7 +972,7 @@ def query_heatmap(
     )
     ax.set_xlabel("Query")
     ax.set_ylabel("Schema")
-    ax.set_title("Where queries are expensive (blank is missing, not zero)")
+    ax.set_title("Query Heatmap (blank = no query for schema)")
     ax.tick_params(axis="x", labelrotation=35)
     for label in ax.get_xticklabels():
         label.set_ha("right")
