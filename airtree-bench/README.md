@@ -217,7 +217,7 @@ To plot an existing run by hand, from the repo root:
 python tools/bench/plot_benchmarks.py <run_dir>
 ```
 
-Prefer the project venv when plot deps live there:
+Use the project venv when plot dependencies only exist there:
 
 ```bash
 $CMAKE_BUILD_DIR/venv/bin/python tools/bench/plot_benchmarks.py <run_dir>
@@ -233,7 +233,7 @@ Optional flags: `--out <dir>` (default `<run_dir>/plots`) and `--format png,svg`
 
 **Output:** `<run_dir>/plots/` (or `--out`).
 
-Figures (one line each):
+Figures:
 
 - `generate_insert_points_per_sec.png` — insert throughput (`Points_Per_Second`) by dataset × schema
 - `generate_insert_mbps.png` — same layout, y = `Insertion Speed (MB/s)`
@@ -280,8 +280,7 @@ Sources include FCBench binary datasets (via Google Drive / `gdown`), NYC TLC ye
 
 ---
 
-## Project Layout
-
+## Source Code Reference
 | Path | Purpose |
 | ---- | ------- |
 | `airtree-bench/src/Main.cpp` | CLI entry point (`generate` / `query`) and Google Benchmark integration |
