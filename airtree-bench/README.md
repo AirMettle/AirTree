@@ -156,7 +156,11 @@ bash tools/bench/generate.sh
 Output is written under:
 
 ```text
+All Benchmark Outputs:
 $CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/
+
+Plots Overview:
+$CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/plots/index.md
 ```
 
 #### Pipeline stages
