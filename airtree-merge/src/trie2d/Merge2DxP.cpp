@@ -19,7 +19,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   std::vector<char> mergedBuffer;
   airtree::core::common::serializeHeader(mergedHeader, mergedBuffer);
   size_t header_end = mergedBuffer.size();
-  SPDLOG_LOGGER_INFO(logger(), "Merged headers successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
   std::bitset<BINS_64> pop0_1, pop0_2;
@@ -36,7 +36,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   for (size_t i = 0; i < BINS_64; i++) {
     // DEBUG_PRINT("Merging 2DxP TLEoption3_2D index " << i);
     nDims = getNumDims2D(i);
-    SPDLOG_LOGGER_INFO(logger(), "Number of dimensions: {}", nDims);
+    SPDLOG_LOGGER_DEBUG(logger(), "Number of dimensions: {}", nDims);
     if (nDims == 0) {
       continue;
     }
@@ -105,7 +105,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   }
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Serialized merged trie (all levels) successfully");
   return mergedBuffer;
 }

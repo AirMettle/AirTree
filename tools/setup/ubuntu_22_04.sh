@@ -40,6 +40,11 @@ install_package() {
   fi
 }
 
+# Entries left by earlier add-apt-repository runs conflict with the signed-by entry written below
+# (apt refuses one source with two Signed-By values), so clear them before the first apt-get update.
+run_step "[ airtree-setup ] Remove stale deadsnakes PPA entries" $SUDO rm -f \
+  /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-*.list /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-*.sources \
+  /etc/apt/trusted.gpg.d/deadsnakes-ubuntu-ppa.gpg /etc/apt/trusted.gpg.d/deadsnakes-ubuntu-ppa.gpg~
 run_step "[ airtree-setup ] Run apt-get update" $SUDO apt-get update
 run_step "[ airtree-setup ] Install gcc" install_package gcc # should version lock this
 run_step "[ airtree-setup ] Install g++" install_package g++ # should version lock this

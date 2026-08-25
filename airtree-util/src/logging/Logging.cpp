@@ -44,4 +44,9 @@ std::shared_ptr<spdlog::logger> make_logger(std::string name,
       std::move(name), spdlog::sinks_init_list({console_sink}), level);
 }
 
+void setLevel(spdlog::level::level_enum level) {
+  spdlog::apply_all([level](std::shared_ptr<spdlog::logger> l) { l->set_level(level); });
+  spdlog::set_level(level);
+}
+
 } // namespace airtree::util::logging

@@ -189,7 +189,7 @@ std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3, const FPHArray &array4,
                                 bool default_mode) {
   std::string uuid = AirTreeUUID::generateUUID();
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 4DxF Trie for {} values in dim1, "
       "{} values in dim2, {} values in dim3 and {} values in "
@@ -199,7 +199,7 @@ std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1, {} "
       "values for dim2, {} values for dim3 and {} values for dim4 using "
@@ -209,21 +209,21 @@ std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
   std::unique_ptr<TLE_4D_4x8> root =
       execCreateAndInsert_4D_4x8(array1, array2, array3, array4, curr_trie_size,
                                  specialCounts, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 4DxF Trie. "
       "Final trie size: {}.",
       uuid, curr_trie_size);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Serializing 4DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_4D_4x8(
       root.get(), curr_trie_size, specialCounts, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 4DxF Trie.", uuid);
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Completed generating 4DxF Trie.",
                      uuid);
 
@@ -382,7 +382,7 @@ execSerialize_4D_4x8(TLE_4D_4x8 *root, uint64_t &curr_trie_size,
                      std::unique_ptr<SpecialCounts> &specialCounts,
                      [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
-      ConfigWire::Config_4D_Fast, {}, 0,
+      ConfigWire::Config_4D_Fast, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
       specialCounts->posZeroCount, specialCounts->negZeroCount,
       specialCounts->nanCount);

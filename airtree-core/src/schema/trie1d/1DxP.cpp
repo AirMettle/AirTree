@@ -98,34 +98,34 @@ void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber,
 
 std::vector<char> generate_1DxP(const FPHArray &array, bool default_mode) {
   std::string uuid = AirTreeUUID::generateUUID();
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Generating 1DxP Trie for {} "
                      "values using default_mode {}.",
                      uuid, array.length, default_mode);
   SpecialCounts specialCounts;
   uint64_t curr_trie_size = 0;
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values using "
       "default_mode {} into 1DxP Trie.",
       uuid, array.length, default_mode);
   std::unique_ptr<TrieNode_20> root = execCreateAndInsert_TrieNode20(
       specialCounts, curr_trie_size, array, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting values into 1DxP "
       "Trie. Final trie size: {}.",
       uuid, curr_trie_size);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Serializing 1DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialization_TrieNode20(
       root, specialCounts, curr_trie_size, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 1DxP Trie.", uuid);
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Completed generating 1DxP Trie.",
                      uuid);
   return buffer;
@@ -171,7 +171,7 @@ execSerialization_TrieNode20(const std::unique_ptr<TrieNode_20> &root,
                              uint64_t trieSize,
                              [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
-      ConfigWire::Config_1D_Precise, {}, 0,
+      ConfigWire::Config_1D_Precise, {}, countObservations(root->counts),
       specialCounts.posInfCount, specialCounts.negInfCount,
       specialCounts.posZeroCount, specialCounts.negZeroCount,
       specialCounts.nanCount);

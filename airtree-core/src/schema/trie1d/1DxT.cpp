@@ -76,34 +76,34 @@ void createAndInsertFP(TrieNode_13 *node, uint64_t fpNumber,
 
 std::vector<char> generate_1DxT(const FPHArray &array, bool default_mode) {
   std::string uuid = AirTreeUUID::generateUUID();
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Generating 1DxT Trie for {} "
                      "values using default_mode {}.",
                      uuid, array.length, default_mode);
   SpecialCounts specialCounts;
   uint64_t curr_trie_size = 0;
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values using "
       "default_mode {} into 1DxT Trie.",
       uuid, array.length, default_mode);
   std::unique_ptr<TrieNode_13> root = execCreateAndInsert_TrieNode13(
       specialCounts, curr_trie_size, array, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting values into 1DxT "
       "Trie. Final trie size: {}.",
       uuid, curr_trie_size);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Serializing 1DxT trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialization_TrieNode13(
       root, specialCounts, curr_trie_size, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 1DxT Trie.", uuid);
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Completed generating 1DxT Trie.",
                      uuid);
   return buffer;
@@ -149,7 +149,7 @@ execSerialization_TrieNode13(const std::unique_ptr<TrieNode_13> &root,
                              uint64_t trieSize,
                              [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
-      ConfigWire::Config_1D_Tiny, {}, 0,
+      ConfigWire::Config_1D_Tiny, {}, countObservations(root->counts),
       specialCounts.posInfCount, specialCounts.negInfCount,
       specialCounts.posZeroCount, specialCounts.negZeroCount,
       specialCounts.nanCount);

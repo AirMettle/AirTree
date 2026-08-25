@@ -22,10 +22,10 @@ using namespace airtree::core::io;
 // Sentinel for special values not in the Trie
 constexpr uint32_t SPECIAL_VAL_REP = std::numeric_limits<uint32_t>::max();
 
-TopK::TopK(std::vector<char> buffer) : buffer_(std::move(buffer)) {
+TopK::TopK(std::vector<char> buffer) {
 
   AirTreeReader reader;
-  reader.read(buffer_);
+  reader.read(buffer);
 
   dims_ = reader.getDims();
   bit_length_ = reader.getBitLength();
@@ -34,6 +34,15 @@ TopK::TopK(std::vector<char> buffer) : buffer_(std::move(buffer)) {
 
   bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_shared<airtree::query::meta::Histogram>(bit_length_);
+
+  if (dims_ == 1) { // extract the populated bins now: objects are immutable after construction
+    switch (bit_length_) {
+    case 13: populatedBins<TrieNode_13>(); break;
+    case 16: populatedBins<TrieNode_16>(); break;
+    case 20: populatedBins<TrieNode_20>(); break;
+    default: break;
+    }
+  }
 }
 
 TopKResultVector TopK::getTopK(double k) {

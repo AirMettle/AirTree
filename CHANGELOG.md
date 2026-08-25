@@ -4,6 +4,18 @@ All notable changes to AirTree are listed here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Generated buffers carry the observation count in the header's `trie_count`
+  field (previously always 0); merges sum it. Files written by earlier
+  versions still read; their field stays 0.
+- `Percentile`, `CDF`, `MinMax` and `TopK` extract their populated bins at
+  construction and no longer keep a copy of the input buffer, so a query
+  object is immutable after construction and safe to share between threads.
+- Per-operation log lines in generate and merge are `DEBUG` (were `INFO`);
+  `airtree::util::logging::setLevel` adjusts every AirTree logger at run time.
+
 ## [1.6.3] - 2026-08-25
 
 Query-path performance release. Nothing about the on-disk format changed:

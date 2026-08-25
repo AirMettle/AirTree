@@ -130,7 +130,7 @@ void insertintoTrie_3D_888(TLE_3D_888 *root, unsigned int combined,
 std::vector<char> generate_3DxF(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3, bool default_mode) {
   std::string uuid = AirTreeUUID::generateUUID();
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 3DxF Trie for {} values in dim1, "
       "{} values in dim2 and {} values in dim3 using default_mode {}.",
@@ -138,7 +138,7 @@ std::vector<char> generate_3DxF(const FPHArray &array1, const FPHArray &array2,
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1, {} "
       "values for dim2 and {} values for dim3 using "
@@ -146,21 +146,21 @@ std::vector<char> generate_3DxF(const FPHArray &array1, const FPHArray &array2,
       uuid, array1.length, array2.length, array3.length, default_mode);
   std::unique_ptr<TLE_3D_888> root = execCreateAndInsert_3D_888(
       array1, array2, array3, curr_trie_size, specialCounts, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 3DxF Trie. "
       "Final trie size: {}.",
       uuid, curr_trie_size);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Serializing 3DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_3D_888(
       root.get(), curr_trie_size, specialCounts, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 3DxF Trie.", uuid);
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Completed generating 3DxF Trie.",
                      uuid);
   return buffer;
@@ -280,7 +280,7 @@ execSerialize_3D_888(TLE_3D_888 *root, uint64_t &curr_trie_size,
                      std::unique_ptr<SpecialCounts> &specialCounts,
                      [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
-      ConfigWire::Config_3D_Fast, {}, 0,
+      ConfigWire::Config_3D_Fast, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
       specialCounts->posZeroCount, specialCounts->negZeroCount,
       specialCounts->nanCount);

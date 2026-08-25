@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <thread>
 #include <stdexcept>
 #include <vector>
 
@@ -452,4 +453,31 @@ TEST_P(TestSparseWalk, PercentileBoundsMatchReference) {
       }
     }
   }
+}
+
+TEST(QueryObjects, SafeToShareAcrossThreads) {
+  std::mt19937_64 rng(99);
+  std::lognormal_distribution<double> lat(-2.0, 0.6);
+  std::vector<double> data(20000);
+  for (auto &x : data) x = lat(rng);
+  const auto buffer = build(20, data);
+  Percentile p(buffer);
+  TopK topk(buffer);
+  const double qs[] = {1.0, 50.0, 99.0, 99.9};
+  double expected[4];
+  for (int i = 0; i < 4; ++i) expected[i] = p.getPercentile(qs[i]);
+  const auto topExpected = topk.getTopK(5.0);
+  std::vector<std::thread> threads;
+  std::vector<int> failures(8, 0);
+  for (int t = 0; t < 8; ++t) {
+    threads.emplace_back([&, t] {
+      for (int round = 0; round < 500; ++round) {
+        const int i = (round + t) % 4;
+        if (p.getPercentile(qs[i]) != expected[i]) ++failures[static_cast<size_t>(t)];
+        if (topk.getTopK(5.0).size() != topExpected.size()) ++failures[static_cast<size_t>(t)];
+      }
+    });
+  }
+  for (auto &th : threads) th.join();
+  for (int f : failures) EXPECT_EQ(f, 0);
 }

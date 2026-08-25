@@ -28,6 +28,15 @@ MinMax::MinMax(std::vector<char> buffer) {
 
   bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_unique<airtree::query::meta::Histogram>(bit_length_);
+
+  if (dims_ == 1) { // extract the populated bins now: objects are immutable after construction
+    switch (bit_length_) {
+    case 13: populatedBins<TrieNode_13>(); break;
+    case 16: populatedBins<TrieNode_16>(); break;
+    case 20: populatedBins<TrieNode_20>(); break;
+    default: break;
+    }
+  }
 }
 
 MinMaxResultVector MinMax::getMin() {
