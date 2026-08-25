@@ -5,6 +5,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace airtree::query::meta {
@@ -12,13 +14,10 @@ namespace airtree::query::meta {
 class HistogramMetadata {
 public:
   uint64_t getInternalRepresentation() const;
-
   void setInternalRepresentation(uint64_t representation);
-
 
 private:
   uint64_t internal_representation_;
-  // Additional metadata can be added here as needed
 };
 
 /**
@@ -30,9 +29,12 @@ private:
  * float64, int32, and int64 are filed into 13 bit representations.
  * The histogram can be used to retrieve bins, their internal representations,
  * and the actual (close approximation) floating-point numbers they represent.
+ * The bin table depends only on the bit length and is shared by all instances.
  */
 class Histogram {
 public:
+  using Bin = std::pair<double, HistogramMetadata>;
+
   Histogram(uint64_t bitLength);
 
   /**
@@ -42,11 +44,11 @@ public:
   uint64_t getBinCount() const;
 
   /**
-   * Get the bins of the histogram.
+   * Get the bins of the histogram, sorted by value.
    * Each bin is a pair of a floating-point number and its associated metadata.
-   * @return A vector of pairs containing the bin values and their metadata.
+   * @return The shared, immutable bin table.
    */
-  std::vector<std::pair<double, HistogramMetadata>> getBins() const;
+  const std::vector<Bin> &getBins() const;
 
   /**
    * Get the index of the bin that contains the specified value.
@@ -88,10 +90,8 @@ public:
 
   /**
    * Returns the sign bit of the bin at the specified index.
-   * The sign bit indicates whether the value is positive or negative.
    * A sign bit of 0 indicates a positive value, and a sign bit of 1 indicates
    * a negative value.
-   * index.
    * @param index The index of the bin.
    * @return The sign bit of the bin.
    */
@@ -99,17 +99,21 @@ public:
 
   /**
    * Returns the exponent sign bit of the bin at the specified index.
-   * The exponent sign bit indicates whether the exponent is positive or
-   * negative. An exponent sign bit of 0 indicates a positive exponent, and an
+   * An exponent sign bit of 0 indicates a positive exponent, and an
    * exponent sign bit of 1 indicates a negative exponent.
    * @param index The index of the bin.
    * @return The exponent sign bit of the bin.
    */
   uint8_t getExponentSignBit(size_t index) const;
 
+  /** All bin values for a bit length, sorted ascending. */
+  static const std::vector<double> &sortedValues(uint64_t bitLength);
+
+  struct Table;
+
 private:
   uint64_t bitLength_;
-  std::vector<std::pair<double, HistogramMetadata>> bins_;
+  std::shared_ptr<const Table> table_;
 };
 
 } // namespace airtree::query::meta

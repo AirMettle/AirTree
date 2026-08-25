@@ -91,7 +91,7 @@ double CDF::calculateCDF(double value, bool interpolate) {
   if (value == -std::numeric_limits<double>::infinity())
     return cumulative / total_count;
 
-  auto histogram_bins = histogram_->getBins();
+  const auto &histogram_bins = histogram_->getBins();
   size_t n_bins = histogram_bins.size();
 
   bool neg_zeros_handled = false;

@@ -3,6 +3,7 @@
 #include <airtree/core/common/SpecialCounts.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/bin-boundary/BinBoundary.hpp>
+#include <airtree/query/meta/Histogram.hpp>
 #include <algorithm>
 #include <bitset>
 #include <cstddef>
@@ -78,24 +79,15 @@ lookupBinBounds(double reconstructed,
   return {*idx, *(idx + 1)};
 }
 
-// Returns a sorted vector 64-bit IEEE 754 floating point numbers
-// that each represent a bin for N-bit internal representation
-// Defaults to 12 bits if no argument is provided
-std::vector<double> generateNBitBinBoundaries(uint32_t bitLength = 12) {
-  std::vector<double> binBoundaries;
-  auto numBins = (1u << bitLength);
-  for (uint32_t i = 0; i < numBins; ++i) {
-    double boundary = reConstruct<double>(i, bitLength);
-    binBoundaries.push_back(boundary);
-  }
-  std::sort(binBoundaries.begin(), binBoundaries.end());
-  return binBoundaries;
+// Sorted bin values for an N-bit representation (shared table, see meta::Histogram).
+const std::vector<double> &generateNBitBinBoundaries(uint32_t bitLength = 12) {
+  return airtree::query::meta::Histogram::sortedValues(bitLength);
 }
 
 BinBoundary1DList BinBoundary::buildBinBoundaries1DxT() {
   BinBoundary1DList binBoundaries;
 
-  auto ref13BitBinBoundaries = generateNBitBinBoundaries(13);
+  const auto &ref13BitBinBoundaries = generateNBitBinBoundaries(13);
 
   // Deserialize l0 populated bitset
   auto l0_populated =
@@ -134,7 +126,7 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxT() {
 BinBoundary1DList BinBoundary::buildBinBoundaries1DxF() {
   BinBoundary1DList binBoundaries;
 
-  auto ref16BitBinBoundaries = generateNBitBinBoundaries(16);
+  const auto &ref16BitBinBoundaries = generateNBitBinBoundaries(16);
 
   // Deserialize l0 populated bitset
   auto l0_populated =
@@ -175,7 +167,7 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxF() {
 BinBoundary1DList BinBoundary::buildBinBoundaries1DxP() {
   BinBoundary1DList binBoundaries;
 
-  auto ref20BitBinBoundaries = generateNBitBinBoundaries(20);
+  const auto &ref20BitBinBoundaries = generateNBitBinBoundaries(20);
 
   // Deserialize l0 populated bitset
   auto l0_populated =
@@ -228,7 +220,7 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
   // This holds a vector of (xmin, xmax, ymin, ymax, count)
   BinBoundary2DList binBoundaries;
 
-  auto ref12BitBinBoundaries = generateNBitBinBoundaries();
+  const auto &ref12BitBinBoundaries = generateNBitBinBoundaries();
 
   // Deserialize TLE bitset
   auto tle_populated =
@@ -366,7 +358,7 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
   // This holds a vector of (xmin, xmax, ymin, ymax, zmin, zmax, count)
   BinBoundary3DList binBoundaries;
 
-  auto ref12BitBinBoundaries = generateNBitBinBoundaries();
+  const auto &ref12BitBinBoundaries = generateNBitBinBoundaries();
 
   // Deserialize TLE bitset
   auto tle_populated =
@@ -591,7 +583,7 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
   // count)
   BinBoundary4DList binBoundaries;
 
-  auto ref12BitBinBoundaries = generateNBitBinBoundaries();
+  const auto &ref12BitBinBoundaries = generateNBitBinBoundaries();
   // Deserialize TLE bitset
   auto tle_populated =
       deserializeBitset<BINS_4096>(buffer_, offset_, BINS_4096 / 64);

@@ -110,7 +110,7 @@ template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
 
   const auto &trie_root = trie_node_.get_ptr<NodeType>();
 
-  auto histogram_bins = histogram_->getBins();
+  const auto &histogram_bins = histogram_->getBins();
   uint64_t histogram_bin_size = histogram_bins.size();
 
   for (size_t i = 0; i < histogram_bin_size; ++i) {

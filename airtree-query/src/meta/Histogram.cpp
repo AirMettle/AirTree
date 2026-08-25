@@ -2,10 +2,13 @@
 
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/meta/Histogram.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <map>
+#include <mutex>
 #include <stdexcept>
 
 using namespace airtree::query::meta;
@@ -18,56 +21,86 @@ void HistogramMetadata::setInternalRepresentation(uint64_t representation) {
   internal_representation_ = representation;
 }
 
-Histogram::Histogram(uint64_t bitLength) : bitLength_(bitLength) {
-  // Initialize bins with default values
-  bins_.resize(1ULL << bitLength);
-  for (uint64_t i = 0; i < bins_.size(); ++i) {
-    double binValue = reConstruct<double>(i, bitLength);
-    auto binMetadata = HistogramMetadata();
-    binMetadata.setInternalRepresentation(i);
+struct Histogram::Table {
+  std::vector<Bin> bins;      // sorted by value
+  std::vector<double> values; // bins[i].first
+};
 
-    // Set the bin value and metadata
-    bins_[i] = {binValue, binMetadata};
+namespace {
+
+constexpr uint64_t kMaxBitLength = 24;
+
+std::shared_ptr<const Histogram::Table> buildTable(uint64_t bitLength) {
+  if (bitLength > kMaxBitLength) {
+    throw std::invalid_argument("Histogram: unsupported bit length "
+                                + std::to_string(bitLength));
   }
-
-  std::sort(bins_.begin(), bins_.end(),
-            [](const std::pair<double, HistogramMetadata> &a,
-               const std::pair<double, HistogramMetadata> &b) {
+  auto table = std::make_shared<Histogram::Table>();
+  const uint64_t n = 1ULL << bitLength;
+  table->bins.resize(n);
+  for (uint64_t i = 0; i < n; ++i) {
+    HistogramMetadata metadata;
+    metadata.setInternalRepresentation(i);
+    table->bins[i] = {reConstruct<double>(static_cast<unsigned int>(i),
+                                          static_cast<int>(bitLength)),
+                      metadata};
+  }
+  std::sort(table->bins.begin(), table->bins.end(),
+            [](const Histogram::Bin &a, const Histogram::Bin &b) {
               return a.first < b.first;
             });
+  table->values.reserve(n);
+  for (const auto &bin : table->bins) {
+    table->values.push_back(bin.first);
+  }
+  return table;
+}
+
+std::shared_ptr<const Histogram::Table> tableFor(uint64_t bitLength) {
+  static std::mutex mutex;
+  static std::map<uint64_t, std::shared_ptr<const Histogram::Table>> cache;
+  std::lock_guard<std::mutex> lock(mutex);
+  auto it = cache.find(bitLength);
+  if (it == cache.end()) {
+    it = cache.emplace(bitLength, buildTable(bitLength)).first;
+  }
+  return it->second;
+}
+
+} // namespace
+
+Histogram::Histogram(uint64_t bitLength)
+    : bitLength_(bitLength), table_(tableFor(bitLength)) {}
+
+const std::vector<double> &Histogram::sortedValues(uint64_t bitLength) {
+  return tableFor(bitLength)->values;
 }
 
 size_t Histogram::getBinIndex(double value) const {
-
-  auto idx = std::lower_bound(
-      bins_.begin(), bins_.end(), std::make_pair(value, HistogramMetadata()),
-      [](const std::pair<double, HistogramMetadata> &a,
-         const std::pair<double, HistogramMetadata> &b) {
-        return a.first < b.first;
-      });
-
-  // The value is guaranteed to be in the bins_ vector because the histogram is
+  const auto &values = table_->values;
+  auto idx = std::lower_bound(values.begin(), values.end(), value);
+  // The value is guaranteed to be in the table because the histogram is
   // constructed to cover all possible values.
-  return std::distance(bins_.begin(), idx);
+  return static_cast<size_t>(std::distance(values.begin(), idx));
 }
 
 uint64_t Histogram::getBinCount() const {
   return (1ULL << bitLength_);
 }
 
-std::vector<std::pair<double, HistogramMetadata>> Histogram::getBins() const {
-  return bins_;
+const std::vector<Histogram::Bin> &Histogram::getBins() const {
+  return table_->bins;
 }
 
 uint64_t Histogram::getInternalRepresentation(size_t index) const {
-  return bins_[index].second.getInternalRepresentation();
+  return table_->bins[index].second.getInternalRepresentation();
 }
 
 double Histogram::getFPNumber(size_t index) const {
-  if (index >= bins_.size()) {
+  if (index >= table_->bins.size()) {
     return std::numeric_limits<double>::infinity();
   }
-  return bins_[index].first;
+  return table_->bins[index].first;
 }
 
 double Histogram::getBinLowerBound(size_t index) const {
@@ -79,7 +112,7 @@ double Histogram::getBinUpperBound(size_t index) const {
 }
 
 uint8_t Histogram::getSignBit(size_t index) const {
-  if (index >= bins_.size()) {
+  if (index >= table_->bins.size()) {
     throw std::out_of_range("Index out of bounds");
   }
   uint64_t internal_rep = getInternalRepresentation(index);
@@ -87,7 +120,7 @@ uint8_t Histogram::getSignBit(size_t index) const {
 }
 
 uint8_t Histogram::getExponentSignBit(size_t index) const {
-  if (index >= bins_.size()) {
+  if (index >= table_->bins.size()) {
     throw std::out_of_range("Index out of bounds");
   }
   uint64_t internal_rep = getInternalRepresentation(index);

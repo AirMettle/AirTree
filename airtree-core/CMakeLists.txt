@@ -78,6 +78,7 @@ add_executable(ut_core
     tests/TestFpInternalManual.cpp
     tests/TestAirTreeHeader.cpp
     tests/TestHeaderDeserialization.cpp
+    tests/TestReconstructEquivalence.cpp
     tests/TestInterleave.cpp
     tests/TestReconstuctionOrignalFP.cpp
     tests/TestSerialization.cpp

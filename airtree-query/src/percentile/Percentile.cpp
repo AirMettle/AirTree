@@ -121,7 +121,7 @@ double Percentile::calculatePercentile(double percentile) {
   }
 
   uint64_t internal_rep;
-  auto histogram_bins = histogram_->getBins();
+  const auto &histogram_bins = histogram_->getBins();
   uint64_t histogram_bin_size = histogram_bins.size();
 
   bool zeros_handled = false;
