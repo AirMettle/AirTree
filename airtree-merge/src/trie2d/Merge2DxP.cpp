@@ -41,7 +41,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
       continue;
     }
     if (pop0_1.test(i) && !pop0_2.test(i)) {
-      SPDLOG_LOGGER_INFO(logger(), "Only buffer1 has a node at index {}", i);
+      SPDLOG_LOGGER_TRACE(logger(), "Only buffer1 has a node at index {}", i);
       temp_node_level1 = deserialize_2DxP_l0(buffer1, offset1, nDims, false);
       serialize_2DxP_l0(temp_node_level1.get(), mergedBuffer, false);
       pop0_level1 = temp_node_level1->populated;
@@ -57,7 +57,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
       }
     } else if (pop0_2.test(i) && !pop0_1.test(i)) {
       // Similar check for buffer2.
-      SPDLOG_LOGGER_INFO(logger(), "Only buffer2 has a node at index {}", i);
+      SPDLOG_LOGGER_TRACE(logger(), "Only buffer2 has a node at index {}", i);
       temp_node_level1 = deserialize_2DxP_l0(buffer2, offset2, nDims, false);
       serialize_2DxP_l0(temp_node_level1.get(), mergedBuffer, false);
       pop0_level1 = temp_node_level1->populated;
@@ -73,7 +73,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
       }
     } else if (pop0_1.test(i) && pop0_2.test(i)) {
       if (offset1 < buffer1.size() && offset2 < buffer2.size()) {
-        SPDLOG_LOGGER_INFO(logger(), "Both buffers have a node at index {}", i);
+        SPDLOG_LOGGER_TRACE(logger(), "Both buffers have a node at index {}", i);
         auto node1_level1 = deserialize_2DxP_l0(buffer1, offset1, nDims, false);
         auto node2_level1 = deserialize_2DxP_l0(buffer2, offset2, nDims, false);
         auto pop1_level1 = node1_level1->populated;

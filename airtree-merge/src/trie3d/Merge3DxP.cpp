@@ -221,7 +221,7 @@ Merge3DxP::mergeNode3D_3x10_l1(std::unique_ptr<Node3D_3x10_l1> node1,
 std::unique_ptr<Node3D_3x10_l2>
 Merge3DxP::mergeNode3D_3x10_l2(std::unique_ptr<Node3D_3x10_l2> node1,
                                std::unique_ptr<Node3D_3x10_l2> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode3D_3x10_l2");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode3D_3x10_l2");
   if (!node1)
     return node2;
   if (!node2)
