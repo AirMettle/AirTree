@@ -122,27 +122,15 @@ void serialize_4DxF_l1(const Node4D_4x8_l1 *node, std::vector<char> &buffer,
   }
 }
 
-std::unique_ptr<TLE_4D_4x8> deserialize_4DxF(const std::vector<char> buffer,
+std::unique_ptr<TLE_4D_4x8> deserialize_4DxF(const std::vector<char> &buffer,
                                              size_t &offset) {
   auto node = std::make_unique<TLE_4D_4x8>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_4096 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_4096; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_4096 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_4096)
+      || !deserializeCounts(buffer, offset, mask, BINS_4096, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_4096; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   // Recursively deserialize child nodes
   for (size_t i = 0; i < BINS_4096; i++) {
@@ -192,24 +180,12 @@ std::unique_ptr<Node4D_4x8_l0>
 deserialize_4DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursively) {
   auto node = std::make_unique<Node4D_4x8_l0>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_256 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_256; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_256 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_256)
+      || !deserializeCounts(buffer, offset, mask, BINS_256, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   if (level == 1) {
     return node;
@@ -233,24 +209,12 @@ std::unique_ptr<Node4D_4x8_l1>
 deserialize_4DxF_l1(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursively) {
   auto node = std::make_unique<Node4D_4x8_l1>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_256 / 64);
-  auto compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (int i = 0; i < BINS_256; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_256 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_256)
+      || !deserializeCounts(buffer, offset, mask, BINS_256, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (int i = 0; i < BINS_256; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   if (level == 2) {
     return node;
@@ -274,24 +238,12 @@ std::unique_ptr<TrieNode_16>
 deserialize_4DxF_l2(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursively) {
   auto node = std::make_unique<TrieNode_16>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_256 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_256; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_256 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_256)
+      || !deserializeCounts(buffer, offset, mask, BINS_256, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   if (level == 3) {
     return node;
@@ -315,20 +267,10 @@ std::unique_ptr<TrieNode_16_Level1>
 deserialize_4DxF_l3(const std::vector<char> &buffer, size_t &offset,
                     int level [[maybe_unused]]) {
   auto node = std::make_unique<TrieNode_16_Level1>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_256 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, compact_array.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (compact_array.get(i)) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
+  uint64_t mask[(BINS_256 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_256)
+      || !deserializeCounts(buffer, offset, mask, BINS_256, node->counts)) {
+    return nullptr;
   }
 
   return node;

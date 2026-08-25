@@ -1,185 +1,74 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/core/common/Reconstruct.hpp>
+
 #include <algorithm>
-#include <bitset>
 #include <cstdint>
 #include <cstring>
-#include <airtree/core/common/Reconstruct.hpp>
-#include <string>
 #include <iostream>
+#include <type_traits>
 
-double internalRepToIEEE(uint64_t internalReconstructedBits) {
-  double result;
-  memcpy(&result, &internalReconstructedBits, sizeof(result));
-  return result;
-}
+namespace {
 
-float internalRepToIEEE_32(uint32_t internalReconstructedBits) {
-  float result;
-  memcpy(&result, &internalReconstructedBits, sizeof(result));
-  return result;
-}
+// Inverse of the S|E|M|P encoding in InternalEncoding.cpp
+template <typename T> struct IEEELayout;
+template <> struct IEEELayout<double> {
+  using bits_t = uint64_t;
+  static constexpr int exp_bits = 11;
+  static constexpr int mant_bits = 52;
+  static constexpr int bias = 1023;
+  static constexpr int max_exp = 2046; // 2047 is NaN/Inf
+};
+template <> struct IEEELayout<float> {
+  using bits_t = uint32_t;
+  static constexpr int exp_bits = 8;
+  static constexpr int mant_bits = 23;
+  static constexpr int bias = 127;
+  static constexpr int max_exp = 254; // 255 is NaN/Inf
+};
+
+} // namespace
 
 template <typename T> T reConstruct(unsigned int BitRep, int bitLength) {
-
-  std::string binaryRep;
-
-  switch (bitLength) {
-  case 12:
-    binaryRep = std::bitset<12>(BitRep).to_string();
-    break;
-  case 13:
-    binaryRep = std::bitset<13>(BitRep).to_string();
-    break;
-  case 16:
-    binaryRep = std::bitset<16>(BitRep).to_string();
-    break;
-  case 20:
-    binaryRep = std::bitset<20>(BitRep).to_string();
-    break;
-  default:
+  if (bitLength != 12 && bitLength != 13 && bitLength != 16 && bitLength != 20) {
     std::cout << "Invalid bit length" << std::endl;
     return 0;
   }
+  using L = IEEELayout<T>;
+  using bits_t = typename L::bits_t;
 
+  const int pBits = bitLength - 6;
+  const uint64_t sign = (BitRep >> (bitLength - 1)) & 1u;
+  const uint64_t expSign = (BitRep >> (bitLength - 2)) & 1u;
+  const unsigned magnitude = (BitRep >> pBits) & 0xFu;
+  const uint64_t precision = BitRep & ((1ull << pBits) - 1);
 
-  char signBit = binaryRep[0];
-  char signedExponentBit = binaryRep[1];
-  std::string magnitudeBits = binaryRep.substr(2, 4);
-  std::string precisionBits = binaryRep.substr(6);
+  const bool implicitOne = (magnitude != 15);
+  const int streamLen = 1 + static_cast<int>(magnitude) + (implicitOne ? 1 : 0) + pBits;
+  const uint64_t stream = implicitOne ? ((1ull << pBits) | precision) : precision;
 
-  // std::cout << "=================== REVERSE ENGINEER 12 BIT
-  // ===================="
-  //      << std::endl;
-  // std::cout << "Sign Bit: " << signBit
-  //      << ", Signed Exponent Bit: " << signedExponentBit
-  //      << ", Magnitude Bits: " << magnitudeBits
-  //      << ", Precision Bits: " << precisionBits << std::endl;
-
-
-  int firstOne = stoi(magnitudeBits, nullptr, 2);
-  // cout << "First One: " << firstOne << endl;
-
-  // Define maximum magnitude for saturation check
-  const int MAX_MAGNITUDE = 15;
-
-  std::string mod12BitRep;
-
-  if (firstOne == MAX_MAGNITUDE) {
-    // SATURATION CASE: Don't insert implicit "1"
-    // The precision bits already include the bit at the saturation point (which
-    // might be 0)
-    mod12BitRep = std::string(1, signBit) + "0" + std::string(firstOne, '0')
-                  + precisionBits;
+  uint64_t expField;
+  uint64_t mantissa;
+  if (streamLen >= L::exp_bits) {
+    const int rest = streamLen - L::exp_bits;
+    expField = stream >> rest;
+    mantissa = rest > 0 ? ((stream & ((1ull << rest) - 1)) << (L::mant_bits - rest)) : 0;
   } else {
-    // NORMAL CASE: Insert the implicit "1" that was skipped during encoding
-    mod12BitRep = std::string(1, signBit) + "0" + std::string(firstOne, '0')
-                  + "1" + precisionBits;
+    expField = stream << (L::exp_bits - streamLen);
+    mantissa = 0;
   }
 
-  if (mod12BitRep.length() < 12) {
-    mod12BitRep.append(12 - mod12BitRep.length(), '0');
-  }
+  const int tempExponent = static_cast<int>(expField) + (expSign ? 1 : 0);
+  int absExp = expSign ? (L::bias - tempExponent) : (L::bias + tempExponent);
+  absExp = std::clamp(absExp, 0, L::max_exp);
 
-  if constexpr (std::is_same_v<T, double>) {
-
-
-    // std::cout << "Modified 12 Bit Representation: " << mod12BitRep <<
-    // std::endl;
-
-    std::string exponent12Bits = mod12BitRep.substr(1, 11);
-    if (exponent12Bits.length() < 11) {
-      exponent12Bits.append(11 - exponent12Bits.length(), '0');
-    }
-
-    //   std::cout << "Exponent 11 bit (binary): " << exponent12Bits <<
-    //   std::endl;
-    // std::cout << "Length of Exponent 11 bit: " << exponent12Bits.length() <<
-    // std::endl;
-
-
-    std::string restOfTheBits = mod12BitRep.substr(12);
-    int exponentInDec = stoi(exponent12Bits, nullptr, 2);
-
-    // std::cout << "Exponent 11 bit: " << exponentInDec << std::endl;
-    // std::cout << "Mantissa: " << restOfTheBits << std::endl;
-
-    int tempExponent =
-        (signedExponentBit == '1') ? (exponentInDec + 1) : exponentInDec;
-    int absExp = (signedExponentBit == '1') ? (1023 - tempExponent)
-                                            : (1023 + tempExponent);
-
-    // Clamp to valid IEEE-754 double exponent range [0, 2046].
-    // Exponent 2047 (0x7FF) is reserved for NaN/Inf — underflow past 0
-    // means the value is too small to represent even as subnormal.
-    absExp = std::clamp(absExp, 0, 2046);
-
-    std::string originalIEEE = std::string(1, signBit)
-                               + std::bitset<11>(absExp).to_string()
-                               + restOfTheBits;
-    // cout << "Original IEEE bits: " << originalIEEE << endl;
-
-    std::string newIEEERep = originalIEEE;
-    newIEEERep.append(
-        64 - newIEEERep.length(), '0'); // Padding to ensure 64 bits.
-
-    // cout << "Approximated IEEE-754 Representation (padded to 64 bits): "
-    //      << newIEEERep << endl;
-
-    // Convert the binary string to a uint64_t representation of IEEE-754
-    uint64_t ieeeBinary = stoull(newIEEERep, nullptr, 2);
-    return internalRepToIEEE(ieeeBinary);
-
-    // cout << "Approximated Floating-Point Value: " << approxValue << endl;
-
-    // return static_cast<T>(approxValue);
-
-  } else {
-
-    std::string exponent12Bits = mod12BitRep.substr(1, 8);
-    if (exponent12Bits.length() < 8) {
-      exponent12Bits.append(8 - exponent12Bits.length(), '0');
-    }
-
-    //   std::cout << "Exponent 11 bit (binary): " << exponent12Bits <<
-    //   std::endl;
-    // std::cout << "Length of Exponent 11 bit: " << exponent12Bits.length() <<
-    // std::endl;
-
-
-    std::string restOfTheBits = mod12BitRep.substr(9);
-    int exponentInDec = stoi(exponent12Bits, nullptr, 2);
-
-    // std::cout << "Exponent 11 bit: " << exponentInDec << std::endl;
-    // std::cout << "Mantissa: " << restOfTheBits << std::endl;
-
-    int tempExponent =
-        (signedExponentBit == '1') ? (exponentInDec + 1) : exponentInDec;
-    int absExp = (signedExponentBit == '1') ? (127 - tempExponent)
-                                            : (127 + tempExponent);
-
-    // Clamp to valid IEEE-754 float exponent range [0, 254].
-    // Exponent 255 (0xFF) is reserved for NaN/Inf.
-    absExp = std::clamp(absExp, 0, 254);
-
-    std::string originalIEEE = std::string(1, signBit)
-                               + std::bitset<8>(absExp).to_string()
-                               + restOfTheBits;
-    // cout << "Original IEEE bits: " << originalIEEE << endl;
-
-    std::string newIEEERep = originalIEEE;
-    newIEEERep.append(
-        32 - newIEEERep.length(), '0'); // Padding to ensure 64 bits.
-
-    // cout << "Approximated IEEE-754 Representation (padded to 64 bits): "
-    //      << newIEEERep << endl;
-
-    // Convert the binary string to a uint64_t representation of IEEE-754
-    uint32_t ieeeBinary = stoull(newIEEERep, nullptr, 2);
-    return internalRepToIEEE_32(ieeeBinary);
-  }
+  const bits_t ieee = (static_cast<bits_t>(sign) << (L::exp_bits + L::mant_bits))
+                      | (static_cast<bits_t>(absExp) << L::mant_bits)
+                      | static_cast<bits_t>(mantissa);
+  T result;
+  std::memcpy(&result, &ieee, sizeof(result));
+  return result;
 }
-
 
 template float reConstruct<float>(unsigned int, int);
 template double reConstruct<double>(unsigned int, int);

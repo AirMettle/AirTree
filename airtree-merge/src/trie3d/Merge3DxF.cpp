@@ -184,21 +184,21 @@ std::vector<char> Merge3DxF::merge(const std::vector<char> &buffer1,
 std::unique_ptr<Node3D_888_l0>
 Merge3DxF::mergeNode3D_888_l0(std::unique_ptr<Node3D_888_l0> node1,
                               std::unique_ptr<Node3D_888_l0> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode3D_888_l0");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode3D_888_l0");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
   for (size_t i = 0; i < BINS_256; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging 3DxF l0 index {}", i);
+    SPDLOG_LOGGER_TRACE(logger(), "Merging 3DxF l0 index {}", i);
     node1->counts[i] += node2->counts[i];
     if (node2->populated.test(i)) {
       if (!node1->populated.test(i)) {
-        SPDLOG_LOGGER_INFO(logger(), "3DxF l0: adopting child at index {}", i);
+        SPDLOG_LOGGER_TRACE(logger(), "3DxF l0: adopting child at index {}", i);
         node1->populated.set(i);
         node1->nodes[i] = std::move(node2->nodes[i]);
       } else {
-        SPDLOG_LOGGER_INFO(
+        SPDLOG_LOGGER_TRACE(
             logger(), "3DxF l0: merging children at index {}", i);
         // Here we use the existing merge for TrieNode_16.
         node1->nodes[i] = mergeTrieNode16(

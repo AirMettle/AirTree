@@ -82,8 +82,16 @@ else
   log "INFO" "CMake version $CMAKE_INSTALLED is already installed and meets the requirement."
 fi
 
-# install python3.12 by specifying the apt-get repository
-run_step "[ airtree-setup ] Add deadsnakes PPA" $SUDO add-apt-repository ppa:deadsnakes/ppa -y > /dev/null
+install_package gnupg
+# python3.12 from the deadsnakes PPA. The signing key is committed (tools/setup/keys, fingerprint
+# F23C5A6CF475977595C89F51BA6932366A755776) so setup does not depend on Launchpad's key service.
+run_step "[ airtree-setup ] Add deadsnakes PPA" bash -c '
+  set -e
+  . /etc/os-release
+  '"$SUDO"' install -d -m 0755 /etc/apt/keyrings
+  gpg --dearmor < "'"$ROOT_DIR"'/tools/setup/keys/deadsnakes-ppa.asc" | '"$SUDO"' tee /etc/apt/keyrings/deadsnakes-ppa.gpg > /dev/null
+  echo "deb [signed-by=/etc/apt/keyrings/deadsnakes-ppa.gpg] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu $VERSION_CODENAME main" \
+    | '"$SUDO"' tee /etc/apt/sources.list.d/deadsnakes-ppa.list > /dev/null'
 run_step "[ airtree-setup ] Update package list" $SUDO apt-get update
 run_step "[ airtree-setup ] Install python3.12" install_package python3.12
 run_step "[ airtree-setup ] Install python3.12-venv" install_package python3.12-venv

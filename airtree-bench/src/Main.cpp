@@ -106,13 +106,13 @@ std::string benchmark_filter_for(const std::string &config_name,
 // Allowed query names per schema (current airtree-query only).
 std::set<std::string> allowed_queries_for_schema(const std::string &schema) {
   if (schema == "1DxT" || schema == "1DxF" || schema == "1DxP") {
-    return {"topk", "minmax", "percentile"};
+    return {"topk", "minmax", "percentile", "cdf", "binboundary", "reader"};
   }
   if (schema == "2DxP" || schema == "3DxP") {
-    return {"grid", "boundingbox"};
+    return {"grid", "boundingbox", "binboundary", "reader"};
   }
   if (schema == "4DxP") {
-    return {"grid"};
+    return {"grid", "binboundary", "reader"};
   }
   return {};
 }
@@ -133,6 +133,12 @@ std::string query_benchmark_filter(const std::string &schema,
       parts.push_back("AirTreeQuery" + schema + "_Grid/.*");
     } else if (q == "boundingbox") {
       parts.push_back("AirTreeQuery" + schema + "_BoundingBox/.*");
+    } else if (q == "cdf") {
+      parts.push_back("AirTreeQuery" + schema + "_CDF/.*");
+    } else if (q == "binboundary") {
+      parts.push_back("AirTreeQuery" + schema + "_BinBoundary/.*");
+    } else if (q == "reader") {
+      parts.push_back("AirTreeQuery" + schema + "_Reader/.*");
     }
   }
   if (parts.empty()) {
@@ -331,8 +337,8 @@ int main(int argc, char *argv[]) {
       ->required();
   query->add_option(
       "-q,--queries", query_list,
-      "Subset: topk,minmax,percentile,grid,boundingbox (must be allowed for "
-      "schema)");
+      "Subset: topk,minmax,percentile,cdf,binboundary,grid,boundingbox,reader (must be "
+      "allowed for schema)");
 
   query->callback([&]() {
     auto allowed = allowed_queries_for_schema(query_schema);
@@ -391,6 +397,58 @@ int main(int argc, char *argv[]) {
     ::benchmark::Shutdown();
   });
   
+  auto merge = app.add_subcommand(
+      "merge", "Benchmark airtree-merge on two or more .airtree files of one schema");
+
+  std::vector<std::string> merge_inputs;
+  std::string merge_schema;
+
+  merge
+      ->add_option("-i,--inputs", merge_inputs,
+                   "Two or more .airtree files (same schema); order = fold order")
+      ->required()
+      ->check(CLI::ExistingFile);
+  merge->add_option("-s,--schema", merge_schema, "Schema label for reporting")
+      ->required();
+
+  merge->callback([&]() {
+    if (merge_inputs.size() < 2) {
+      throw CLI::ValidationError("--inputs", "merge needs at least two files");
+    }
+    airtree::bench::BenchPaths::query_schema = merge_schema;
+    airtree::bench::BenchPaths::merge_buffers.clear();
+    for (const auto &path : merge_inputs) {
+      auto buffer = airtree::bench::query::loadAirtreeFile(path);
+      if (buffer.empty()) {
+        throw CLI::ValidationError("--inputs", "Loaded .airtree buffer is empty: " + path);
+      }
+      airtree::bench::BenchPaths::merge_buffers.push_back(std::move(buffer));
+    }
+    SPDLOG_LOGGER_INFO(logger(), "Loaded {} .airtree buffers for merge ({})",
+                       airtree::bench::BenchPaths::merge_buffers.size(), merge_schema);
+
+    std::vector<std::string> gb_args;
+    gb_args.push_back(argv[0]);
+    gb_args.push_back("--benchmark_filter=AirTreeMerge/.*");
+    std::vector<std::string> remaining_args = app.remaining();
+    for (const auto &arg : remaining_args) {
+      gb_args.push_back(arg);
+    }
+
+    std::vector<char *> gb_argv;
+    for (auto &str : gb_args) {
+      gb_argv.push_back(str.data());
+    }
+
+    int gb_argc = static_cast<int>(gb_argv.size());
+
+    ::benchmark::Initialize(&gb_argc, gb_argv.data());
+    if (::benchmark::ReportUnrecognizedArguments(gb_argc, gb_argv.data()))
+      return;
+    ::benchmark::RunSpecifiedBenchmarks();
+    ::benchmark::Shutdown();
+  });
+
   CLI11_PARSE(app, argc, argv);
 
   return 0;

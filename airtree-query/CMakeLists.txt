@@ -52,7 +52,8 @@ add_executable(ut_query_test
     tests/TestMinMax.cpp
     tests/TestPercentile.cpp
     tests/TestTopK.cpp
-    tests/TestGridQuery.cpp)
+    tests/TestGridQuery.cpp
+    tests/TestSparseWalk.cpp)
 
 target_link_libraries(ut_query_test PRIVATE 
     airtree::airtree-util 

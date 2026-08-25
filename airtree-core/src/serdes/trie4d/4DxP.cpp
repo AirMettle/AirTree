@@ -168,27 +168,15 @@ void serialize_4DxP(const TLE_4D_4x10 *node, std::vector<char> &buffer,
       buffer.end(), marker_bytes, marker_bytes + sizeof(endOfFileMarker));
 }
 
-std::unique_ptr<TLE_4D_4x10> deserialize_4DxP(std::vector<char> buffer,
+std::unique_ptr<TLE_4D_4x10> deserialize_4DxP(const std::vector<char> &buffer,
                                               size_t &offset) {
   auto node = std::make_unique<TLE_4D_4x10>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_4096 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_4096; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_4096 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_4096)
+      || !deserializeCounts(buffer, offset, mask, BINS_4096, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_4096; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   // Recursively deserialize child nodes
   for (size_t i = 0; i < BINS_4096; i++) {
@@ -238,24 +226,12 @@ std::unique_ptr<Node4D_4x10_l0>
 deserialize_4DxP_l0(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<Node4D_4x10_l0>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_1024 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_1024; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   if (level == 1) {
     return node;
@@ -278,24 +254,12 @@ std::unique_ptr<Node4D_4x10_l1>
 deserialize_4DxP_l1(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<Node4D_4x10_l1>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_1024 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_1024; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   if (level == 2) {
     return node;
@@ -318,24 +282,12 @@ std::unique_ptr<Node4D_4x10_l2>
 deserialize_4DxP_l2(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<Node4D_4x10_l2>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_1024 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_1024; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   if (level == 3) {
     return node;
@@ -358,24 +310,12 @@ std::unique_ptr<Node4D_4x10_l3>
 deserialize_4DxP_l3(const std::vector<char> &buffer, size_t &offset,
                     int level [[maybe_unused]]) {
   auto node = std::make_unique<Node4D_4x10_l3>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_1024 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_1024; i++) {
-    node->populated[i] = compact_array.get(i);
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
+  setPopulated(node->populated, mask);
 
   return node;
 }

@@ -1,5 +1,6 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/topk/TopK.hpp>
 #include <airtree/query/Logger.hpp>
@@ -103,20 +104,24 @@ inline uint32_t getCount(const std::unique_ptr<NodeType> &trie,
   return 0;
 }
 
+template <typename NodeType>
+const std::vector<airtree::query::meta::PopulatedBin> &TopK::populatedBins() {
+  if (!populated_ready_) {
+    populated_ = airtree::query::meta::populatedBins(trie_node_.get_ptr<NodeType>(), *histogram_);
+    populated_ready_ = true;
+  }
+  return populated_;
+}
+
 template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
 
   uint64_t total_count_u64 = header_.pos_inf_count + header_.neg_inf_count
                              + header_.pos_zero_count + header_.neg_zero_count;
 
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
 
-  auto histogram_bins = histogram_->getBins();
-  uint64_t histogram_bin_size = histogram_bins.size();
-
-  for (size_t i = 0; i < histogram_bin_size; ++i) {
-    uint64_t internal_rep =
-        histogram_bins[i].second.getInternalRepresentation();
-    total_count_u64 += getCount(trie_root, internal_rep);
+  const auto &bins = populatedBins<NodeType>();
+  for (const auto &bin : bins) {
+    total_count_u64 += bin.count;
   }
 
   if (total_count_u64 == 0) {
@@ -144,13 +149,8 @@ template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
   bool zeros_handled = false;
 
   // Iterate bins backwards (highest to lowest values)
-  size_t idx = histogram_bin_size;
-  while (idx > 0) {
-    size_t bin_idx = idx - 1;
-    idx--;
-
-    double lower_bound = histogram_->getBinLowerBound(bin_idx);
-
+  for (auto it = bins.rbegin(); it != bins.rend(); ++it) {
+    double lower_bound = histogram_->getBinLowerBound(it->position);
     if (lower_bound < 0.0 && !zeros_handled) {
       if (header_.pos_zero_count > 0) {
         cumulative_count += header_.pos_zero_count;
@@ -168,26 +168,11 @@ template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
       }
       zeros_handled = true;
     }
-
-    uint64_t internal_rep = histogram_->getInternalRepresentation(bin_idx);
-    uint32_t bin_count = getCount<NodeType>(trie_root, internal_rep);
-
-    if (bin_count == 0) {
-      continue; // Skip empty bins
-    }
-
-    cumulative_count += bin_count;
-    double upper_bound = histogram_->getBinUpperBound(bin_idx);
-
+    cumulative_count += it->count;
+    double upper_bound = histogram_->getBinUpperBound(it->position);
     top_k_bins.emplace_back(
-        lower_bound, upper_bound, bin_count, (uint32_t)internal_rep);
-
+        lower_bound, upper_bound, it->count, static_cast<uint32_t>(it->code));
     if (cumulative_count >= n) {
-      SPDLOG_LOGGER_DEBUG(
-          logger(),
-          "Reached top-k threshold at index: {} with cumulative "
-          "count: {} >= {}",
-          bin_idx, cumulative_count, n);
       return top_k_bins;
     }
   }

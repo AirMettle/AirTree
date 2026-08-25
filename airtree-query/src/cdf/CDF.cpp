@@ -1,5 +1,6 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/query/cdf/CDF.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/Logger.hpp>
@@ -69,6 +70,15 @@ double CDF::getCDF(double value, bool interpolate) {
 }
 
 template <typename NodeType>
+const std::vector<airtree::query::meta::PopulatedBin> &CDF::populatedBins() {
+  if (!populated_ready_) {
+    populated_ = airtree::query::meta::populatedBins(trie_node_.get_ptr<NodeType>(), *histogram_);
+    populated_ready_ = true;
+  }
+  return populated_;
+}
+
+template <typename NodeType>
 double CDF::calculateCDF(double value, bool interpolate) {
   const auto &trie_root = trie_node_.get_ptr<NodeType>();
 
@@ -91,48 +101,37 @@ double CDF::calculateCDF(double value, bool interpolate) {
   if (value == -std::numeric_limits<double>::infinity())
     return cumulative / total_count;
 
-  auto histogram_bins = histogram_->getBins();
-  size_t n_bins = histogram_bins.size();
-
+  const auto &bins = populatedBins<NodeType>();
+  const size_t n_bins = histogram_->getBinCount();
   bool neg_zeros_handled = false;
   bool pos_zeros_handled = false;
-
   bool includes_neg_zero = (value >= 0.0);
   bool includes_pos_zero =
       (value > 0.0) || (value == 0.0 && !std::signbit(value));
-
-  for (size_t i = 0; i < n_bins; ++i) {
-    const auto &bin = histogram_bins[i];
-    double bin_value = bin.first;
-    uint64_t internal_rep = bin.second.getInternalRepresentation();
-    uint32_t bin_count = getCount<NodeType>(trie_root, internal_rep);
-
+  for (const auto &bin : bins) {
+    const double bin_value = histogram_->getFPNumber(bin.position);
+    const uint32_t bin_count = bin.count;
     bool bin_is_neg_zero_or_greater = (bin_value >= 0.0);
     bool bin_is_pos_zero_or_greater =
         (bin_value > 0.0) || (bin_value == 0.0 && !std::signbit(bin_value));
-
     if (!neg_zeros_handled && bin_is_neg_zero_or_greater) {
       neg_zeros_handled = true;
       if (includes_neg_zero) {
         cumulative += header_.neg_zero_count;
       }
     }
-
     if (!pos_zeros_handled && bin_is_pos_zero_or_greater) {
       pos_zeros_handled = true;
       if (includes_pos_zero) {
         cumulative += header_.pos_zero_count;
       }
     }
-
-    double next_value = (i + 1 < n_bins)
-                            ? histogram_bins[i + 1].first
-                            : std::numeric_limits<double>::infinity();
-
+    const double next_value = (bin.position + 1 < n_bins)
+                                  ? histogram_->getFPNumber(bin.position + 1)
+                                  : std::numeric_limits<double>::infinity();
     if (value < bin_value) {
       break;
     }
-
     if (value >= next_value) {
       cumulative += bin_count;
     } else {
