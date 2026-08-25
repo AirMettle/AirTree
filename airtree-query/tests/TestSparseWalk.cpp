@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <stdexcept>
 #include <vector>
 
 using airtree::core::io::AirTreeReader;
@@ -375,3 +376,14 @@ TEST_P(TestSparseWalk, MatchesFullTableWalk) {
 }
 
 INSTANTIATE_TEST_SUITE_P(Schemas, TestSparseWalk, ::testing::Values(13, 16, 20));
+
+TEST(HistogramTable, RejectsBitLengthsTheCodecDoesNotHave) {
+  for (uint64_t bits : {0u, 8u, 12u, 13u, 16u, 20u, 21u, 24u, 32u}) {
+    const bool ok = bits == 12 || bits == 13 || bits == 16 || bits == 20;
+    if (ok) {
+      EXPECT_NO_THROW(Histogram h(bits));
+    } else {
+      EXPECT_THROW(Histogram h(bits), std::invalid_argument) << bits;
+    }
+  }
+}

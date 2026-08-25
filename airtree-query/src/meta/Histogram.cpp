@@ -29,10 +29,13 @@ struct Histogram::Table {
 
 namespace {
 
-constexpr uint64_t kMaxBitLength = 24;
+// The bit lengths reConstruct knows how to decode; anything else is a bad header.
+bool supportedBitLength(uint64_t bitLength) {
+  return bitLength == 12 || bitLength == 13 || bitLength == 16 || bitLength == 20;
+}
 
 std::shared_ptr<const Histogram::Table> buildTable(uint64_t bitLength) {
-  if (bitLength > kMaxBitLength) {
+  if (!supportedBitLength(bitLength)) {
     throw std::invalid_argument("Histogram: unsupported bit length "
                                 + std::to_string(bitLength));
   }
