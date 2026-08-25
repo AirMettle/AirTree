@@ -106,6 +106,9 @@ public:
    */
   uint8_t getExponentSignBit(size_t index) const;
 
+  /** Index in the sorted table of the bin with this internal representation. */
+  size_t positionOf(uint64_t code) const;
+
   /** All bin values for a bit length, sorted ascending. */
   static const std::vector<double> &sortedValues(uint64_t bitLength);
 

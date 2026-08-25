@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <cstddef>
@@ -43,6 +44,9 @@ private:
   AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
   airtree::core::common::AirTreeHeader header_;
+  std::vector<airtree::query::meta::PopulatedBin> populated_;
+  bool populated_ready_ = false;
+  template <typename NodeType> const std::vector<airtree::query::meta::PopulatedBin> &populatedBins();
 };
 
 } // namespace airtree::query::percentile

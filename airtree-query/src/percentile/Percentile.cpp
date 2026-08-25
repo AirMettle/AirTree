@@ -1,5 +1,6 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <cstring>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/percentile/Percentile.hpp>
@@ -90,6 +91,15 @@ inline uint32_t getCount(const std::unique_ptr<NodeType> &trie,
 }
 
 template <typename NodeType>
+const std::vector<airtree::query::meta::PopulatedBin> &Percentile::populatedBins() {
+  if (!populated_ready_) {
+    populated_ = airtree::query::meta::populatedBins(trie_node_.get_ptr<NodeType>(), *histogram_);
+    populated_ready_ = true;
+  }
+  return populated_;
+}
+
+template <typename NodeType>
 double Percentile::calculatePercentile(double percentile) {
 
   // Total count from trie
@@ -120,18 +130,11 @@ double Percentile::calculatePercentile(double percentile) {
     return -std::numeric_limits<double>::infinity();
   }
 
-  uint64_t internal_rep;
-  const auto &histogram_bins = histogram_->getBins();
-  uint64_t histogram_bin_size = histogram_bins.size();
-
+  const auto &bins = populatedBins<NodeType>();
+  const size_t last_position = histogram_->getBinCount() - 1;
   bool zeros_handled = false;
-
-  for (size_t bin_idx = 0; bin_idx < histogram_bin_size; bin_idx++) {
-    const auto bin = histogram_bins[bin_idx];
-    const auto metadata = bin.second;
-    double bin_value = bin.first;
-
-    // Handle zeros before first non-negative bin
+  for (const auto &bin : bins) {
+    const double bin_value = histogram_->getFPNumber(bin.position);
     if (!zeros_handled && bin_value >= 0.0) {
       cumulative_count += header_.neg_zero_count;
       if (cumulative_count >= rank) {
@@ -143,41 +146,20 @@ double Percentile::calculatePercentile(double percentile) {
       }
       zeros_handled = true;
     }
-
-    internal_rep = metadata.getInternalRepresentation();
-    uint32_t bin_count = getCount<NodeType>(trie_root, internal_rep);
-
-    cumulative_count += bin_count;
+    cumulative_count += bin.count;
     if (cumulative_count < rank) {
-      // std::cout << "Cumulative count: " << cumulative_count
-      //           << " is less than rank: " << rank << " at bin: " << bin_idx
-      //           << " with value: " << bin.first << std::endl;
-      continue; // Continue to the next bin
+      continue;
     }
-
-    if (cumulative_count >= rank) {
-      // Found the bin containing the rank
-      // Calculate cumulative count before this bin (for interpolation)
-      uint32_t cumulative_before_bin = cumulative_count - bin_count;
-
-      if (bin_idx == histogram_bin_size - 1) {
-        // Last bin - can't interpolate to next bin
-        // Check if rank extends beyond this bin into +inf range
-        if (rank > cumulative_count && header_.pos_inf_count > 0) {
-          return std::numeric_limits<double>::infinity();
-        }
-        return bin.first;
+    const uint32_t cumulative_before_bin = cumulative_count - bin.count;
+    if (bin.position == last_position) {
+      if (rank > cumulative_count && header_.pos_inf_count > 0) {
+        return std::numeric_limits<double>::infinity();
       }
-
-      // Interpolate between this bin and the next
-      double min_value = bin.first;
-      double max_value = histogram_bins[bin_idx + 1].first;
-      double interpolated_value =
-          min_value
-          + (((rank - cumulative_before_bin) / bin_count)
-             * (max_value - min_value));
-      return interpolated_value;
+      return bin_value;
     }
+    const double max_value = histogram_->getFPNumber(bin.position + 1);
+    return bin_value
+           + (((rank - cumulative_before_bin) / bin.count) * (max_value - bin_value));
   }
 
   // If zeros haven't been handled yet (all bins were negative or no bins at

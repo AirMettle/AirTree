@@ -1,5 +1,6 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <cstdint>
 #include <cstring>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -158,9 +159,17 @@ void updateMaxResults(MinMaxResultVector &results, uint32_t &max_count,
   }
 }
 
+template <typename NodeType>
+const std::vector<airtree::query::meta::PopulatedBin> &MinMax::populatedBins() {
+  if (!populated_ready_) {
+    populated_ = airtree::query::meta::populatedBins(trie_node_.get_ptr<NodeType>(), *histogram_);
+    populated_ready_ = true;
+  }
+  return populated_;
+}
+
 template <typename NodeType> MinMaxResultVector MinMax::calculateMin() {
   MinMaxResultVector results;
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
   uint32_t min_count = std::numeric_limits<uint32_t>::max();
 
   // NOTE: We INCLUDE special values in frequency analysis.
@@ -174,13 +183,9 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMin() {
                    std::numeric_limits<double>::infinity(),
                    header_.pos_inf_count);
 
-  for (size_t i = 0; i < histogram_->getBinCount(); ++i) {
-    uint64_t internal_rep = histogram_->getInternalRepresentation(i);
-    uint32_t count = getCount<NodeType>(trie_root, internal_rep);
-
-    double lowerBound = histogram_->getBinLowerBound(i);
-    double upperBound = histogram_->getBinUpperBound(i);
-    updateMinResults(results, min_count, lowerBound, upperBound, count);
+  for (const auto &bin : populatedBins<NodeType>()) {
+    updateMinResults(results, min_count, histogram_->getBinLowerBound(bin.position),
+                     histogram_->getBinUpperBound(bin.position), bin.count);
   }
 
   return results;
@@ -189,7 +194,6 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMin() {
 
 template <typename NodeType> MinMaxResultVector MinMax::calculateMax() {
   MinMaxResultVector results;
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
   uint32_t max_count = 0;
 
   // NOTE: We INCLUDE special values in frequency analysis.
@@ -202,13 +206,9 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMax() {
                    std::numeric_limits<double>::infinity(),
                    header_.pos_inf_count);
 
-  for (size_t i = 0; i < histogram_->getBinCount(); ++i) {
-    uint64_t internal_rep = histogram_->getInternalRepresentation(i);
-    uint32_t count = getCount<NodeType>(trie_root, internal_rep);
-
-    double lowerBound = histogram_->getBinLowerBound(i);
-    double upperBound = histogram_->getBinUpperBound(i);
-    updateMaxResults(results, max_count, lowerBound, upperBound, count);
+  for (const auto &bin : populatedBins<NodeType>()) {
+    updateMaxResults(results, max_count, histogram_->getBinLowerBound(bin.position),
+                     histogram_->getBinUpperBound(bin.position), bin.count);
   }
 
   return results;
@@ -216,7 +216,6 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMax() {
 
 template <typename NodeType> MinMaxResultVector MinMax::calculateMinValue() {
   MinMaxResultVector results;
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
 
   // Order: -Inf -> Negatives -> -0 -> +0 -> Positives -> +Inf
 
@@ -231,10 +230,8 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMinValue() {
   bool zeros_handled = false;
 
   // 2. Iterate bins (Negatives -> Positives)
-  for (size_t i = 0; i < histogram_->getBinCount(); ++i) {
-    double lowerBound = histogram_->getBinLowerBound(i);
-
-    // Transition to non-negatives: check zeros
+  for (const auto &bin : populatedBins<NodeType>()) {
+    double lowerBound = histogram_->getBinLowerBound(bin.position);
     if (lowerBound >= 0.0 && !zeros_handled) {
       if (header_.neg_zero_count > 0) {
         results.emplace_back(-0.0, -0.0, header_.neg_zero_count);
@@ -246,14 +243,8 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMinValue() {
       }
       zeros_handled = true;
     }
-
-    uint64_t internal_rep = histogram_->getInternalRepresentation(i);
-    uint32_t count = getCount<NodeType>(trie_root, internal_rep);
-    if (count > 0) {
-      double upperBound = histogram_->getBinUpperBound(i);
-      results.emplace_back(lowerBound, upperBound, count);
-      return results;
-    }
+    results.emplace_back(lowerBound, histogram_->getBinUpperBound(bin.position), bin.count);
+    return results;
   }
 
   // Post-loop check for zeros (if all bins were negative)
@@ -282,7 +273,6 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMinValue() {
 
 template <typename NodeType> MinMaxResultVector MinMax::calculateMaxValue() {
   MinMaxResultVector results;
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
 
   // Order: +Inf -> Positives -> +0 -> -0 -> Negatives -> -Inf
 
@@ -295,34 +285,22 @@ template <typename NodeType> MinMaxResultVector MinMax::calculateMaxValue() {
   }
 
   bool zeros_handled = false;
-  size_t total_bins = histogram_->getBinCount();
-
-  // 2. Iterate bins BACKWARDS (Positives -> Negatives)
-  if (total_bins > 0) {
-    for (size_t i = total_bins; i-- > 0;) {
-      double lowerBound = histogram_->getBinLowerBound(i);
-
-      // Transition to negatives: check zeros
-      if (lowerBound < 0.0 && !zeros_handled) {
-        if (header_.pos_zero_count > 0) {
-          results.emplace_back(0.0, 0.0, header_.pos_zero_count);
-          return results;
-        }
-        if (header_.neg_zero_count > 0) {
-          results.emplace_back(-0.0, -0.0, header_.neg_zero_count);
-          return results;
-        }
-        zeros_handled = true;
-      }
-
-      uint64_t internal_rep = histogram_->getInternalRepresentation(i);
-      uint32_t count = getCount<NodeType>(trie_root, internal_rep);
-      if (count > 0) {
-        double upperBound = histogram_->getBinUpperBound(i);
-        results.emplace_back(lowerBound, upperBound, count);
+  const auto &bins = populatedBins<NodeType>();
+  for (auto it = bins.rbegin(); it != bins.rend(); ++it) {
+    double lowerBound = histogram_->getBinLowerBound(it->position);
+    if (lowerBound < 0.0 && !zeros_handled) {
+      if (header_.pos_zero_count > 0) {
+        results.emplace_back(0.0, 0.0, header_.pos_zero_count);
         return results;
       }
+      if (header_.neg_zero_count > 0) {
+        results.emplace_back(-0.0, -0.0, header_.neg_zero_count);
+        return results;
+      }
+      zeros_handled = true;
     }
+    results.emplace_back(lowerBound, histogram_->getBinUpperBound(it->position), it->count);
+    return results;
   }
 
   // Post-loop check for zeros

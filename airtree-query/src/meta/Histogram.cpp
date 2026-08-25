@@ -23,7 +23,8 @@ void HistogramMetadata::setInternalRepresentation(uint64_t representation) {
 
 struct Histogram::Table {
   std::vector<Bin> bins;      // sorted by value
-  std::vector<double> values; // bins[i].first
+  std::vector<double> values;   // bins[i].first
+  std::vector<uint32_t> position; // code -> index in bins
 };
 
 namespace {
@@ -50,8 +51,10 @@ std::shared_ptr<const Histogram::Table> buildTable(uint64_t bitLength) {
               return a.first < b.first;
             });
   table->values.reserve(n);
-  for (const auto &bin : table->bins) {
-    table->values.push_back(bin.first);
+  table->position.assign(n, 0);
+  for (size_t i = 0; i < n; ++i) {
+    table->values.push_back(table->bins[i].first);
+    table->position[table->bins[i].second.getInternalRepresentation()] = static_cast<uint32_t>(i);
   }
   return table;
 }
@@ -74,6 +77,10 @@ Histogram::Histogram(uint64_t bitLength)
 
 const std::vector<double> &Histogram::sortedValues(uint64_t bitLength) {
   return tableFor(bitLength)->values;
+}
+
+size_t Histogram::positionOf(uint64_t code) const {
+  return table_->position[code];
 }
 
 size_t Histogram::getBinIndex(double value) const {
