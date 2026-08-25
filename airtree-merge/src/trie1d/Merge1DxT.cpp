@@ -20,14 +20,14 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
   std::vector<char> mergedBuffer;
   airtree::core::common::serializeHeader(mergedHeader, mergedBuffer);
   size_t header_end = mergedBuffer.size();
-  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Merged headers successfully");
+  SPDLOG_LOGGER_DEBUG(airtree::merge::logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
   std::bitset<BINS_256> pop1, pop2;
   auto mergedRoot = Root_merge<TrieNode_13, BINS_256>(
       buffer1, buffer2, offset1, offset2, pop1, pop2);
   serialize_1DxT(mergedRoot.get(), mergedBuffer, false);
-  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Serialized merged trie (root) successfully");
+  SPDLOG_LOGGER_DEBUG(airtree::merge::logger(), "Serialized merged trie (root) successfully");
   mergedRoot.reset();
 
   // Merge the level-1 children based on original populated flags.
@@ -59,7 +59,7 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
   // Add EOF marker and serialize the merged trie.
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       airtree::merge::logger(), "Serialized merged trie (root and children) successfully");
   return mergedBuffer;
 }

@@ -19,7 +19,7 @@ std::vector<char> Merge1DxF::merge(const std::vector<char> &buffer1,
   std::vector<char> mergedBuffer;
   airtree::core::common::serializeHeader(mergedHeader, mergedBuffer);
   size_t header_end = mergedBuffer.size();
-  SPDLOG_LOGGER_INFO(logger(), "Merged headers successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
   std::bitset<BINS_256> pop1, pop2;
@@ -29,7 +29,7 @@ std::vector<char> Merge1DxF::merge(const std::vector<char> &buffer1,
   mergedRoot.reset();
 
 
-  SPDLOG_LOGGER_INFO(logger(), "Merged root nodes successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "Merged root nodes successfully");
   // Merge level1 children based on the original populated flags.
   std::unique_ptr<TrieNode_16_Level1> temp_node;
   for (size_t i = 0; i < BINS_256; i++) {
@@ -57,7 +57,7 @@ std::vector<char> Merge1DxF::merge(const std::vector<char> &buffer1,
       }
     }
   }
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Serialized merged trie (root and children) successfully");
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);

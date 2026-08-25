@@ -200,6 +200,7 @@ trie — they do not deserialize into a heavy intermediate structure.
 airtree::query::percentile::Percentile p(histogram_buffer);
 double value = p.getPercentile(50.0);   // percentile in 0 – 100
 auto r = p.getPercentileWithBounds(99.0); // r.value plus r.lower_bound / r.upper_bound of the native bin it fell in
+// Query objects are immutable after construction and may be shared between threads.
 
 // Returns -∞ (negative infinity) if the histogram is empty.
 ```

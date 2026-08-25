@@ -4,6 +4,7 @@
 #include <airtree/core/utils/Utils.hpp>
 #include <gtest/gtest.h>
 
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <cmath>
 #include <limits>
 #include <random>
@@ -104,3 +105,11 @@ TEST(NWayMerge, TwoDFallsBackToPairwise) {
 }
 
 } // namespace
+
+TEST(NWayMerge, MergedHeaderCarriesTheObservationCount) {
+  auto a = gen(&generate_1DxP, {1.0, 2.0, 3.0});
+  auto b = gen(&generate_1DxP, {4.0, 5.0});
+  using airtree::core::common::deserializeHeader;
+  EXPECT_EQ(deserializeHeader(mergeAirTrees({a, b})).trie_count, 5u);
+  EXPECT_EQ(deserializeHeader(mergeAirTree(a, b)).trie_count, 5u);
+}

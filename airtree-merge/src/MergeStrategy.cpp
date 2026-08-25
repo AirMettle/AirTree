@@ -16,17 +16,17 @@ airtree::merge::MergeStrategy::mergeHeaders(airtree::core::common::AirTreeHeader
   header1.pos_zero_count = header1.pos_zero_count + header2.pos_zero_count;
   header1.neg_zero_count = header1.neg_zero_count + header2.neg_zero_count;
   header1.nan_count = header1.nan_count + header2.nan_count;
-  SPDLOG_LOGGER_INFO(logger(), "mergeHeaders completed successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "mergeHeaders completed successfully");
   return header1;
 }
 
 void MergeStrategy::add_EOF(std::vector<char> &buffer) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering add_EOF");
+  SPDLOG_LOGGER_DEBUG(logger(), "Entering add_EOF");
   int32_t endOfFileMarker = -1;
   auto marker_bytes = reinterpret_cast<const char *>(&endOfFileMarker);
   buffer.insert(
       buffer.end(), marker_bytes, marker_bytes + sizeof(endOfFileMarker));
-  SPDLOG_LOGGER_INFO(logger(), "add_EOF completed successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "add_EOF completed successfully");
 }
 
 std::unique_ptr<TrieNode_16_Level1> MergeStrategy::mergeTrieNode16Level1(
@@ -77,9 +77,9 @@ MergeStrategy::mergeTrieNode16(std::unique_ptr<TrieNode_16> node1,
 
 void MergeStrategy::saveMergedBinaryFile_buffer(const std::vector<char> &buffer,
                                                 const std::string &outputFile) {
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Starting serialization to file: {}", outputFile);
-  SPDLOG_LOGGER_INFO(logger(), "Serialized trie structure, buffer size now: {}",
+  SPDLOG_LOGGER_DEBUG(logger(), "Serialized trie structure, buffer size now: {}",
                      buffer.size());
 
   std::ofstream outFile(outputFile, std::ios::binary);
@@ -88,5 +88,5 @@ void MergeStrategy::saveMergedBinaryFile_buffer(const std::vector<char> &buffer,
   }
   outFile.write(buffer.data(), buffer.size());
   outFile.close();
-  SPDLOG_LOGGER_INFO(logger(), "Merged binary file saved as {}", outputFile);
+  SPDLOG_LOGGER_DEBUG(logger(), "Merged binary file saved as {}", outputFile);
 }

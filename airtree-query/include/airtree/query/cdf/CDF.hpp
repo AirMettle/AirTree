@@ -26,7 +26,6 @@ private:
   uint16_t dims_;
   uint16_t bit_length_;
   uint64_t bin_count_;
-  std::vector<char> buffer_;
   AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
   airtree::core::common::AirTreeHeader header_;

@@ -23,6 +23,9 @@ make_logger(std::string name,
             spdlog::level::level_enum level =
                 static_cast<spdlog::level::level_enum>(SPDLOG_ACTIVE_LEVEL));
 
+// Sets the level of every AirTree logger at run time (cannot go below the compiled-in level).
+void setLevel(spdlog::level::level_enum level);
+
 } // namespace airtree::util::logging
 
 

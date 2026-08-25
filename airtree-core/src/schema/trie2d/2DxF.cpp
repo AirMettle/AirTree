@@ -87,7 +87,7 @@ void insertintoTLETrie_2D_88(TLETrieNode_2D *root, unsigned int combined,
 std::vector<char> generate_2DxF(const FPHArray &array1, const FPHArray &array2,
                                 bool default_mode) {
   std::string uuid = AirTreeUUID::generateUUID();
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 2DxF Trie for {} "
       "values in dim1 and {} values in dim2 using default_mode {}.",
@@ -95,7 +95,7 @@ std::vector<char> generate_2DxF(const FPHArray &array1, const FPHArray &array2,
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1 and {} "
       "values for dim2 using "
@@ -103,21 +103,21 @@ std::vector<char> generate_2DxF(const FPHArray &array1, const FPHArray &array2,
       uuid, array1.length, array2.length, default_mode);
   std::unique_ptr<TLETrieNode_2D> root = execCreateAndInsert_2D(
       array1, array2, curr_trie_size, specialCounts, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 2DxF Trie. "
       "Final trie size: {}.",
       uuid, curr_trie_size);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Serializing 2DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer =
       execSerialize_2D(root.get(), curr_trie_size, specialCounts, default_mode);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 2DxF Trie.", uuid);
-  SPDLOG_LOGGER_INFO(logger(),
+  SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Completed generating 2DxF Trie.",
                      uuid);
   return buffer;
@@ -202,7 +202,7 @@ execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
                  std::unique_ptr<SpecialCounts> &specialCounts,
                  [[maybe_unused]] bool default_mode) {
   auto header = airtree::core::common::makeHeader(
-      ConfigWire::Config_2D_Fast, {}, 0,
+      ConfigWire::Config_2D_Fast, {}, countObservations(root->TLEcounts),
       specialCounts->posInfCount, specialCounts->negInfCount,
       specialCounts->posZeroCount, specialCounts->negZeroCount,
       specialCounts->nanCount);
