@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_TOPK_TOPK_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_TOPK_TOPK_HPP
 
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/common/AirTreeType.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -69,6 +70,9 @@ private:
   AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
   airtree::core::common::AirTreeHeader header_;
+  std::vector<airtree::query::meta::PopulatedBin> populated_;
+  bool populated_ready_ = false;
+  template <typename NodeType> const std::vector<airtree::query::meta::PopulatedBin> &populatedBins();
 };
 
 } // namespace airtree::query::topk

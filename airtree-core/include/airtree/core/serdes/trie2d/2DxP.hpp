@@ -20,7 +20,7 @@ void serialize_2DxP_l1(const TrieNode_2D_10_Level1 *node,
 [[nodiscard]] std::pair<std::unique_ptr<TLEoption3_2D>, airtree::core::common::AirTreeHeader>
 processBuffer_2DxP(const std::vector<char> &buffer);
 
-std::unique_ptr<TLEoption3_2D> deserialize_2DxP(std::vector<char> buffer,
+std::unique_ptr<TLEoption3_2D> deserialize_2DxP(const std::vector<char> &buffer,
                                                 size_t &offset);
 
 [[nodiscard]] std::unique_ptr<TrieNode_2D_10>

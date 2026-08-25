@@ -284,7 +284,7 @@ std::vector<char> Merge4DxF::merge(const std::vector<char> &buffer1,
 std::unique_ptr<Node4D_4x8_l0>
 Merge4DxF::mergeNode4D_4x8_l0(std::unique_ptr<Node4D_4x8_l0> node1,
                               std::unique_ptr<Node4D_4x8_l0> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x8_l0");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode4D_4x8_l0");
   if (!node1)
     return node2;
   if (!node2)
@@ -307,7 +307,7 @@ Merge4DxF::mergeNode4D_4x8_l0(std::unique_ptr<Node4D_4x8_l0> node1,
 std::unique_ptr<Node4D_4x8_l1>
 Merge4DxF::mergeNode4D_4x8_l1(std::unique_ptr<Node4D_4x8_l1> node1,
                               std::unique_ptr<Node4D_4x8_l1> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x8_l1");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode4D_4x8_l1");
   if (!node1)
     return node2;
   if (!node2)

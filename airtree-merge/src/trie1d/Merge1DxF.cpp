@@ -33,7 +33,7 @@ std::vector<char> Merge1DxF::merge(const std::vector<char> &buffer1,
   // Merge level1 children based on the original populated flags.
   std::unique_ptr<TrieNode_16_Level1> temp_node;
   for (size_t i = 0; i < BINS_256; i++) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie16 Level1 index {}", i);
+    SPDLOG_LOGGER_TRACE(logger(), "Merging Trie16 Level1 index {}", i);
     if (pop1.test(i) && !pop2.test(i)) {
       if (offset1 < buffer1.size()) {
         temp_node = deserialize_1DxF_l1(buffer1, offset1);

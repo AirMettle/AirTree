@@ -9,7 +9,7 @@ using namespace airtree::merge;
 airtree::core::common::AirTreeHeader
 airtree::merge::MergeStrategy::mergeHeaders(airtree::core::common::AirTreeHeader &header1,
                                             const airtree::core::common::AirTreeHeader &header2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeHeaders");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeHeaders");
   header1.trie_count += header2.trie_count;
   header1.pos_inf_count = header1.pos_inf_count + header2.pos_inf_count;
   header1.neg_inf_count = header1.neg_inf_count + header2.neg_inf_count;
@@ -32,17 +32,17 @@ void MergeStrategy::add_EOF(std::vector<char> &buffer) {
 std::unique_ptr<TrieNode_16_Level1> MergeStrategy::mergeTrieNode16Level1(
     std::unique_ptr<TrieNode_16_Level1> node1,
     std::unique_ptr<TrieNode_16_Level1> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeTrieNode16Level1");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeTrieNode16Level1");
   if (!node1) {
-    SPDLOG_LOGGER_INFO(logger(), "node1 is nullptr, returning node2");
+    SPDLOG_LOGGER_TRACE(logger(), "node1 is nullptr, returning node2");
     return node2;
   }
   if (!node2) {
-    SPDLOG_LOGGER_INFO(logger(), "node2 is nullptr, returning node1");
+    SPDLOG_LOGGER_TRACE(logger(), "node2 is nullptr, returning node1");
     return node1;
   }
   for (size_t i = 0; i < BINS_256; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie16 Level1 index {}: {} + {}", i,
+    SPDLOG_LOGGER_TRACE(logger(), "Merging Trie16 Level1 index {}: {} + {}", i,
                        node1->counts[i], node2->counts[i]);
     node1->counts[i] += node2->counts[i];
   }
@@ -52,18 +52,18 @@ std::unique_ptr<TrieNode_16_Level1> MergeStrategy::mergeTrieNode16Level1(
 std::unique_ptr<TrieNode_16>
 MergeStrategy::mergeTrieNode16(std::unique_ptr<TrieNode_16> node1,
                                std::unique_ptr<TrieNode_16> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeTrieNode16");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeTrieNode16");
   if (!node1) {
-    SPDLOG_LOGGER_INFO(logger(), "node1 is nullptr, returning node2");
+    SPDLOG_LOGGER_TRACE(logger(), "node1 is nullptr, returning node2");
     return node2;
   }
   if (!node2) {
-    SPDLOG_LOGGER_INFO(logger(), "node2 is nullptr, returning node1");
+    SPDLOG_LOGGER_TRACE(logger(), "node2 is nullptr, returning node1");
     return node1;
   }
 
   for (size_t i = 0; i < BINS_256; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie16 Level0 index {}", i);
+    SPDLOG_LOGGER_TRACE(logger(), "Merging Trie16 Level0 index {}", i);
     // Merge the counts at this index.
     node1->counts[i] += node2->counts[i];
     // Set the populated flag if either node has it.

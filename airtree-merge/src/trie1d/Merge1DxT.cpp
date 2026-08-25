@@ -68,17 +68,17 @@ std::vector<char> Merge1DxT::merge(const std::vector<char> &buffer1,
 std::unique_ptr<TrieNode_13_Level1>
 Merge1DxT::mergeTrieNode13Level1(std::unique_ptr<TrieNode_13_Level1> node1,
                                  std::unique_ptr<TrieNode_13_Level1> node2) {
-  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Entering mergeTrieNode13Level1");
+  SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "Entering mergeTrieNode13Level1");
   if (!node1) {
-    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node1 is nullptr, returning node2");
+    SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "node1 is nullptr, returning node2");
     return node2;
   }
   if (!node2) {
-    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node2 is nullptr, returning node1");
+    SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "node2 is nullptr, returning node1");
     return node1;
   }
   for (size_t i = 0; i < BINS_32; ++i) {
-    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Merging Trie13 Level1 index {}: {} + {}", i,
+    SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "Merging Trie13 Level1 index {}: {} + {}", i,
                        node1->counts[i], node2->counts[i]);
     node1->counts[i] += node2->counts[i];
   }
@@ -90,18 +90,18 @@ Merge1DxT::mergeTrieNode13Level1(std::unique_ptr<TrieNode_13_Level1> node1,
 std::unique_ptr<TrieNode_13>
 mergeTrieNode13(std::unique_ptr<TrieNode_13> node1,
                 std::unique_ptr<TrieNode_13> node2) {
-  SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Entering mergeTrieNode13");
+  SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "Entering mergeTrieNode13");
   if (!node1) {
-    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node1 is nullptr, returning node2");
+    SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "node1 is nullptr, returning node2");
     return node2;
   }
   if (!node2) {
-    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "node2 is nullptr, returning node1");
+    SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "node2 is nullptr, returning node1");
     return node1;
   }
 
   for (size_t i = 0; i < BINS_256; ++i) {
-    SPDLOG_LOGGER_INFO(airtree::merge::logger(), "Merging Trie13 Level0 index {}", i);
+    SPDLOG_LOGGER_TRACE(airtree::merge::logger(), "Merging Trie13 Level0 index {}", i);
     // Merge the counts at this index.
     node1->counts[i] += node2->counts[i];
 

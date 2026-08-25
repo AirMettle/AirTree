@@ -9,7 +9,7 @@
 void serialize_4DxP(const TLE_4D_4x10 *node, std::vector<char> &buffer,
                     bool recursive = true);
 [[nodiscard]] std::unique_ptr<TLE_4D_4x10>
-deserialize_4DxP(std::vector<char> buffer, size_t &offset);
+deserialize_4DxP(const std::vector<char> &buffer, size_t &offset);
 [[nodiscard]] std::pair<std::unique_ptr<TLE_4D_4x10>, airtree::core::common::AirTreeHeader>
 processBuffer_4DxP(const std::vector<char> &buffer);
 

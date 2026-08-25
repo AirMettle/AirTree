@@ -24,17 +24,17 @@ BENCHMARK_F(AirTreeBench2DxP, Serialize_float)(benchmark::State &state) {
 }
 
 BENCHMARK_F(AirTreeBench2DxP, CreateAndInsert_int32)(benchmark::State &state) {
-  runCreateAndInsert<float>(state);
+  runCreateAndInsert<int32_t>(state);
 }
 
 BENCHMARK_F(AirTreeBench2DxP, Serialize_int32)(benchmark::State &state) {
-  runSerialize<float>(state);
+  runSerialize<int32_t>(state);
 }
 
 BENCHMARK_F(AirTreeBench2DxP, CreateAndInsert_int64)(benchmark::State &state) {
-  runCreateAndInsert<float>(state);
+  runCreateAndInsert<int64_t>(state);
 }
 
 BENCHMARK_F(AirTreeBench2DxP, Serialize_int64)(benchmark::State &state) {
-  runSerialize<float>(state);
+  runSerialize<int64_t>(state);
 }

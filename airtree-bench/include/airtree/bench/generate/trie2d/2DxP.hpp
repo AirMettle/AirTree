@@ -4,13 +4,53 @@
 #define AIRTREE_BENCH_GENERATE_TRIE2D_2DXP_HPP
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/io/AirTreeWriter.hpp>
+#include <airtree/bench/BenchPaths.hpp>
 #include <airtree/bench/BenchmarkData.hpp>
 #include <benchmark/benchmark.h>
 #include <cstdint>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 namespace airtree::bench::generate::trie2D {
+
+inline constexpr double megaByteConversion = 1'000'000.0;
+
+inline uint64_t calculateTotalInputBytes(const FPHArray &fpharray) {
+  return static_cast<uint64_t>(fpharray.length) *
+         static_cast<uint64_t>(getFPHTypeSize(fpharray.type));
+}
+
+template <typename T>
+uint64_t countDistinctValues(const std::vector<T> &data) {
+  return static_cast<uint64_t>(
+      std::unordered_set<T>(data.begin(), data.end()).size());
+}
+
+inline uint64_t countPreciseBins2DxP(const TLEoption3_2D *root) {
+  if (!root) {
+    return 0;
+  }
+
+  uint64_t precise_bins = 0;
+  for (unsigned int i = 0; i < BINS_64; ++i) {
+    if (!root->populated.test(i) || !root->nodes[i]) {
+      continue;
+    }
+    for (unsigned int j = 0; j < BINS_1024; ++j) {
+      if (!root->nodes[i]->populated.test(j) || !root->nodes[i]->nodes[j]) {
+        continue;
+      }
+      for (unsigned int k = 0; k < BINS_1024; ++k) {
+        if (root->nodes[i]->nodes[j]->counts[k] > 0) {
+          ++precise_bins;
+        }
+      }
+    }
+  }
+  return precise_bins;
+}
 
 class AirTreeBench2DxP : public benchmark::Fixture {
 protected:
@@ -34,6 +74,12 @@ protected:
 
     const auto &fpharray1 = BenchmarkData<T>::fpharrays[0];
     const auto &fpharray2 = BenchmarkData<T>::fpharrays[1];
+    const uint64_t dataset_size_bytes =
+        calculateTotalInputBytes(fpharray1) + calculateTotalInputBytes(fpharray2);
+    const uint64_t dataset_value_count = static_cast<uint64_t>(fpharray1.length);
+    const uint64_t distinct_values =
+        countDistinctValues(BenchmarkData<T>::raw_data[0]) +
+        countDistinctValues(BenchmarkData<T>::raw_data[1]);
 
     for (auto _ : state) {
       state.PauseTiming();
@@ -47,13 +93,26 @@ protected:
       benchmark::DoNotOptimize(airTree2DxP_root);
     }
 
-    state.counters["Speed"] =
-        benchmark::Counter(state.iterations() * fpharray1.length
-                               * getFPHTypeSize(fpharray1.type) * 2,
-                           benchmark::Counter::kIsRate);
+    const uint64_t total_input_bytes =
+        static_cast<uint64_t>(state.iterations()) * dataset_size_bytes;
+    const uint64_t precise_bins = countPreciseBins2DxP(airTree2DxP_root.get());
+    const double avg_bytes_per_bin =
+        precise_bins > 0
+            ? static_cast<double>(curr_trie_size) /
+                  static_cast<double>(precise_bins)
+            : 0.0;
+    state.SetBytesProcessed(total_input_bytes);
+    state.counters["Insertion Speed (MB/s)"] = benchmark::Counter(
+        static_cast<double>(total_input_bytes) / megaByteConversion,
+        benchmark::Counter::kIsRate);
     state.counters["Points_Per_Second"] = benchmark::Counter(
         state.iterations() * fpharray1.length, benchmark::Counter::kIsRate);
-    state.counters["Size of trie in-mem (bytes)"] = curr_trie_size;
+    state.counters["Dataset Size MB"] = dataset_size_bytes / megaByteConversion;
+    state.counters["Dataset Value Count"] = dataset_value_count;
+    state.counters["Distinct Values"] = distinct_values;
+    state.counters["Precise Bins"] = precise_bins;
+    state.counters["Avg Bytes/Bin"] = avg_bytes_per_bin;
+    state.counters["Trie Size (Bytes)"] = curr_trie_size;
   }
 
   template <typename T> void runSerialize(benchmark::State &state) {
@@ -70,20 +129,27 @@ protected:
         fpharray1, fpharray2, curr_trie_size, specialCounts, true);
 
     for (auto _ : state) {
-      auto serialized = execSerialize_2D_2x10(
+      auto serializedTrieLocal = execSerialize_2D_2x10(
           airTree2DxP_root.get(), curr_trie_size, specialCounts, true);
 
-      benchmark::DoNotOptimize(serialized.data());
+      benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
 
       // Update counter inside loop so it registers properly
-      state.counters["Size"] = serialized.size();
+      state.counters["Size"] = serializedTrieLocal.size();
     }
+
+    // Untimed materialize: write serialized histogram once if requested.
+    if (!BenchPaths::write_airtree_path.empty()) {
+      auto buffer = execSerialize_2D_2x10(
+          airTree2DxP_root.get(), curr_trie_size, specialCounts, true);
+      airtree::core::io::AirTreeWriter::Write(buffer,
+                                              BenchPaths::write_airtree_path);
+      BenchPaths::write_airtree_path.clear();
+    }
+   
   }
 
-  void TearDown([[maybe_unused]] const ::benchmark::State &state) override {
-    serializedTrie.clear();
-  }
 };
 
 } // namespace airtree::bench::generate::trie2D

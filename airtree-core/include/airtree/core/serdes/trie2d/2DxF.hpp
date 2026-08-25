@@ -12,7 +12,7 @@ void serialize_2DxF(const TLETrieNode_2D *node, std::vector<char> &buffer,
 
 
 [[nodiscard]] std::unique_ptr<TLETrieNode_2D>
-deserialize_2DxF(std::vector<char> buffer, size_t &offset);
+deserialize_2DxF(const std::vector<char> &buffer, size_t &offset);
 
 [[nodiscard]] std::unique_ptr<TrieNode_16>
 deserialize_2DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,

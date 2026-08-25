@@ -54,6 +54,7 @@ pyairtree.write(buffer, "histogram.airtree")
 p = pyairtree.Percentile(buffer)
 print(f"Median: {p.get_percentile(50):.4f}")
 print(f"95th percentile: {p.get_percentile(95):.4f}")
+value, lo, hi = p.get_percentile_with_bounds(99)   # the quantile and the native bin it fell in
 ```
 
 #### Load data directly from .npy or single-array .npz files
