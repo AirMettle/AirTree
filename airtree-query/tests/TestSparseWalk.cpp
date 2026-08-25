@@ -18,6 +18,7 @@ using airtree::query::meta::Histogram;
 using airtree::query::minmax::MinMax;
 using airtree::query::minmax::MinMaxResultVector;
 using airtree::query::percentile::Percentile;
+using airtree::query::percentile::PercentileResult;
 using airtree::query::topk::TopK;
 using airtree::query::topk::TopKResultVector;
 
@@ -384,6 +385,71 @@ TEST(HistogramTable, RejectsBitLengthsTheCodecDoesNotHave) {
       EXPECT_NO_THROW(Histogram h(bits));
     } else {
       EXPECT_THROW(Histogram h(bits), std::invalid_argument) << bits;
+    }
+  }
+}
+
+namespace {
+
+// Reference: walk the full table to the crossing bin and apply the export's bounds convention.
+template <typename NodeType>
+PercentileResult refBounds(const Loaded &l, double percentile) {
+  const auto &root = l.type.get_ptr<NodeType>();
+  const auto &h = l.header;
+  const auto &hist = *l.histogram;
+  uint32_t total = 0;
+  for (size_t i = 0; i < root->size(); ++i) total += root->counts[i];
+  total += h.pos_zero_count + h.neg_zero_count + h.pos_inf_count + h.neg_inf_count;
+  auto special = [](double v) { return PercentileResult{v, v, v}; };
+  if (total == 0) return special(-kInf);
+  const double rank = (percentile / 100) * total;
+  uint32_t cum = h.neg_inf_count;
+  if (cum >= rank) return special(-kInf);
+  const size_t n = hist.getBinCount();
+  bool zeros = false;
+  for (size_t i = 0; i < n; ++i) {
+    const double v = hist.getFPNumber(i);
+    if (!zeros && v >= 0.0) {
+      cum += h.neg_zero_count; if (cum >= rank) return special(-0.0);
+      cum += h.pos_zero_count; if (cum >= rank) return special(0.0);
+      zeros = true;
+    }
+    const uint32_t c = refCount<NodeType>(root, hist.getInternalRepresentation(i));
+    cum += c;
+    if (cum < rank) continue;
+    if (i == n - 1 && rank > cum && h.pos_inf_count > 0) return special(kInf);
+    const double lo = v < 0.0 ? (i == 0 ? -kInf : hist.getFPNumber(i - 1)) : v;
+    const double hi = i == n - 1 ? kInf : v < 0.0 ? v : hist.getFPNumber(i + 1);
+    return {std::nan(""), lo, hi}; // value checked separately against getPercentile
+  }
+  if (!zeros) {
+    cum += h.neg_zero_count; if (cum >= rank) return special(-0.0);
+    cum += h.pos_zero_count; if (cum >= rank) return special(0.0);
+  }
+  cum += h.pos_inf_count;
+  if (cum >= rank) return special(kInf);
+  return special(-kInf);
+}
+
+} // namespace
+
+TEST_P(TestSparseWalk, PercentileBoundsMatchReference) {
+  const int bitLength = GetParam();
+  for (const auto &data : corpus()) {
+    auto buffer = build(bitLength, data);
+    Loaded l = load(buffer);
+    Percentile p(buffer);
+    for (double q : {0.0, 0.1, 1.0, 25.0, 50.0, 90.0, 99.0, 99.9, 100.0}) {
+      const auto got = p.getPercentileWithBounds(q);
+      const auto ref = dispatch(l, [&](auto *t) { return refBounds<std::remove_pointer_t<decltype(t)>>(l, q); });
+      EXPECT_EQ(bits(got.value), bits(p.getPercentile(q))) << "q=" << q;
+      EXPECT_EQ(bits(got.lower_bound), bits(ref.lower_bound)) << "q=" << q << " n=" << data.size();
+      EXPECT_EQ(bits(got.upper_bound), bits(ref.upper_bound)) << "q=" << q << " n=" << data.size();
+      if (std::isfinite(got.value) && got.value > 0.0) {
+        // interpolation places the value inside its bin; it equals the upper edge when the rank
+        // lands exactly on the bin's last observation (always at q = 100)
+        EXPECT_TRUE(got.lower_bound <= got.value && got.value <= got.upper_bound) << "q=" << q;
+      }
     }
   }
 }

@@ -29,19 +29,13 @@ Percentile::Percentile(std::vector<char> buffer) {
 }
 
 double Percentile::getPercentile(double percentile) {
-  if (!histogram_) {
-    throw std::runtime_error("Histogram not initialized.");
-  }
+  return getPercentileWithBounds(percentile).value;
+}
 
+PercentileResult Percentile::getPercentileWithBounds(double percentile) {
   if (trie_node_.valueless_by_exception()) {
     throw std::runtime_error("Trie node not initialized.");
   }
-
-  if (percentile <= 0 || percentile >= 100) {
-    throw std::out_of_range(
-        "Percentile must be greater than 0 and less than 100.");
-  }
-
   if (dims_ == 1 && bit_length_ == 13) {
     return calculatePercentile<TrieNode_13>(percentile);
   } else if (dims_ == 1 && bit_length_ == 16) {
@@ -100,7 +94,7 @@ const std::vector<airtree::query::meta::PopulatedBin> &Percentile::populatedBins
 }
 
 template <typename NodeType>
-double Percentile::calculatePercentile(double percentile) {
+PercentileResult Percentile::calculatePercentile(double percentile) {
 
   // Total count from trie
   uint32_t trie_count = 0;
@@ -116,7 +110,7 @@ double Percentile::calculatePercentile(double percentile) {
 
   // std::cout << "Total count: " << total_count << std::endl;
   if (total_count == 0) {
-    return -std::numeric_limits<double>::infinity();
+    return {-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()};
   }
 
   double rank = (percentile / 100) * total_count;
@@ -127,7 +121,7 @@ double Percentile::calculatePercentile(double percentile) {
   // Handle negative infinity
   cumulative_count += header_.neg_inf_count;
   if (cumulative_count >= rank) {
-    return -std::numeric_limits<double>::infinity();
+    return {-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()};
   }
 
   const auto &bins = populatedBins<NodeType>();
@@ -138,11 +132,11 @@ double Percentile::calculatePercentile(double percentile) {
     if (!zeros_handled && bin_value >= 0.0) {
       cumulative_count += header_.neg_zero_count;
       if (cumulative_count >= rank) {
-        return -0.0;
+        return {-0.0, -0.0, -0.0};
       }
       cumulative_count += header_.pos_zero_count;
       if (cumulative_count >= rank) {
-        return 0.0;
+        return {0.0, 0.0, 0.0};
       }
       zeros_handled = true;
     }
@@ -151,15 +145,20 @@ double Percentile::calculatePercentile(double percentile) {
       continue;
     }
     const uint32_t cumulative_before_bin = cumulative_count - bin.count;
+    const double inf = std::numeric_limits<double>::infinity();
+    const double lower = bin_value < 0.0
+        ? (bin.position == 0 ? -inf : histogram_->getFPNumber(bin.position - 1))
+        : bin_value;
+    const double upper = bin.position == last_position ? inf
+        : bin_value < 0.0 ? bin_value : histogram_->getFPNumber(bin.position + 1);
     if (bin.position == last_position) {
       if (rank > cumulative_count && header_.pos_inf_count > 0) {
-        return std::numeric_limits<double>::infinity();
+        return {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
       }
-      return bin_value;
+      return {bin_value, lower, upper};
     }
     const double max_value = histogram_->getFPNumber(bin.position + 1);
-    return bin_value
-           + (((rank - cumulative_before_bin) / bin.count) * (max_value - bin_value));
+    return {bin_value + (((rank - cumulative_before_bin) / bin.count) * (max_value - bin_value)), lower, upper};
   }
 
   // If zeros haven't been handled yet (all bins were negative or no bins at
@@ -167,21 +166,21 @@ double Percentile::calculatePercentile(double percentile) {
   if (!zeros_handled) {
     cumulative_count += header_.neg_zero_count;
     if (cumulative_count >= rank) {
-      return -0.0;
+      return {-0.0, -0.0, -0.0};
     }
     cumulative_count += header_.pos_zero_count;
     if (cumulative_count >= rank) {
-      return 0.0;
+      return {0.0, 0.0, 0.0};
     }
   }
 
   // Handle positive infinity (if rank extends beyond all trie values)
   cumulative_count += header_.pos_inf_count;
   if (cumulative_count >= rank) {
-    return std::numeric_limits<double>::infinity();
+    return {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
   }
 
   // If we reach here, it means the percentile was not found - should we throw
   // an error?
-  return -std::numeric_limits<double>::infinity();
+  return {-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()};
 }
