@@ -141,8 +141,8 @@ bool deserializeCounts(const std::vector<char> &buffer, size_t &offset,
           if constexpr (std::endian::native == std::endian::little) {
             std::memcpy(&next, bytes + offset, sizeof(next));
           } else {
-            for (int i = 0; i < 8; ++i)
-              next |= static_cast<uint64_t>(bytes[offset + i]) << (8 * i);
+            for (int b = 0; b < 8; ++b)
+              next |= static_cast<uint64_t>(bytes[offset + b]) << (8 * b);
           }
           const int take = (64 - bitsInBuffer) >> 3; // whole bytes that still fit
           if (take < 8)
