@@ -20,6 +20,9 @@ struct BenchPaths {
 
   // Schema name for the current query run (e.g. "1DxF").
   inline static std::string query_schema;
+
+  // Preloaded .airtree buffers (same schema) for merge fixtures (loaded untimed in Main).
+  inline static std::vector<std::vector<char>> merge_buffers;
 };
 
 } // namespace airtree::bench

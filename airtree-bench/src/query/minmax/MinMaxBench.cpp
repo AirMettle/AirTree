@@ -101,4 +101,28 @@ DEFINE_MINMAX_SUITE(AirTreeQuery1DxP_MinMax)
 
 #undef DEFINE_MINMAX_SUITE
 
+// Construction only (builds the 1D bin table).
+#define DEFINE_MINMAX_CTOR_SUITE(SchemaClass)                                  \
+  BENCHMARK_DEFINE_F(SchemaClass, MinMax_ctor)(benchmark::State & state) {     \
+    if (!hasBuffer()) {                                                        \
+      state.SkipWithError("empty .airtree buffer");                            \
+      return;                                                                  \
+    }                                                                          \
+    for (auto _ : state) {                                                     \
+      airtree::query::minmax::MinMax q(buffer_);                               \
+      benchmark::DoNotOptimize(q);                                             \
+      benchmark::ClobberMemory();                                              \
+    }                                                                          \
+    applyCommonCounters(state);                                                \
+    applyQueryId(state, QueryId::MinMax_ctor);                                 \
+    applyResultSize(state, 0);                                                 \
+  }                                                                            \
+  BENCHMARK_REGISTER_F(SchemaClass, MinMax_ctor);
+
+DEFINE_MINMAX_CTOR_SUITE(AirTreeQuery1DxT_MinMax)
+DEFINE_MINMAX_CTOR_SUITE(AirTreeQuery1DxF_MinMax)
+DEFINE_MINMAX_CTOR_SUITE(AirTreeQuery1DxP_MinMax)
+
+#undef DEFINE_MINMAX_CTOR_SUITE
+
 } // namespace

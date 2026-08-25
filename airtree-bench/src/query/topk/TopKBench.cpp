@@ -233,4 +233,54 @@ BENCHMARK_DEFINE_F(AirTreeQuery1DxP_TopK, TopK_k15)(benchmark::State &state) {
 }
 BENCHMARK_REGISTER_F(AirTreeQuery1DxP_TopK, TopK_k15);
 
+
+// Construction only (builds the 1D bin table).
+BENCHMARK_DEFINE_F(AirTreeQuery1DxT_TopK, TopK_ctor)(benchmark::State &state) {
+  if (!hasBuffer()) {
+    state.SkipWithError("empty .airtree buffer");
+    return;
+  }
+  for (auto _ : state) {
+    airtree::query::topk::TopK q(buffer_);
+    benchmark::DoNotOptimize(q);
+    benchmark::ClobberMemory();
+  }
+  applyCommonCounters(state);
+  applyQueryId(state, QueryId::TopK_ctor);
+  applyResultSize(state, 0);
+}
+BENCHMARK_REGISTER_F(AirTreeQuery1DxT_TopK, TopK_ctor);
+
+BENCHMARK_DEFINE_F(AirTreeQuery1DxF_TopK, TopK_ctor)(benchmark::State &state) {
+  if (!hasBuffer()) {
+    state.SkipWithError("empty .airtree buffer");
+    return;
+  }
+  for (auto _ : state) {
+    airtree::query::topk::TopK q(buffer_);
+    benchmark::DoNotOptimize(q);
+    benchmark::ClobberMemory();
+  }
+  applyCommonCounters(state);
+  applyQueryId(state, QueryId::TopK_ctor);
+  applyResultSize(state, 0);
+}
+BENCHMARK_REGISTER_F(AirTreeQuery1DxF_TopK, TopK_ctor);
+
+BENCHMARK_DEFINE_F(AirTreeQuery1DxP_TopK, TopK_ctor)(benchmark::State &state) {
+  if (!hasBuffer()) {
+    state.SkipWithError("empty .airtree buffer");
+    return;
+  }
+  for (auto _ : state) {
+    airtree::query::topk::TopK q(buffer_);
+    benchmark::DoNotOptimize(q);
+    benchmark::ClobberMemory();
+  }
+  applyCommonCounters(state);
+  applyQueryId(state, QueryId::TopK_ctor);
+  applyResultSize(state, 0);
+}
+BENCHMARK_REGISTER_F(AirTreeQuery1DxP_TopK, TopK_ctor);
+
 } // namespace
