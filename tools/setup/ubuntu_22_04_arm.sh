@@ -88,7 +88,7 @@ else
 fi
 
 # install python3.12 by specifying the apt-get repository
-run_step "[ airtree-setup ] Add deadsnakes PPA" $SUDO add-apt-repository ppa:deadsnakes/ppa -y
+run_step --retries 5 --retry-delay 20 "[ airtree-setup ] Add deadsnakes PPA" $SUDO add-apt-repository ppa:deadsnakes/ppa -y
 run_step --retries 3 --retry-delay 5 \
   "[ airtree-setup ] Update package list" \
   $SUDO apt-get update

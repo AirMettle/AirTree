@@ -83,7 +83,7 @@ else
 fi
 
 # install python3.12 by specifying the apt-get repository
-run_step "[ airtree-setup ] Add deadsnakes PPA" $SUDO add-apt-repository ppa:deadsnakes/ppa -y > /dev/null
+run_step --retries 5 --retry-delay 20 "[ airtree-setup ] Add deadsnakes PPA" $SUDO add-apt-repository ppa:deadsnakes/ppa -y > /dev/null
 run_step "[ airtree-setup ] Update package list" $SUDO apt-get update
 run_step "[ airtree-setup ] Install python3.12" install_package python3.12
 run_step "[ airtree-setup ] Install python3.12-venv" install_package python3.12-venv

@@ -137,10 +137,13 @@ bool deserializeCounts(const std::vector<char> &buffer, size_t &offset,
       }
       if (bitsInBuffer < minBits) {
         if (offset + sizeof(uint64_t) <= end) {
-          uint64_t next;
-          std::memcpy(&next, bytes + offset, sizeof(next));
-          if constexpr (std::endian::native != std::endian::little)
-            next = __builtin_bswap64(next);
+          uint64_t next = 0;
+          if constexpr (std::endian::native == std::endian::little) {
+            std::memcpy(&next, bytes + offset, sizeof(next));
+          } else {
+            for (int i = 0; i < 8; ++i)
+              next |= static_cast<uint64_t>(bytes[offset + i]) << (8 * i);
+          }
           const int take = (64 - bitsInBuffer) >> 3; // whole bytes that still fit
           if (take < 8)
             next &= (static_cast<uint64_t>(1) << (take * 8)) - 1;
