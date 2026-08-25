@@ -72,4 +72,24 @@ BENCHMARK_DEFINE_F(AirTreeMerge, Merge_fold)(benchmark::State &state) {
 }
 BENCHMARK_REGISTER_F(AirTreeMerge, Merge_fold);
 
+BENCHMARK_DEFINE_F(AirTreeMerge, Merge_nway)(benchmark::State &state) {
+  if (buffers_ == nullptr || buffers_->size() < 2) {
+    state.SkipWithError("merge needs at least two buffers");
+    return;
+  }
+  const std::size_t n = buffers_->size();
+  std::size_t last_result_bytes = 0;
+  for (auto _ : state) {
+    auto merged = airtree::merge::mergeAirTrees(*buffers_);
+    last_result_bytes = merged.size();
+    benchmark::DoNotOptimize(merged.data());
+    benchmark::ClobberMemory();
+  }
+  applyQueryId(state, QueryId::Merge_nway);
+  applyResultSize(state, last_result_bytes);
+  state.counters["N"] = static_cast<double>(n);
+  state.counters["InputBytes"] = static_cast<double>(inputBytes(n));
+}
+BENCHMARK_REGISTER_F(AirTreeMerge, Merge_nway);
+
 } // namespace

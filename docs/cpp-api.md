@@ -499,11 +499,21 @@ void mergeAirTree(const std::vector<char>& buffer1,
                   const std::vector<char>& buffer2,
                   const std::string& output_path);
 
+// Merges any number of buffers in one pass
+std::vector<char> mergeAirTrees(const std::vector<std::vector<char>>& buffers);
+
 } // namespace airtree::merge
 ```
 
-Both inputs must have **identical configuration** (same schema, same trie
-variant). Incompatible inputs throw `std::runtime_error`.
+All inputs must have **identical configuration** (same schema, same trie
+variant). Incompatible inputs throw `std::runtime_error`; an empty list throws
+`std::invalid_argument`.
+
+`mergeAirTrees` produces exactly the bytes a pairwise fold would, but reads each
+input once: for 1D schemas it streams the N buffers side by side, re-encoding
+only the nodes that more than one input populates and copying the rest verbatim.
+Prefer it whenever you combine more than two histograms (a range of time
+windows, shards of one dataset). Other schemas currently fold pairwise.
 
 **Example:**
 
@@ -527,6 +537,9 @@ int main() {
 
   // Option 2 — merge directly to a file
   airtree::merge::mergeAirTree(buf1, buf2, "merged_histogram.airtree");
+
+  // Option 3 — many inputs in one pass
+  auto range = airtree::merge::mergeAirTrees({buf1, buf2, read_file("histogram3.airtree")});
 
   std::cout << "Merge complete: " << merged.size() << " bytes\n";
 }

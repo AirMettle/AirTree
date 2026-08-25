@@ -53,3 +53,9 @@ bool readPopulatedMask(const std::vector<char> &buffer, size_t &offset,
   offset += n_words * sizeof(uint64_t);
   return true;
 }
+
+void writePopulatedMask(const uint64_t *words, std::size_t bins,
+                        std::vector<char> &out) {
+  const auto *bytes = reinterpret_cast<const char *>(words);
+  out.insert(out.end(), bytes, bytes + ((bins + 63) / 64) * sizeof(uint64_t));
+}

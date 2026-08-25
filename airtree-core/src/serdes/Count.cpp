@@ -162,3 +162,44 @@ bool deserializeCounts(const std::vector<char> &buffer, size_t &offset,
   offset = end;
   return true;
 }
+
+void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
+                     std::vector<char> &out) {
+  const size_t nWords = (bins + 63) / 64;
+  uint32_t maxCount = 0;
+  for (size_t w = 0; w < nWords; ++w)
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1)
+      maxCount = std::max(maxCount, counts[w * 64 + std::countr_zero(m)]);
+  const int minBits = minimumBits(maxCount);
+  out.push_back(static_cast<char>(minBits));
+  uint64_t bitBuffer = 0;
+  int bitCount = 0;
+  for (size_t w = 0; w < nWords; ++w) {
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      bitBuffer |= static_cast<uint64_t>(counts[w * 64 + std::countr_zero(m)]) << bitCount;
+      bitCount += minBits;
+      while (bitCount >= 8) {
+        out.push_back(static_cast<char>(bitBuffer & 0xFF));
+        bitBuffer >>= 8;
+        bitCount -= 8;
+      }
+    }
+  }
+  if (bitCount > 0)
+    out.push_back(static_cast<char>(bitBuffer & 0xFF));
+}
+
+bool skipCounts(const std::vector<char> &buffer, size_t &offset,
+                const uint64_t *mask, size_t bins) {
+  size_t populated = 0;
+  for (size_t w = 0; w < (bins + 63) / 64; ++w)
+    populated += static_cast<size_t>(std::popcount(mask[w]));
+  if (offset >= buffer.size())
+    return false;
+  const int minBits = static_cast<unsigned char>(buffer[offset++]);
+  const size_t end = offset + (populated * minBits + 7) / 8;
+  if (end > buffer.size())
+    return false;
+  offset = end;
+  return true;
+}

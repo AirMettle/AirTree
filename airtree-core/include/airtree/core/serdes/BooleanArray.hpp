@@ -23,6 +23,10 @@ deserializeCompactBooleanArray(const std::vector<char> &buffer, size_t &offset,
                                      size_t &offset, uint64_t *words,
                                      std::size_t bins);
 
+// Appends the mask words for `bins` slots (inverse of readPopulatedMask).
+void writePopulatedMask(const uint64_t *words, std::size_t bins,
+                        std::vector<char> &out);
+
 template <typename Fn>
 void forEachSetBit(const uint64_t *words, std::size_t bins, Fn &&fn) {
   for (std::size_t w = 0; w < (bins + 63) / 64; ++w) {

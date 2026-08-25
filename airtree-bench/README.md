@@ -100,6 +100,7 @@ Each timed query variant records a fixed `query_id` (defined in `QueryFixtureBas
 | `21` | `Merge_pair` | `mergeAirTree(a, b)` | `merge` subcommand; `N=2`, `InputBytes` |
 | `22` | `Merge_fold` | pairwise fold over all N inputs | the cost of a range query over N stored windows today; `N`, `InputBytes` |
 | `23` | `Reader_read` | `AirTreeReader::read(buffer)` | deserialization alone (buffer → trie, plus its teardown); the floor under every `ctor`/`cold` number |
+| `24` | `Merge_nway` | `mergeAirTrees(all N)` | single streaming pass over the same N inputs as `Merge_fold`; `N`, `InputBytes` |
 
 **Warm vs cold.** Fixtures `0`–`11` and `18` build the query object once, outside the timed loop, and time the call — the cost of the algorithm. The `ctor` and `cold` fixtures time construction (which for the 1D classes builds the full bin table from the schema, independent of buffer size) so that the per-request cost of a service answering one query per stored buffer is visible. Compare `Percentile_cold_p50` with `Percentile_p50` to see how much of a request is construction.
 

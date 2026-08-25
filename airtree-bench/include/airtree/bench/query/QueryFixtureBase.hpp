@@ -62,6 +62,7 @@ protected:
     Merge_pair = 21,
     Merge_fold = 22,
     Reader_read = 23,
+    Merge_nway = 24,
   };
 
   void applyQueryId(benchmark::State &state, QueryId id) const {
