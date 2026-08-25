@@ -61,6 +61,7 @@ protected:
     BinBoundary_generate = 20,
     Merge_pair = 21,
     Merge_fold = 22,
+    Reader_read = 23,
   };
 
   void applyQueryId(benchmark::State &state, QueryId id) const {

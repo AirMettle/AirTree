@@ -17,7 +17,7 @@ void serialize_4DxF_l1(const Node4D_4x8_l1 *node, std::vector<char> &buffer,
                        bool recursively = true);
 
 [[nodiscard]] std::unique_ptr<TLE_4D_4x8>
-deserialize_4DxF(const std::vector<char> buffer, size_t &offset);
+deserialize_4DxF(const std::vector<char> &buffer, size_t &offset);
 
 [[nodiscard]] std::unique_ptr<Node4D_4x8_l0>
 deserialize_4DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,

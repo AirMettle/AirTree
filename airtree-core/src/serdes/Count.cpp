@@ -1,6 +1,8 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
 #include <algorithm>
+#include <bit>
+#include <cstring>
 #include <airtree/core/serdes/Count.hpp>
 
 #include <airtree/core/Logger.hpp>
@@ -100,4 +102,63 @@ std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
   }
 
   return counts;
+}
+bool deserializeCounts(const std::vector<char> &buffer, size_t &offset,
+                       const uint64_t *mask, size_t bins, uint32_t *counts) {
+  const size_t nWords = (bins + 63) / 64;
+  size_t populated = 0;
+  for (size_t w = 0; w < nWords; ++w)
+    populated += static_cast<size_t>(std::popcount(mask[w]));
+  if (offset >= buffer.size()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Buffer underflow while reading count width.");
+    return false;
+  }
+  const int minBits = static_cast<unsigned char>(buffer[offset++]);
+  if (minBits > 32) {
+    SPDLOG_LOGGER_ERROR(logger(), "Invalid count width {} bits.", minBits);
+    return false;
+  }
+  // The node's count payload is exactly ceil(populated * minBits / 8) bytes; refills never cross it.
+  const size_t end = offset + (populated * minBits + 7) / 8;
+  if (end > buffer.size()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Buffer underflow while reading {} counts.", populated);
+    return false;
+  }
+  const auto *bytes = reinterpret_cast<const unsigned char *>(buffer.data());
+  const uint64_t valueMask = (static_cast<uint64_t>(1) << minBits) - 1;
+  uint64_t bitBuffer = 0;
+  int bitsInBuffer = 0;
+  for (size_t w = 0; w < nWords; ++w) {
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + static_cast<size_t>(std::countr_zero(m));
+      if (i >= bins) {
+        SPDLOG_LOGGER_ERROR(logger(), "Populated bit {} outside node of {} bins.", i, bins);
+        return false;
+      }
+      if (bitsInBuffer < minBits) {
+        if (offset + sizeof(uint64_t) <= end) {
+          uint64_t next;
+          std::memcpy(&next, bytes + offset, sizeof(next));
+          if constexpr (std::endian::native != std::endian::little)
+            next = __builtin_bswap64(next);
+          const int take = (64 - bitsInBuffer) >> 3; // whole bytes that still fit
+          if (take < 8)
+            next &= (static_cast<uint64_t>(1) << (take * 8)) - 1;
+          bitBuffer |= next << bitsInBuffer;
+          offset += take;
+          bitsInBuffer += take * 8;
+        } else {
+          while (bitsInBuffer < minBits) {
+            bitBuffer |= static_cast<uint64_t>(bytes[offset++]) << bitsInBuffer;
+            bitsInBuffer += 8;
+          }
+        }
+      }
+      counts[i] = static_cast<uint32_t>(bitBuffer & valueMask);
+      bitBuffer >>= minBits;
+      bitsInBuffer -= minBits;
+    }
+  }
+  offset = end;
+  return true;
 }

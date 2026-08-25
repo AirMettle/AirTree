@@ -42,3 +42,14 @@ deserializeCompactBooleanArray(const std::vector<char> &buffer, size_t &offset,
   }
   return compact_arr_values;
 }
+bool readPopulatedMask(const std::vector<char> &buffer, size_t &offset,
+                       uint64_t *words, std::size_t bins) {
+  const std::size_t n_words = (bins + 63) / 64;
+  if (offset + n_words * sizeof(uint64_t) > buffer.size()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Buffer underflow while reading populated mask.");
+    return false;
+  }
+  std::memcpy(words, &buffer[offset], n_words * sizeof(uint64_t));
+  offset += n_words * sizeof(uint64_t);
+  return true;
+}

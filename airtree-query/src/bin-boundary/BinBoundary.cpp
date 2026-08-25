@@ -4,6 +4,8 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/bin-boundary/BinBoundary.hpp>
 #include <airtree/query/meta/Histogram.hpp>
+#include <airtree/core/serdes/BooleanArray.hpp>
+#include <airtree/core/serdes/Count.hpp>
 #include <algorithm>
 #include <bitset>
 #include <cstddef>
@@ -13,41 +15,38 @@
 #include <limits>
 #include <memory>
 #include <queue>
+#include <stdexcept>
 #include <spdlog/spdlog.h>
 #include <sys/types.h>
 #include <vector>
 
 using namespace airtree::query::bin_boundary;
 
+// Populated bitset of one node plus its raw mask words (the count decoder needs the words).
+template <size_t N> struct Populated : std::bitset<N> {
+  uint64_t words[(N + 63) / 64];
+};
+
 template <size_t N>
-[[nodiscard]] std::bitset<N> deserializeBitset(const std::vector<char> buffer,
-                                               size_t &offset, int len) {
-  std::vector<uint64_t> compact_array_values =
-      deserializeCompactBooleanArray(buffer, offset, len);
-  BooleanArray compact_array = BooleanArray(compact_array_values);
-  std::bitset<N> populated;
-  for (size_t i = 0; i < N; ++i) {
-    populated[i] = compact_array.get(i);
+[[nodiscard]] Populated<N> deserializeBitset(const std::vector<char> &buffer,
+                                             size_t &offset, int /*len*/) {
+  Populated<N> populated;
+  if (!readPopulatedMask(buffer, offset, populated.words, N)) {
+    throw std::runtime_error("BinBoundary: truncated populated mask");
   }
+  setPopulated(populated, populated.words);
   return populated;
 }
 
 template <size_t N>
 [[nodiscard]] std::vector<uint32_t>
 deserializeCountsToOriginalLen(const std::vector<char> &buffer, size_t &offset,
-                               std::bitset<N> &populated) {
-  std::vector<uint32_t> counts =
-      deserializeCounts(buffer, offset, populated.count());
-  std::vector<uint32_t> expandedCounts(N, 0);
-  size_t countIdx = 0;
-  for (size_t i = 0; i < N; ++i) {
-    if (populated.test(i)) {
-      expandedCounts[i] = counts[countIdx];
-      countIdx++;
-    }
+                               const Populated<N> &populated) {
+  std::vector<uint32_t> counts(N, 0);
+  if (!deserializeCounts(buffer, offset, populated.words, N, counts.data())) {
+    throw std::runtime_error("BinBoundary: truncated counts");
   }
-
-  return expandedCounts;
+  return counts;
 }
 
 // Lookup bin boundaries from the sorted reference table.

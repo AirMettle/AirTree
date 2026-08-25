@@ -42,6 +42,7 @@ add_executable(airtree_bench
     ${BENCHMARK_DIR}/src/query/cdf/CDFBench.cpp
     ${BENCHMARK_DIR}/src/query/binboundary/BinBoundaryBench.cpp
     ${BENCHMARK_DIR}/src/merge/MergeBench.cpp
+    ${BENCHMARK_DIR}/src/reader/ReaderBench.cpp
 )
 
 if(TARGET am_airtree_dependencies)

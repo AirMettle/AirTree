@@ -64,9 +64,9 @@ Query fixtures load a pre-serialized `.airtree` buffer (untimed) and time indivi
 
 | Schema | Allowed `--queries` values |
 | ------ | -------------------------- |
-| `1DxT`, `1DxF`, `1DxP` | `topk`, `minmax`, `percentile`, `cdf`, `binboundary` |
-| `2DxP`, `3DxP` | `grid`, `boundingbox`, `binboundary` |
-| `4DxP` | `grid`, `binboundary` |
+| `1DxT`, `1DxF`, `1DxP` | `topk`, `minmax`, `percentile`, `cdf`, `binboundary`, `reader` |
+| `2DxP`, `3DxP` | `grid`, `boundingbox`, `binboundary`, `reader` |
+| `4DxP` | `grid`, `binboundary`, `reader` |
 
 Other schemas (for example Fast multi-D) have generate benches only; they have no query suite in this build.
 
@@ -99,6 +99,7 @@ Each timed query variant records a fixed `query_id` (defined in `QueryFixtureBas
 | `20` | `BinBoundary_generate` | `BinBoundary(buffer).generateBinBoundaries()` | single-use object, so construction and generation are timed together; `Bins` = occupied bins |
 | `21` | `Merge_pair` | `mergeAirTree(a, b)` | `merge` subcommand; `N=2`, `InputBytes` |
 | `22` | `Merge_fold` | pairwise fold over all N inputs | the cost of a range query over N stored windows today; `N`, `InputBytes` |
+| `23` | `Reader_read` | `AirTreeReader::read(buffer)` | deserialization alone (buffer → trie, plus its teardown); the floor under every `ctor`/`cold` number |
 
 **Warm vs cold.** Fixtures `0`–`11` and `18` build the query object once, outside the timed loop, and time the call — the cost of the algorithm. The `ctor` and `cold` fixtures time construction (which for the 1D classes builds the full bin table from the schema, independent of buffer size) so that the per-request cost of a service answering one query per stored buffer is visible. Compare `Percentile_cold_p50` with `Percentile_p50` to see how much of a request is construction.
 

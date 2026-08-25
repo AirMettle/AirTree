@@ -106,13 +106,13 @@ std::string benchmark_filter_for(const std::string &config_name,
 // Allowed query names per schema (current airtree-query only).
 std::set<std::string> allowed_queries_for_schema(const std::string &schema) {
   if (schema == "1DxT" || schema == "1DxF" || schema == "1DxP") {
-    return {"topk", "minmax", "percentile", "cdf", "binboundary"};
+    return {"topk", "minmax", "percentile", "cdf", "binboundary", "reader"};
   }
   if (schema == "2DxP" || schema == "3DxP") {
-    return {"grid", "boundingbox", "binboundary"};
+    return {"grid", "boundingbox", "binboundary", "reader"};
   }
   if (schema == "4DxP") {
-    return {"grid", "binboundary"};
+    return {"grid", "binboundary", "reader"};
   }
   return {};
 }
@@ -137,6 +137,8 @@ std::string query_benchmark_filter(const std::string &schema,
       parts.push_back("AirTreeQuery" + schema + "_CDF/.*");
     } else if (q == "binboundary") {
       parts.push_back("AirTreeQuery" + schema + "_BinBoundary/.*");
+    } else if (q == "reader") {
+      parts.push_back("AirTreeQuery" + schema + "_Reader/.*");
     }
   }
   if (parts.empty()) {
@@ -335,7 +337,7 @@ int main(int argc, char *argv[]) {
       ->required();
   query->add_option(
       "-q,--queries", query_list,
-      "Subset: topk,minmax,percentile,cdf,binboundary,grid,boundingbox (must be "
+      "Subset: topk,minmax,percentile,cdf,binboundary,grid,boundingbox,reader (must be "
       "allowed for schema)");
 
   query->callback([&]() {

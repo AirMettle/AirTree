@@ -68,86 +68,47 @@ void serialize_2DxF(const TLETrieNode_2D *node, std::vector<char> &buffer,
 std::unique_ptr<TrieNode_16_Level1>
 deserialize_2DxF_l1(const std::vector<char> &buffer, size_t &offset,
                     int level [[maybe_unused]]) {
+  uint64_t mask[(BINS_256 + 63) / 64];
   auto node = std::make_unique<TrieNode_16_Level1>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_256 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, compact_array.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (compact_array.get(i)) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
+  if (!readPopulatedMask(buffer, offset, mask, BINS_256)
+      || !deserializeCounts(buffer, offset, mask, BINS_256, node->counts)) {
+    return nullptr;
   }
-
   return node;
 }
 
 std::unique_ptr<TrieNode_16>
 deserialize_2DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
                     bool recursive) {
+  uint64_t mask[(BINS_256 + 63) / 64];
   auto node = std::make_unique<TrieNode_16>();
-  // deserialize compact BooleanArray
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_256 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-  // Convert compact BooleanArray to populated bitset
-  for (size_t i = 0; i < BINS_256; i++) {
-    node->populated[i] = compact_array.get(i);
+  if (!readPopulatedMask(buffer, offset, mask, BINS_256)
+      || !deserializeCounts(buffer, offset, mask, BINS_256, node->counts)) {
+    return nullptr;
   }
-
-  // Deserialize count for buckets with populated bit set
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (node->populated[i]) {
-      node->counts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
-
+  setPopulated(node->populated, mask);
   if (level == 1) {
     return node;
   }
-
   if (!recursive)
     return node;
-
-  // Recursively deserialize child nodes
   for (size_t i = 0; i < BINS_256; i++) {
     if (node->populated[i]) {
       node->nodes[i] = deserialize_2DxF_l1(buffer, offset, level);
     }
   }
-
   return node;
 }
 
-std::unique_ptr<TLETrieNode_2D> deserialize_2DxF(std::vector<char> buffer,
+std::unique_ptr<TLETrieNode_2D> deserialize_2DxF(const std::vector<char> &buffer,
                                                  size_t &offset) {
+  uint64_t mask[(BINS_64 + 63) / 64];
   auto node = std::make_unique<TLETrieNode_2D>();
-
-  std::vector<uint64_t> compact_arr_values =
-      deserializeCompactBooleanArray(buffer, offset, BINS_64 / 64);
-  BooleanArray compact_array = BooleanArray(compact_arr_values);
-
-  for (int i = 0; i < BINS_64; i++) {
-    node->populated[i] = compact_array.get(i);
+  if (!readPopulatedMask(buffer, offset, mask, BINS_64)
+      || !deserializeCounts(buffer, offset, mask, BINS_64, node->TLEcounts)) {
+    return nullptr;
   }
-
-  auto counts = deserializeCounts(buffer, offset, node->populated.count());
-  auto count_idx = 0;
-  for (int i = 0; i < BINS_64; i++) {
-    if (node->populated[i]) {
-      node->TLEcounts[i] = counts[count_idx];
-      count_idx++;
-    }
-  }
-
+  setPopulated(node->populated, mask);
   for (int i = 0; i < BINS_64; i++) {
     if (node->populated[i]) {
       int nDims = getNumDims2D(i);
@@ -166,11 +127,9 @@ std::unique_ptr<TLETrieNode_2D> deserialize_2DxF(std::vector<char> buffer,
       }
     }
   }
-
   if (!verifyEndOfFileMarker(buffer, offset)) {
     SPDLOG_LOGGER_ERROR(logger(), "End of file marker not found");
     return node;
   }
-
   return node;
 }
