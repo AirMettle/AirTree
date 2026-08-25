@@ -12,9 +12,7 @@ namespace {
 using airtree::bench::query::QueryFixtureBase;
 using airtree::query::bin_boundary::BinBoundary;
 
-// BinBoundary is single-use (the object owns the buffer and walks it once), so
-// construction + generateBinBoundaries() are timed together. This is the path
-// that produces native bin bounds for export and for bound-carrying answers.
+// BinBoundary is single-use, so construction and generation are timed together.
 #define DEFINE_BINBOUNDARY_SUITE(SchemaClass)                                  \
   class SchemaClass : public QueryFixtureBase {};                              \
                                                                                \

@@ -48,9 +48,7 @@ protected:
     Percentile_p90 = 8,
     Grid_steps8 = 9,
     BoundingBox_mid50 = 10,
-    // Added for service-shaped workloads (many small buffers, one query each):
-    // "warm" = object built once, call timed; "cold" = construction + call timed per iteration;
-    // "ctor" = construction only. The 1D constructors build the full 2^bits bin table.
+    // ctor = construction only, cold = construction + call per iteration
     Percentile_p99 = 11,
     Percentile_ctor = 12,
     Percentile_cold_p50 = 13,

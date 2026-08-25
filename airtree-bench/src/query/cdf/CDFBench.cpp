@@ -10,8 +10,7 @@ namespace {
 
 using airtree::bench::query::QueryFixtureBase;
 
-// The CDF is evaluated at the buffer's own median, computed untimed in SetUp, so the
-// probed value is always inside the populated range whatever the input file.
+// Probes the CDF at the buffer's own median (computed untimed in SetUp).
 class CDFFixtureBase : public QueryFixtureBase {
 protected:
   double p50_ = 0.0;

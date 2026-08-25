@@ -12,9 +12,7 @@ namespace {
 using airtree::bench::BenchPaths;
 using airtree::bench::query::QueryFixtureBase;
 
-// Merge fixtures read BenchPaths::merge_buffers (two or more buffers of one schema, loaded
-// untimed in Main). Merge_pair times mergeAirTree(a, b); Merge_fold times the pairwise fold
-// over all N buffers — the cost of answering a range query over N stored windows today.
+// Inputs come from BenchPaths::merge_buffers; Merge_fold is the pairwise fold over all N.
 class AirTreeMerge : public QueryFixtureBase {
 protected:
   const std::vector<std::vector<char>> *buffers_ = nullptr;
