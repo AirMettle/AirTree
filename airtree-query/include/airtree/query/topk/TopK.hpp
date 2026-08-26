@@ -62,17 +62,16 @@ public:
   TopKResultVector getTopK(double k);
 
 private:
-  template <typename NodeType> TopKResultVector fetchTopK(double k);
+  TopKResultVector fetchTopK(double k);
 
   uint16_t dims_;
   uint16_t bit_length_;
   uint64_t bin_count_;
-  AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
   airtree::core::common::AirTreeHeader header_;
   std::vector<airtree::query::meta::PopulatedBin> populated_;
-  bool populated_ready_ = false;
-  template <typename NodeType> const std::vector<airtree::query::meta::PopulatedBin> &populatedBins();
+  bool populated_ready_ = false; // a supported 1D configuration; bins and trie_count_ are set
+  uint32_t trie_count_ = 0; // finite, non-zero observations (the root counts)
 };
 
 } // namespace airtree::query::topk
