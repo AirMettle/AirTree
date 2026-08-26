@@ -10,7 +10,6 @@
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -903,12 +902,6 @@ BinBoundary::BinBoundary(std::vector<char> buffer) {
   auto header = airtree::core::common::deserializeHeader(buffer_);
   header_ = std::make_unique<airtree::core::common::AirTreeHeader>(header);
   offset_ = header.header_length;
-
-  auto params = airtree::core::common::configParams(header);
-  std::cout << "Header Dims: " << static_cast<int>(params.dims) << std::endl;
-  std::cout << "Header Config: 0x" << std::hex
-            << static_cast<int>(static_cast<uint8_t>(header.config))
-            << std::dec << std::endl;
 
   specialCounts_ = std::make_unique<SpecialCounts>();
 
