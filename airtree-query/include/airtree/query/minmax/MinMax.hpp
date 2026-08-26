@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_MINMAX_MINMAX_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_MINMAX_MINMAX_HPP
 
+#include <span>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -46,7 +47,7 @@ using MinMaxResultVector = std::vector<MinMaxResult>;
  */
 class MinMax {
 public:
-  MinMax(std::vector<char> buffer);
+  MinMax(std::span<const char> buffer);
   /**
    * Get the min value from the trie.
    * @return The calculated min value. Returns -inf if the min cannot be

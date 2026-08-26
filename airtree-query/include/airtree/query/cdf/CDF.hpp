@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_CDF__CDF_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_CDF__CDF_HPP
 
+#include <span>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <cstdint>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -14,7 +15,7 @@ namespace airtree::query::cdf {
 
 class CDF {
 public:
-  CDF(std::vector<char> &buffer);
+  CDF(std::span<const char> buffer);
 
   // Returns the cumulative distribution function (CDF) value for the histogram
   [[nodiscard]] double getCDF(double value, bool interpolate = false);

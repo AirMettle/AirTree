@@ -22,7 +22,7 @@ using namespace airtree::core::io;
 // Sentinel for special values not in the Trie
 constexpr uint32_t SPECIAL_VAL_REP = std::numeric_limits<uint32_t>::max();
 
-TopK::TopK(std::vector<char> buffer) {
+TopK::TopK(std::span<const char> buffer) {
 
   AirTreeReader reader;
   reader.read(buffer);

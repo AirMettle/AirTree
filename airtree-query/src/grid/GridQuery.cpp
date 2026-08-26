@@ -798,7 +798,7 @@ std::vector<GridCell> GridResult::materializeRows() const {
 // ---------------------------------------------------------------------------
 // GridQuery.
 // ---------------------------------------------------------------------------
-GridQuery::GridQuery(std::vector<char> buffer) {
+GridQuery::GridQuery(std::span<const char> buffer) {
   AirTreeReader reader;
   reader.read(buffer);
   dims_ = reader.getDims();

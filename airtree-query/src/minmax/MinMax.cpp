@@ -15,7 +15,7 @@
 using namespace airtree::query::minmax;
 using namespace airtree::core::io;
 
-MinMax::MinMax(std::vector<char> buffer) {
+MinMax::MinMax(std::span<const char> buffer) {
 
   AirTreeReader reader;
   reader.read(buffer);

@@ -4,6 +4,7 @@
 #define AIRTREE_CORE_SERDES_COUNT_SER_HPP
 
 
+#include <span>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -12,10 +13,10 @@
 [[nodiscard]] std::vector<char> serializeCounts(const uint32_t counts[],
                                                 size_t len);
 [[nodiscard]] std::vector<uint32_t>
-deserializeCounts(const std::vector<char> &buffer, size_t &offset, size_t len);
+deserializeCounts(std::span<const char> buffer, size_t &offset, size_t len);
 
 // One count per set mask bit, ascending, into counts[bit]; false on underflow or a bit >= bins.
-[[nodiscard]] bool deserializeCounts(const std::vector<char> &buffer,
+[[nodiscard]] bool deserializeCounts(std::span<const char> buffer,
                                      size_t &offset, const uint64_t *mask,
                                      size_t bins, uint32_t *counts);
 
@@ -25,7 +26,7 @@ void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
                      std::vector<char> &out);
 
 // Advances past a count payload without decoding it; false on underflow.
-[[nodiscard]] bool skipCounts(const std::vector<char> &buffer, size_t &offset,
+[[nodiscard]] bool skipCounts(std::span<const char> buffer, size_t &offset,
                               const uint64_t *mask, size_t bins);
 
 #endif // AIRTREE_CORE_SERDES_COUNT_SER_HPP

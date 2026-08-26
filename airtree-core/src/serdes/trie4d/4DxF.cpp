@@ -14,7 +14,7 @@ using namespace airtree::core;
 using namespace airtree::core::common;
 
 std::pair<std::unique_ptr<TLE_4D_4x8>, airtree::core::common::AirTreeHeader>
-processBuffer_4DxF(const std::vector<char> &buffer) {
+processBuffer_4DxF(std::span<const char> buffer) {
 
   auto header = airtree::core::common::deserializeHeader(buffer);
   size_t offset = header.header_length;
@@ -84,7 +84,7 @@ void serialize_4DxF_l1(const Node4D_4x8_l1 *node, std::vector<char> &buffer,
   }
 }
 
-std::unique_ptr<TLE_4D_4x8> deserialize_4DxF(const std::vector<char> &buffer,
+std::unique_ptr<TLE_4D_4x8> deserialize_4DxF(std::span<const char> buffer,
                                              size_t &offset) {
   auto node = std::make_unique<TLE_4D_4x8>();
   uint64_t mask[(BINS_4096 + 63) / 64];
@@ -139,7 +139,7 @@ std::unique_ptr<TLE_4D_4x8> deserialize_4DxF(const std::vector<char> &buffer,
 
 
 std::unique_ptr<Node4D_4x8_l0>
-deserialize_4DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_4DxF_l0(std::span<const char> buffer, size_t &offset, int level,
                     bool recursively) {
   auto node = std::make_unique<Node4D_4x8_l0>();
   uint64_t mask[(BINS_256 + 63) / 64];
@@ -168,7 +168,7 @@ deserialize_4DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
 }
 
 std::unique_ptr<Node4D_4x8_l1>
-deserialize_4DxF_l1(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_4DxF_l1(std::span<const char> buffer, size_t &offset, int level,
                     bool recursively) {
   auto node = std::make_unique<Node4D_4x8_l1>();
   uint64_t mask[(BINS_256 + 63) / 64];
@@ -197,7 +197,7 @@ deserialize_4DxF_l1(const std::vector<char> &buffer, size_t &offset, int level,
 }
 
 std::unique_ptr<TrieNode_16>
-deserialize_4DxF_l2(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_4DxF_l2(std::span<const char> buffer, size_t &offset, int level,
                     bool recursively) {
   auto node = std::make_unique<TrieNode_16>();
   uint64_t mask[(BINS_256 + 63) / 64];
@@ -226,7 +226,7 @@ deserialize_4DxF_l2(const std::vector<char> &buffer, size_t &offset, int level,
 }
 
 std::unique_ptr<TrieNode_16_Level1>
-deserialize_4DxF_l3(const std::vector<char> &buffer, size_t &offset,
+deserialize_4DxF_l3(std::span<const char> buffer, size_t &offset,
                     int level [[maybe_unused]]) {
   auto node = std::make_unique<TrieNode_16_Level1>();
   uint64_t mask[(BINS_256 + 63) / 64];

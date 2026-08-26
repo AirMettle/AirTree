@@ -14,7 +14,7 @@ using namespace airtree::core;
 using namespace airtree::core::common;
 
 std::pair<std::unique_ptr<TLE_3D_3x10>, airtree::core::common::AirTreeHeader>
-processBuffer_3DxP(const std::vector<char> &buffer) {
+processBuffer_3DxP(std::span<const char> buffer) {
 
   auto header = airtree::core::common::deserializeHeader(buffer);
   size_t offset = header.header_length;
@@ -90,7 +90,7 @@ void serialize_3DxP(const TLE_3D_3x10 *node, std::vector<char> &buffer,
 }
 
 std::unique_ptr<Node3D_3x10_l2>
-deserialize_3DxP_l2(const std::vector<char> &buffer, size_t &offset) {
+deserialize_3DxP_l2(std::span<const char> buffer, size_t &offset) {
   auto node = std::make_unique<Node3D_3x10_l2>();
   uint64_t mask[(BINS_1024 + 63) / 64];
   if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
@@ -104,7 +104,7 @@ deserialize_3DxP_l2(const std::vector<char> &buffer, size_t &offset) {
 
 
 std::unique_ptr<Node3D_3x10_l1>
-deserialize_3DxP_l1(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_3DxP_l1(std::span<const char> buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<Node3D_3x10_l1>();
   uint64_t mask[(BINS_1024 + 63) / 64];
@@ -132,7 +132,7 @@ deserialize_3DxP_l1(const std::vector<char> &buffer, size_t &offset, int level,
 }
 
 std::unique_ptr<Node3D_3x10_l0>
-deserialize_3DxP_l0(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_3DxP_l0(std::span<const char> buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<Node3D_3x10_l0>();
   uint64_t mask[(BINS_1024 + 63) / 64];
@@ -160,7 +160,7 @@ deserialize_3DxP_l0(const std::vector<char> &buffer, size_t &offset, int level,
 }
 
 
-std::unique_ptr<TLE_3D_3x10> deserialize_3DxP(const std::vector<char> &buffer,
+std::unique_ptr<TLE_3D_3x10> deserialize_3DxP(std::span<const char> buffer,
                                               size_t &offset) {
   auto node = std::make_unique<TLE_3D_3x10>();
   uint64_t mask[(BINS_512 + 63) / 64];

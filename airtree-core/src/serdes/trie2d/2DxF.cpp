@@ -14,7 +14,7 @@ using namespace airtree::core;
 using namespace airtree::core::common;
 
 std::pair<std::unique_ptr<TLETrieNode_2D>, airtree::core::common::AirTreeHeader>
-processBuffer_2DxF(const std::vector<char> &buffer) {
+processBuffer_2DxF(std::span<const char> buffer) {
 
   auto header = airtree::core::common::deserializeHeader(buffer);
   size_t offset = header.header_length;
@@ -52,7 +52,7 @@ void serialize_2DxF(const TLETrieNode_2D *node, std::vector<char> &buffer,
 }
 
 std::unique_ptr<TrieNode_16_Level1>
-deserialize_2DxF_l1(const std::vector<char> &buffer, size_t &offset,
+deserialize_2DxF_l1(std::span<const char> buffer, size_t &offset,
                     int level [[maybe_unused]]) {
   uint64_t mask[(BINS_256 + 63) / 64];
   auto node = std::make_unique<TrieNode_16_Level1>();
@@ -64,7 +64,7 @@ deserialize_2DxF_l1(const std::vector<char> &buffer, size_t &offset,
 }
 
 std::unique_ptr<TrieNode_16>
-deserialize_2DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_2DxF_l0(std::span<const char> buffer, size_t &offset, int level,
                     bool recursive) {
   uint64_t mask[(BINS_256 + 63) / 64];
   auto node = std::make_unique<TrieNode_16>();
@@ -86,7 +86,7 @@ deserialize_2DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
   return node;
 }
 
-std::unique_ptr<TLETrieNode_2D> deserialize_2DxF(const std::vector<char> &buffer,
+std::unique_ptr<TLETrieNode_2D> deserialize_2DxF(std::span<const char> buffer,
                                                  size_t &offset) {
   uint64_t mask[(BINS_64 + 63) / 64];
   auto node = std::make_unique<TLETrieNode_2D>();

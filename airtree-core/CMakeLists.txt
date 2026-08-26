@@ -81,6 +81,7 @@ add_executable(ut_core
     tests/TestHeaderDeserialization.cpp
     tests/TestReconstructEquivalence.cpp
     tests/TestCountCodec.cpp
+    tests/TestInsert2D.cpp
     tests/TestInterleave.cpp
     tests/TestReconstuctionOrignalFP.cpp
     tests/TestSerialization.cpp

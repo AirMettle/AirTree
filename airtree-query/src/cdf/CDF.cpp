@@ -11,7 +11,7 @@
 using namespace airtree::query::cdf;
 using namespace airtree::core::io;
 
-CDF::CDF(std::vector<char> &buffer) {
+CDF::CDF(std::span<const char> buffer) {
   AirTreeReader reader;
   reader.read(buffer);
 

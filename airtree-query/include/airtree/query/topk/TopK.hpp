@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_TOPK_TOPK_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_TOPK_TOPK_HPP
 
+#include <span>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/common/AirTreeType.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -51,7 +52,7 @@ using TopKResultVector = std::vector<TopKResult>;
  */
 class TopK {
 public:
-  TopK(std::vector<char> buffer);
+  TopK(std::span<const char> buffer);
 
   /**
    * Get the top-k elements from the trie.

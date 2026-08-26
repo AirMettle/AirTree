@@ -3,6 +3,7 @@
 #ifndef AIRTREE_CORE_SERDES_BOOLEANARRAYSER_HPP
 #define AIRTREE_CORE_SERDES_BOOLEANARRAYSER_HPP
 
+#include <span>
 #include <bit>
 #include <bitset>
 #include <cstddef>
@@ -14,12 +15,12 @@
 [[nodiscard]] std::vector<char>
 serializeCompactBooleanArray(const BooleanArray &array);
 [[nodiscard]] std::vector<uint64_t>
-deserializeCompactBooleanArray(const std::vector<char> &buffer, size_t &offset,
+deserializeCompactBooleanArray(std::span<const char> buffer, size_t &offset,
                                std::size_t len);
 
 
 // Populated-mask words for `bins` slots, as written by serializeCompactBooleanArray; false on underflow.
-[[nodiscard]] bool readPopulatedMask(const std::vector<char> &buffer,
+[[nodiscard]] bool readPopulatedMask(std::span<const char> buffer,
                                      size_t &offset, uint64_t *words,
                                      std::size_t bins);
 

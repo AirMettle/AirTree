@@ -12,7 +12,7 @@
 using namespace airtree::query::bounding_box;
 using namespace airtree::core::io;
 
-BoundingBox::BoundingBox(std::vector<char> buffer) {
+BoundingBox::BoundingBox(std::span<const char> buffer) {
   AirTreeReader reader;
   reader.read(buffer);
 

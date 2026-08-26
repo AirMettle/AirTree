@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 
+#include <span>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -34,7 +35,7 @@ struct PercentileResult {
 
 class Percentile {
 public:
-  Percentile(std::vector<char> buffer);
+  Percentile(std::span<const char> buffer);
   /**
    * Get the percentile value from the trie.
    * @param percentile The percentile to calculate (0-100).

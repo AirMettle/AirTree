@@ -157,7 +157,7 @@ void serializeHeader(const AirTreeHeader &header,
   writeLE32(buffer, 0);
 }
 
-AirTreeHeader deserializeHeader(const std::vector<char> &buffer) {
+AirTreeHeader deserializeHeader(std::span<const char> buffer) {
   if (buffer.size() < kHeaderLength)
     throw std::runtime_error(
         "Buffer too small to contain AirTree header");

@@ -14,7 +14,7 @@ using namespace airtree::core;
 using namespace airtree::core::common;
 
 std::pair<std::unique_ptr<TLE_3D_888>, airtree::core::common::AirTreeHeader>
-processBuffer_3DxF(const std::vector<char> &buffer) {
+processBuffer_3DxF(std::span<const char> buffer) {
 
   auto header = airtree::core::common::deserializeHeader(buffer);
   size_t offset = header.header_length;
@@ -68,7 +68,7 @@ void serialize_3DxF(const TLE_3D_888 *node, std::vector<char> &buffer,
 
 
 std::unique_ptr<TrieNode_16_Level1>
-deserialize_3DxF_l2(const std::vector<char> &buffer, size_t &offset,
+deserialize_3DxF_l2(std::span<const char> buffer, size_t &offset,
                     int level [[maybe_unused]]) {
   auto node = std::make_unique<TrieNode_16_Level1>();
   uint64_t mask[(BINS_256 + 63) / 64];
@@ -81,7 +81,7 @@ deserialize_3DxF_l2(const std::vector<char> &buffer, size_t &offset,
 }
 
 std::unique_ptr<TrieNode_16>
-deserialize_3DxF_l1(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_3DxF_l1(std::span<const char> buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<TrieNode_16>();
   uint64_t mask[(BINS_256 + 63) / 64];
@@ -109,7 +109,7 @@ deserialize_3DxF_l1(const std::vector<char> &buffer, size_t &offset, int level,
 }
 
 std::unique_ptr<Node3D_888_l0>
-deserialize_3DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
+deserialize_3DxF_l0(std::span<const char> buffer, size_t &offset, int level,
                     bool recursive) {
   auto node = std::make_unique<Node3D_888_l0>();
   uint64_t mask[(BINS_256 + 63) / 64];
@@ -136,7 +136,7 @@ deserialize_3DxF_l0(const std::vector<char> &buffer, size_t &offset, int level,
   return node;
 }
 
-std::unique_ptr<TLE_3D_888> deserialize_3DxF(const std::vector<char> &buffer,
+std::unique_ptr<TLE_3D_888> deserialize_3DxF(std::span<const char> buffer,
                                              size_t &offset) {
   auto node = std::make_unique<TLE_3D_888>();
   uint64_t mask[(BINS_512 + 63) / 64];

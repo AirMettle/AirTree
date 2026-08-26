@@ -57,7 +57,7 @@ std::vector<char> serializeCounts(const uint32_t counts[], size_t len) {
   return buffer;
 }
 
-std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
+std::vector<uint32_t> deserializeCounts(std::span<const char> buffer,
                                         size_t &offset, size_t len) {
   if (offset >= buffer.size()) {
     SPDLOG_LOGGER_ERROR(
@@ -103,7 +103,7 @@ std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
 
   return counts;
 }
-bool deserializeCounts(const std::vector<char> &buffer, size_t &offset,
+bool deserializeCounts(std::span<const char> buffer, size_t &offset,
                        const uint64_t *mask, size_t bins, uint32_t *counts) {
   const size_t nWords = (bins + 63) / 64;
   size_t populated = 0;
@@ -200,7 +200,7 @@ void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
     *p++ = static_cast<char>(bitBuffer & 0xFF);
 }
 
-bool skipCounts(const std::vector<char> &buffer, size_t &offset,
+bool skipCounts(std::span<const char> buffer, size_t &offset,
                 const uint64_t *mask, size_t bins) {
   size_t populated = 0;
   for (size_t w = 0; w < (bins + 63) / 64; ++w)

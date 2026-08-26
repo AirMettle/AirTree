@@ -62,7 +62,7 @@ void serialize_1DxP_l2(const TrieNode_20_Level2 *node,
 }
 
 std::unique_ptr<TrieNode_20_Level1>
-deserialize_1DxP_l1(const std::vector<char> &buffer, size_t &offset,
+deserialize_1DxP_l1(std::span<const char> buffer, size_t &offset,
                     bool recursive) {
   uint64_t mask[(BINS_64 + 63) / 64];
   auto node = std::make_unique<TrieNode_20_Level1>();
@@ -87,7 +87,7 @@ deserialize_1DxP_l1(const std::vector<char> &buffer, size_t &offset,
 }
 
 std::unique_ptr<TrieNode_20>
-deserialize_1DxP(const std::vector<char> &buffer, size_t &offset) {
+deserialize_1DxP(std::span<const char> buffer, size_t &offset) {
   uint64_t mask[(BINS_256 + 63) / 64];
   auto node = std::make_unique<TrieNode_20>();
   if (!readPopulatedMask(buffer, offset, mask, BINS_256)
@@ -116,7 +116,7 @@ deserialize_1DxP(const std::vector<char> &buffer, size_t &offset) {
 }
 
 std::unique_ptr<TrieNode_20_Level2>
-deserialize_1DxP_l2(const std::vector<char> &buffer, size_t &offset) {
+deserialize_1DxP_l2(std::span<const char> buffer, size_t &offset) {
   uint64_t mask[(BINS_64 + 63) / 64];
   auto node = std::make_unique<TrieNode_20_Level2>();
   if (!readPopulatedMask(buffer, offset, mask, BINS_64)
@@ -127,7 +127,7 @@ deserialize_1DxP_l2(const std::vector<char> &buffer, size_t &offset) {
 }
 
 std::pair<std::unique_ptr<TrieNode_20>, airtree::core::common::AirTreeHeader>
-processBuffer_1DxP(const std::vector<char> &buffer) {
+processBuffer_1DxP(std::span<const char> buffer) {
   auto header = airtree::core::common::deserializeHeader(buffer);
   size_t offset = header.header_length;
 

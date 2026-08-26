@@ -2,6 +2,7 @@
 
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BOUNDING_BOX__BOUNDING_BOX_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BOUNDING_BOX__BOUNDING_BOX_HPP
+#include <span>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/meta/Histogram.hpp>
 #include <cstddef>
@@ -184,7 +185,7 @@ using BatchBoundingBoxResult3D = std::vector<BoxCoordinate3DResultPair>;
 */
 class BoundingBox {
 public:
-  BoundingBox(std::vector<char> buffer);
+  BoundingBox(std::span<const char> buffer);
 
   BoxCoordinate2DResultPair getCounts(BoundingBoxCoordinate2D box) const;
   BoxCoordinate3DResultPair getCounts(BoundingBoxCoordinate3D box) const;

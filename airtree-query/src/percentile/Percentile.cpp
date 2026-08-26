@@ -15,7 +15,7 @@
 using namespace airtree::query::percentile;
 using namespace airtree::core::io;
 
-Percentile::Percentile(std::vector<char> buffer) {
+Percentile::Percentile(std::span<const char> buffer) {
 
   AirTreeReader reader;
   reader.read(buffer);

@@ -19,7 +19,7 @@ std::vector<char> serializeCompactBooleanArray(const BooleanArray &array) {
 }
 
 std::vector<uint64_t>
-deserializeCompactBooleanArray(const std::vector<char> &buffer, size_t &offset,
+deserializeCompactBooleanArray(std::span<const char> buffer, size_t &offset,
                                std::size_t len) {
   std::vector<uint64_t> compact_arr_values = std::vector<uint64_t>();
 
@@ -42,7 +42,7 @@ deserializeCompactBooleanArray(const std::vector<char> &buffer, size_t &offset,
   }
   return compact_arr_values;
 }
-bool readPopulatedMask(const std::vector<char> &buffer, size_t &offset,
+bool readPopulatedMask(std::span<const char> buffer, size_t &offset,
                        uint64_t *words, std::size_t bins) {
   const std::size_t n_words = (bins + 63) / 64;
   if (offset + n_words * sizeof(uint64_t) > buffer.size()) {

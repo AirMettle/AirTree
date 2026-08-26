@@ -138,47 +138,8 @@ std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
     dispatchFPHArray(array2, [&](const auto *vals2) {
       for (int i = 0; i < array1.length; ++i) {
 
-        std::pair<TLE, unsigned int> input_1 =
-            internal_8bit(vals1[i], default_mode);
-        std::pair<TLE, unsigned int> input_2 =
-            internal_8bit(vals2[i], default_mode);
-
-        TLE tle1 = input_1.first;
-        TLE tle2 = input_2.first;
-
-        unsigned int internalFPHNumber1 = input_1.second;
-        unsigned int internalFPHNumber2 = input_2.second;
-
-        unsigned int combinedTLE = (tle1.encoding << 3) | tle2.encoding;
-
-        // Check special conditions and set ndims accordingly
-        unsigned int isTle1Special = update_special_counts(tle1, specialCounts);
-        unsigned int isTle2Special = update_special_counts(tle2, specialCounts);
-
-        unsigned int ndims = (~((isTle1Special << 1) | isTle2Special)) & 0x3;
-
-        unsigned int combined = 0;
-
-        switch (ndims) {
-        case 0:
-          combined = 0; // No need to compute internal numbers
-          break;
-        case 1:
-          combined = internalFPHNumber2;
-          break;
-        case 2:
-          combined = internalFPHNumber1;
-          break;
-        case 3:
-          combined =
-              combine_chunks_8b_temp(internalFPHNumber1, internalFPHNumber2);
-          break;
-        default:
-          SPDLOG_LOGGER_ERROR(logger(), "Invalid value for ndims");
-          break;
-        }
-        insertintoTLETrie_2D_88(
-            root.get(), combined, combinedTLE, ndims, curr_trie_size);
+        createAndInsert_2DxF(root.get(), vals1[i], vals2[i], curr_trie_size,
+                             specialCounts, default_mode);
         if (enable_threshold_2D && curr_trie_size > threshold_2D) {
           SPDLOG_LOGGER_ERROR(logger(),
                               "Trie size exceeded threshold limit of {}.",

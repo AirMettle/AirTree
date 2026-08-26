@@ -4,11 +4,12 @@
 #define AIRTREE_CORE_SERDES_EOF_HPP
 
 
+#include <span>
 #include <cstddef>
 #include <vector>
 
 
-[[nodiscard]] bool verifyEndOfFileMarker(const std::vector<char> &buffer,
+[[nodiscard]] bool verifyEndOfFileMarker(std::span<const char> buffer,
                                          size_t &offset);
 
 

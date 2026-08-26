@@ -27,7 +27,7 @@ template <size_t N> struct Populated : std::bitset<N> {
 };
 
 template <size_t N>
-[[nodiscard]] Populated<N> deserializeBitset(const std::vector<char> &buffer,
+[[nodiscard]] Populated<N> deserializeBitset(std::span<const char> buffer,
                                              size_t &offset, int /*len*/) {
   Populated<N> populated;
   if (!readPopulatedMask(buffer, offset, populated.words, N)) {
@@ -39,7 +39,7 @@ template <size_t N>
 
 template <size_t N>
 [[nodiscard]] std::vector<uint32_t>
-deserializeCountsToOriginalLen(const std::vector<char> &buffer, size_t &offset,
+deserializeCountsToOriginalLen(std::span<const char> buffer, size_t &offset,
                                const Populated<N> &populated) {
   std::vector<uint32_t> counts(N, 0);
   if (!deserializeCounts(buffer, offset, populated.words, N, counts.data())) {
@@ -891,14 +891,14 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
   return binBoundaries;
 }
 
-BinBoundary::BinBoundary(std::vector<char> buffer) {
+BinBoundary::BinBoundary(std::span<const char> buffer) {
   // determine the config type from the buffer and check if it supported
   if (buffer.size() == 0) {
     SPDLOG_ERROR("Buffer is empty");
     return;
   }
 
-  buffer_ = std::move(buffer);
+  buffer_.assign(buffer.begin(), buffer.end());
   auto header = airtree::core::common::deserializeHeader(buffer_);
   header_ = std::make_unique<airtree::core::common::AirTreeHeader>(header);
   offset_ = header.header_length;
