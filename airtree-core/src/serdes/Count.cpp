@@ -170,11 +170,19 @@ void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
                      std::vector<char> &out) {
   const size_t nWords = (bins + 63) / 64;
   uint32_t maxCount = 0;
-  for (size_t w = 0; w < nWords; ++w)
-    for (uint64_t m = mask[w]; m != 0; m &= m - 1)
+  size_t populated = 0;
+  for (size_t w = 0; w < nWords; ++w) {
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
       maxCount = std::max(maxCount, counts[w * 64 + std::countr_zero(m)]);
+      ++populated;
+    }
+  }
   const int minBits = minimumBits(maxCount);
-  out.push_back(static_cast<char>(minBits));
+  // Exact payload size is known up front: one width byte, then ceil(populated * minBits / 8).
+  const size_t start = out.size();
+  out.resize(start + 1 + (populated * static_cast<size_t>(minBits) + 7) / 8);
+  char *p = out.data() + start;
+  *p++ = static_cast<char>(minBits);
   uint64_t bitBuffer = 0;
   int bitCount = 0;
   for (size_t w = 0; w < nWords; ++w) {
@@ -182,14 +190,14 @@ void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
       bitBuffer |= static_cast<uint64_t>(counts[w * 64 + std::countr_zero(m)]) << bitCount;
       bitCount += minBits;
       while (bitCount >= 8) {
-        out.push_back(static_cast<char>(bitBuffer & 0xFF));
+        *p++ = static_cast<char>(bitBuffer & 0xFF);
         bitBuffer >>= 8;
         bitCount -= 8;
       }
     }
   }
   if (bitCount > 0)
-    out.push_back(static_cast<char>(bitBuffer & 0xFF));
+    *p++ = static_cast<char>(bitBuffer & 0xFF);
 }
 
 bool skipCounts(const std::vector<char> &buffer, size_t &offset,

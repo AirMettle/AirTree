@@ -3,27 +3,16 @@
 #include <airtree/core/serdes/ND.hpp>
 #include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/core/serdes/Count.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie1d/1DxF.hpp>
 
 
 void serializeTrieNode_16_ND(const TrieNode_16 *node, std::vector<char> &buffer,
                              bool recursively) {
   // Convert populated bitset to compact BooleanArray
-  BooleanArray compact_array = BooleanArray(BINS_256 / 64);
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (node->populated[i]) {
-      compact_array.set(i, true);
-    }
-  }
-
-  // Store compact array to buffer
-  auto compact_array_buffer = serializeCompactBooleanArray(compact_array);
-  buffer.insert(
-      buffer.end(), compact_array_buffer.begin(), compact_array_buffer.end());
-
-  // Store counts
-  auto counts_buffer = serializeCounts(node->counts, BINS_256);
-  buffer.insert(buffer.end(), counts_buffer.begin(), counts_buffer.end());
+  uint64_t mask[(BINS_256 + 63) / 64];
+  maskFromBitset(node->populated, mask);
+  writeNode(mask, BINS_256, node->counts, buffer);
 
   if (!recursively)
     return;

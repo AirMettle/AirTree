@@ -31,6 +31,7 @@ set(SOURCE_FILES
     ${SRC_DIR}/serdes/Count.cpp
     ${SRC_DIR}/serdes/EOF.cpp
     ${SRC_DIR}/serdes/ND.cpp
+    ${SRC_DIR}/serdes/Node.cpp
     ${SRC_DIR}/serdes/trie1d/1DxF.cpp
     ${SRC_DIR}/serdes/trie1d/1DxP.cpp
     ${SRC_DIR}/serdes/trie1d/1DxT.cpp

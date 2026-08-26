@@ -3,6 +3,7 @@
 #include <airtree/core/serdes/trie4d/4DxP.hpp>
 #include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/core/serdes/Count.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/ND.hpp>
 #include <airtree/core/serdes/EOF.hpp>
 #include <airtree/core/common/NDims.hpp>
@@ -33,40 +34,16 @@ processBuffer_4DxP(const std::vector<char> &buffer) {
 }
 
 void serialize_4DxP_l3(const Node4D_4x10_l3 *node, std::vector<char> &buffer) {
-  BooleanArray compact_array = BooleanArray(BINS_1024 / 64);
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      compact_array.set(i, true);
-    }
-  }
-
-  // Store compact array to buffer
-  auto compact_array_buffer = serializeCompactBooleanArray(compact_array);
-  buffer.insert(
-      buffer.end(), compact_array_buffer.begin(), compact_array_buffer.end());
-
-  // Store count for buckets with populated bit set using minBits
-  auto counts_buffer = serializeCounts(node->counts, BINS_1024);
-  buffer.insert(buffer.end(), counts_buffer.begin(), counts_buffer.end());
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  maskFromBitset(node->populated, mask);
+  writeNode(mask, BINS_1024, node->counts, buffer);
 }
 
 void serialize_4DxP_l2(const Node4D_4x10_l2 *node, std::vector<char> &buffer,
                        bool recursive) {
-  BooleanArray compact_array = BooleanArray(BINS_1024 / 64);
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      compact_array.set(i, true);
-    }
-  }
-
-  // Store compact array to buffer
-  auto compact_array_buffer = serializeCompactBooleanArray(compact_array);
-  buffer.insert(
-      buffer.end(), compact_array_buffer.begin(), compact_array_buffer.end());
-
-  // Store count for buckets with populated bit set using minBits
-  auto counts_buffer = serializeCounts(node->counts, BINS_1024);
-  buffer.insert(buffer.end(), counts_buffer.begin(), counts_buffer.end());
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  maskFromBitset(node->populated, mask);
+  writeNode(mask, BINS_1024, node->counts, buffer);
 
   if (!recursive)
     return;
@@ -80,21 +57,9 @@ void serialize_4DxP_l2(const Node4D_4x10_l2 *node, std::vector<char> &buffer,
 
 void serialize_4DxP_l1(const Node4D_4x10_l1 *node, std::vector<char> &buffer,
                        bool recursive) {
-  BooleanArray compact_array = BooleanArray(BINS_1024 / 64);
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      compact_array.set(i, true);
-    }
-  }
-
-  // Store compact array to buffer
-  auto compact_array_buffer = serializeCompactBooleanArray(compact_array);
-  buffer.insert(
-      buffer.end(), compact_array_buffer.begin(), compact_array_buffer.end());
-
-  // Store count for buckets with populated bit set using minBits
-  auto counts_buffer = serializeCounts(node->counts, BINS_1024);
-  buffer.insert(buffer.end(), counts_buffer.begin(), counts_buffer.end());
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  maskFromBitset(node->populated, mask);
+  writeNode(mask, BINS_1024, node->counts, buffer);
 
   if (!recursive)
     return;
@@ -108,21 +73,9 @@ void serialize_4DxP_l1(const Node4D_4x10_l1 *node, std::vector<char> &buffer,
 
 void serialize_4DxP_l0(const Node4D_4x10_l0 *node, std::vector<char> &buffer,
                        bool recursive) {
-  BooleanArray compact_array = BooleanArray(BINS_1024 / 64);
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      compact_array.set(i, true);
-    }
-  }
-
-  // Store compact array to buffer
-  auto compact_array_buffer = serializeCompactBooleanArray(compact_array);
-  buffer.insert(
-      buffer.end(), compact_array_buffer.begin(), compact_array_buffer.end());
-
-  // Store count for buckets with populated bit set using minBits
-  auto counts_buffer = serializeCounts(node->counts, BINS_1024);
-  buffer.insert(buffer.end(), counts_buffer.begin(), counts_buffer.end());
+  uint64_t mask[(BINS_1024 + 63) / 64];
+  maskFromBitset(node->populated, mask);
+  writeNode(mask, BINS_1024, node->counts, buffer);
 
   if (!recursive)
     return;
@@ -136,21 +89,9 @@ void serialize_4DxP_l0(const Node4D_4x10_l0 *node, std::vector<char> &buffer,
 
 void serialize_4DxP(const TLE_4D_4x10 *node, std::vector<char> &buffer,
                     bool recursive) {
-  BooleanArray compact_array = BooleanArray(BINS_4096 / 64);
-  for (size_t i = 0; i < BINS_4096; i++) {
-    if (node->populated[i]) {
-      compact_array.set(i, true);
-    }
-  }
-
-  // Store compact array to buffer
-  auto compact_array_buffer = serializeCompactBooleanArray(compact_array);
-  buffer.insert(
-      buffer.end(), compact_array_buffer.begin(), compact_array_buffer.end());
-
-  // Store count for buckets with populated bit set using minBits
-  auto counts_buffer = serializeCounts(node->counts, BINS_4096);
-  buffer.insert(buffer.end(), counts_buffer.begin(), counts_buffer.end());
+  uint64_t mask[(BINS_4096 + 63) / 64];
+  maskFromBitset(node->populated, mask);
+  writeNode(mask, BINS_4096, node->counts, buffer);
 
   if (!recursive)
     return;
@@ -162,10 +103,7 @@ void serialize_4DxP(const TLE_4D_4x10 *node, std::vector<char> &buffer,
   }
 
   // add end of file marker
-  int32_t endOfFileMarker = -1;
-  auto marker_bytes = reinterpret_cast<const char *>(&endOfFileMarker);
-  buffer.insert(
-      buffer.end(), marker_bytes, marker_bytes + sizeof(endOfFileMarker));
+  writeEndOfFileMarker(buffer);
 }
 
 std::unique_ptr<TLE_4D_4x10> deserialize_4DxP(const std::vector<char> &buffer,

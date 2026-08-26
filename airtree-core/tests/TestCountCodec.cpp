@@ -2,8 +2,11 @@
 #include <airtree/core/common/BooleanArray.hpp>
 #include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/core/serdes/Count.hpp>
+#include <airtree/core/serdes/EOF.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <gtest/gtest.h>
 
+#include <bitset>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -74,6 +77,65 @@ TEST(CountCodec, RejectsTruncatedPayloadAndOutOfRangeBits) {
   EXPECT_EQ(out[3], 7u);
   EXPECT_EQ(out[63], 1000u);
   EXPECT_EQ(off2, buffer.size());
+}
+
+TEST(CountCodec, WriteNodeMatchesTheLegacyWriters) {
+  std::mt19937_64 rng(20260826);
+  for (size_t bins : {32u, 64u, 256u, 512u, 1024u, 4096u}) {
+    for (int round = 0; round < 100; ++round) {
+      const double density = round == 0 ? 0.0 : std::uniform_real_distribution<double>(0.0, 1.0)(rng);
+      const int width = std::uniform_int_distribution<int>(1, 32)(rng);
+      const uint32_t maxCount = width == 32 ? UINT32_MAX : (1u << width) - 1;
+      std::vector<uint32_t> counts(bins, 0);
+      BooleanArray populated(static_cast<int>((bins + 63) / 64));
+      for (size_t i = 0; i < bins; ++i) {
+        if (std::bernoulli_distribution(density)(rng)) {
+          counts[i] = std::uniform_int_distribution<uint32_t>(1, maxCount)(rng);
+          populated.set(static_cast<int>(i), true);
+        }
+      }
+      std::vector<char> legacy = serializeCompactBooleanArray(populated);
+      auto packed = serializeCounts(counts.data(), bins);
+      legacy.insert(legacy.end(), packed.begin(), packed.end());
+
+      uint64_t mask[4096 / 64];
+      maskFromCounts(counts.data(), bins, mask);
+      std::vector<char> out(3, 'x'); // appends after whatever is already there
+      writeNode(mask, bins, counts.data(), out);
+      ASSERT_EQ(std::vector<char>(out.begin() + 3, out.end()), legacy) << bins << " bins, round " << round;
+    }
+  }
+}
+
+TEST(CountCodec, MaskFromBitsetMatchesMaskFromCounts) {
+  std::mt19937_64 rng(7);
+  std::bitset<4096> populated;
+  std::vector<uint32_t> counts(4096, 0);
+  for (size_t i = 0; i < 4096; ++i) {
+    if (std::bernoulli_distribution(0.3)(rng)) {
+      populated.set(i);
+      counts[i] = 1 + static_cast<uint32_t>(i);
+    }
+  }
+  uint64_t a[64], b[64];
+  maskFromBitset(populated, a);
+  maskFromCounts(counts.data(), 4096, b);
+  EXPECT_EQ(std::vector<uint64_t>(a, a + 64), std::vector<uint64_t>(b, b + 64));
+  std::bitset<32> small;
+  small.set(0);
+  small.set(31);
+  uint64_t w = 0;
+  maskFromBitset(small, &w);
+  EXPECT_EQ(w, (uint64_t(1) << 31) | 1u);
+}
+
+TEST(CountCodec, EndOfFileMarkerRoundTrips) {
+  std::vector<char> out(2, 'h');
+  writeEndOfFileMarker(out);
+  ASSERT_EQ(out.size(), 6u);
+  size_t offset = 2;
+  EXPECT_TRUE(verifyEndOfFileMarker(out, offset));
+  EXPECT_EQ(offset, 6u);
 }
 
 } // namespace
