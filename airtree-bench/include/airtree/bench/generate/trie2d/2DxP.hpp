@@ -83,6 +83,7 @@ protected:
 
     for (auto _ : state) {
       state.PauseTiming();
+      airTree2DxP_root.reset();
       specialCounts = std::make_unique<SpecialCounts>();
       curr_trie_size = 0;
       state.ResumeTiming();
