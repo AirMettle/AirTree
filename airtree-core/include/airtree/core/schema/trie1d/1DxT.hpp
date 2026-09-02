@@ -6,6 +6,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/api/AirTreeGenerator.hpp>
 #include <memory>
 #include <bitset>
@@ -98,10 +99,22 @@ execSerialization_TrieNode13(const std::unique_ptr<TrieNode_13> &root,
  * @param fpNumber The floating-point number to file to internal rep and insert.
  */
 
-void createAndInsertFP(TrieNode_13 *node, uint64_t fpNumber,
-                       uint64_t &curr_trie_size);
-void createAndInsertFP_32(TrieNode_13 *node, uint32_t fpNumber,
-                          uint64_t &curr_trie_size);
+inline void createAndInsertFP(TrieNode_13 *node, uint64_t fpNumber) {
+  const unsigned int code = createInternal13Bit(fpNumber);
+  const unsigned int index8 = (code >> 5) & 0xFF;
+  const unsigned int index5 = code & 0x1F;
+  node->populated.set(index8);
+  node->counts[index8]++;
+  node->nodes[index8]->counts[index5]++;
+}
+inline void createAndInsertFP_32(TrieNode_13 *node, uint32_t fpNumber) {
+  const unsigned int code = createInternal13Bit_32(fpNumber);
+  const unsigned int index8 = (code >> 5) & 0xFF;
+  const unsigned int index5 = code & 0x1F;
+  node->populated.set(index8);
+  node->counts[index8]++;
+  node->nodes[index8]->counts[index5]++;
+}
 
 namespace airtree::core::schema::trie1d {
 

@@ -11,7 +11,6 @@ class CreateAndInsertFPTest : public ::testing::Test {
 protected:
   double orignalNumber;
   std::unique_ptr<TrieNode_13> root = CreateParentNode();
-  uint64_t curr_trie_size = 0;
 
   void setManualExponent(double number, uint64_t manualExponent) {
     uint64_t fpTemp;
@@ -38,7 +37,7 @@ TEST_F(CreateAndInsertFPTest, NormalOperation_TestCase1) {
       0b00110111; // Refer FpInternalManualTest.cpp Test Case 1
   unsigned int expectedIndex5 = 0b00111;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -55,7 +54,7 @@ TEST_F(CreateAndInsertFPTest, NormalOperation_TestCase2) {
       0b00011110; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b01010;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -73,7 +72,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase1) {
       0b01111100; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b00000;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -90,7 +89,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase2) {
       0b01000111; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b10001;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -110,7 +109,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase3) {
       0b01000011; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b11111;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -129,11 +128,11 @@ TEST_F(CreateAndInsertFPTest, EqualExponent_TestCase3) {
 
   unsigned int expectedIndex8 =
       0b00111100; // Refer FpInternalManualTest.cpp Test Case 2
-  [[maybe_unused]] unsigned int expectedIndex5 = 0b00000;
+  unsigned int expectedIndex5 = 0b00000;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP(root.get(), fpNumber);
 
-  ASSERT_EQ(root->nodes[expectedIndex8], nullptr);
+  EXPECT_EQ(root->nodes[expectedIndex8]->counts[expectedIndex5], 0);
   EXPECT_EQ(root->populated[expectedIndex8], false);
 }
 
@@ -143,7 +142,6 @@ class CreateAndInsertFPTest_Apollo16 : public ::testing::Test {
 protected:
   double orignalNumber;
   std::unique_ptr<TrieNode_16> root = CreateParentNode_16();
-  uint64_t curr_trie_size = 0;
 
   void setManualExponent(double number, uint64_t manualExponent) {
     uint64_t fpTemp;
@@ -170,7 +168,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NormalOperation_TestCase1) {
       0b00110111; // Refer FpInternalManualTest.cpp Test Case 1
   unsigned int expectedLast8 = 0b00111011;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP16(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -187,7 +185,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NormalOperation_TestCase2) {
       0b00011110; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b01010100;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP16(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -205,7 +203,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase1) {
       0b01111100; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b00000000;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP16(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -222,7 +220,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase2) {
       0b01000111; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b10001000;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP16(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -242,7 +240,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase3) {
       0b01000011; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b11111010;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
+  createAndInsertFP16(root.get(), fpNumber);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);

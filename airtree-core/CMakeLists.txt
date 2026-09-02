@@ -8,10 +8,8 @@ set(SOURCE_FILES
     ${SRC_DIR}/common/BooleanArray.cpp
     ${SRC_DIR}/common/Conversion.cpp
     ${SRC_DIR}/common/FPHArray.cpp
-    ${SRC_DIR}/common/InternalEncoding.cpp
     ${SRC_DIR}/common/NDims.cpp
     ${SRC_DIR}/common/Reconstruct.cpp
-    ${SRC_DIR}/common/SpecialCounts.cpp
     ${SRC_DIR}/common/TLE.cpp
 
     ${SRC_DIR}/io/AirTreeReader.cpp

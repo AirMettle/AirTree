@@ -7,6 +7,7 @@
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/api/AirTreeGenerator.hpp>
 #include <memory>
 #include <bitset>
@@ -86,10 +87,22 @@ std::unique_ptr<TrieNode_16> CreateParentNode_16();
  * @param node The root node of the Trie.
  * @param fpNumber The floating-point number to file to internal rep and insert.
  */
-void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber,
-                         uint64_t &curr_trie_size);
-void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber,
-                            uint64_t &curr_trie_size);
+inline void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber) {
+  const unsigned int code = createInternal16Bit(fpNumber);
+  const unsigned int index8 = (code >> 8) & 0xFF;
+  const unsigned int index8_level2 = code & 0xFF;
+  node->populated.set(index8);
+  node->counts[index8]++;
+  node->nodes[index8]->counts[index8_level2]++;
+}
+inline void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber) {
+  const unsigned int code = createInternal16Bit_32(fpNumber);
+  const unsigned int index8 = (code >> 8) & 0xFF;
+  const unsigned int index8_level2 = code & 0xFF;
+  node->populated.set(index8);
+  node->counts[index8]++;
+  node->nodes[index8]->counts[index8_level2]++;
+}
 
 [[nodiscard]] std::vector<char> generate_1DxF(const FPHArray &array);
 [[nodiscard]] std::unique_ptr<TrieNode_16>
