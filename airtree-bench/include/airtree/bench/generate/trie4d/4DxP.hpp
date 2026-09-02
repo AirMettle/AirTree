@@ -106,7 +106,7 @@ protected:
 
       airTree4DxP_root = execCreateAndInsert_4D_4x10(
           fpharray1, fpharray2, fpharray3, fpharray4, curr_trie_size,
-          specialCounts, true);
+          specialCounts);
 
       benchmark::DoNotOptimize(airTree4DxP_root);
     }
@@ -147,12 +147,12 @@ protected:
 
     airTree4DxP_root =
         execCreateAndInsert_4D_4x10(fpharray1, fpharray2, fpharray3, fpharray4,
-                                    curr_trie_size, specialCounts, true);
+                                    curr_trie_size, specialCounts);
 
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_4D_4x10(
-          airTree4DxP_root.get(), curr_trie_size, specialCounts, true);
+          airTree4DxP_root.get(), curr_trie_size, specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
@@ -164,7 +164,7 @@ protected:
     // Untimed materialize: write serialized histogram once if requested.
     if (!BenchPaths::write_airtree_path.empty()) {
       auto buffer = execSerialize_4D_4x10(
-          airTree4DxP_root.get(), curr_trie_size, specialCounts, true);
+          airTree4DxP_root.get(), curr_trie_size, specialCounts);
       airtree::core::io::AirTreeWriter::Write(buffer,
                                               BenchPaths::write_airtree_path);
       BenchPaths::write_airtree_path.clear();

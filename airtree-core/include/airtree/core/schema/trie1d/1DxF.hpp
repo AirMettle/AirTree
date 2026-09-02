@@ -66,8 +66,6 @@ struct TrieNode_16_Level1 {
  *
  * @param values Array of floating point values.
  * @param values_len Length of the values array.
- * @param default_mode Flag to check if filing is suppose to be in default mode
- * or not
  * @return Trie in the form of a serialized buffer of characters.
  */
 
@@ -87,23 +85,20 @@ std::unique_ptr<TrieNode_16> CreateParentNode_16();
  *
  * @param node The root node of the Trie.
  * @param fpNumber The floating-point number to file to internal rep and insert.
- * @param default_mode The default mode to use.
  */
 void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber,
-                         uint64_t &curr_trie_size, bool default_mode);
+                         uint64_t &curr_trie_size);
 void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber,
-                            uint64_t &curr_trie_size, bool default_mode);
+                            uint64_t &curr_trie_size);
 
-[[nodiscard]] std::vector<char> generate_1DxF(const FPHArray &array,
-                                              bool default_mode = true);
+[[nodiscard]] std::vector<char> generate_1DxF(const FPHArray &array);
 [[nodiscard]] std::unique_ptr<TrieNode_16>
 execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
-                               uint64_t &curr_trie_size, const FPHArray &array,
-                               bool default_mode);
+                               uint64_t &curr_trie_size, const FPHArray &array);
 [[nodiscard]] std::vector<char>
 execSerialization_TrieNode16(const std::unique_ptr<TrieNode_16> &root,
                              const SpecialCounts &specialCounts,
-                             uint64_t trieSize, bool default_mode);
+                             uint64_t trieSize);
 
 namespace airtree::core::schema::trie1d {
 
@@ -111,8 +106,7 @@ namespace airtree::core::schema::trie1d {
 class Generator1DxF : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie1d

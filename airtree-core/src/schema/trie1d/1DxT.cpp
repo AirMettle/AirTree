@@ -19,12 +19,11 @@ using namespace airtree::core::schema::trie1d;
 using namespace airtree::util::uuid;
 
 std::vector<char>
-Generator1DxT::generate(const std::vector<const FPHArray *> &arrays,
-                       bool default_mode) const {
+Generator1DxT::generate(const std::vector<const FPHArray *> &arrays) const {
   if (arrays.size() != 1) {
     throw std::invalid_argument("Expected exactly 1 array for 1D generation");
   }
-  return generate_1DxT(*arrays[0], default_mode);
+  return generate_1DxT(*arrays[0]);
 }
 
 std::unique_ptr<TrieNode_13> CreateParentNode() {
@@ -35,9 +34,9 @@ std::unique_ptr<TrieNode_13> CreateParentNode() {
 }
 
 void createAndInsertFP_32(TrieNode_13 *node, uint32_t fpNumber,
-                          uint64_t &curr_trie_size, bool default_mode) {
+                          uint64_t &curr_trie_size) {
   // Convert IEEE-754 to 13-bit internal representation
-  unsigned int internal13 = createInternal13Bit_32(fpNumber, default_mode);
+  unsigned int internal13 = createInternal13Bit_32(fpNumber);
 
   // Extract the two indices
   unsigned int index8 = (internal13 >> 5) & 0xFF; // Upper 8 bits (level 0)
@@ -55,9 +54,9 @@ void createAndInsertFP_32(TrieNode_13 *node, uint32_t fpNumber,
 }
 
 void createAndInsertFP(TrieNode_13 *node, uint64_t fpNumber,
-                       uint64_t &curr_trie_size, bool default_mode) {
+                       uint64_t &curr_trie_size) {
   // Convert IEEE-754 to 13-bit internal representation
-  unsigned int internal13 = createInternal13Bit(fpNumber, default_mode);
+  unsigned int internal13 = createInternal13Bit(fpNumber);
 
   // Extract the two indices
   unsigned int index8 = (internal13 >> 5) & 0xFF; // Upper 8 bits (level 0)
@@ -74,21 +73,21 @@ void createAndInsertFP(TrieNode_13 *node, uint64_t fpNumber,
   node->nodes[index8]->counts[index5]++;
 }
 
-std::vector<char> generate_1DxT(const FPHArray &array, bool default_mode) {
+std::vector<char> generate_1DxT(const FPHArray &array) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(logger(),
                      "[generate] [traceID: {}] Generating 1DxT Trie for {} "
-                     "values using default_mode {}.",
-                     uuid, array.length, default_mode);
+                     "values.",
+                     uuid, array.length);
   SpecialCounts specialCounts;
   uint64_t curr_trie_size = 0;
   SPDLOG_LOGGER_DEBUG(
       logger(),
-      "[insert] [traceID: {}] Filing and inserting {} values using "
-      "default_mode {} into 1DxT Trie.",
-      uuid, array.length, default_mode);
+      "[insert] [traceID: {}] Filing and inserting {} values "
+      "into 1DxT Trie.",
+      uuid, array.length);
   std::unique_ptr<TrieNode_13> root = execCreateAndInsert_TrieNode13(
-      specialCounts, curr_trie_size, array, default_mode);
+      specialCounts, curr_trie_size, array);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting values into 1DxT "
@@ -99,7 +98,7 @@ std::vector<char> generate_1DxT(const FPHArray &array, bool default_mode) {
       "[serialization] [traceID: {}] Serializing 1DxT trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialization_TrieNode13(
-      root, specialCounts, curr_trie_size, default_mode);
+      root, specialCounts, curr_trie_size);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 1DxT Trie.", uuid);
@@ -111,8 +110,7 @@ std::vector<char> generate_1DxT(const FPHArray &array, bool default_mode) {
 
 std::unique_ptr<TrieNode_13>
 execCreateAndInsert_TrieNode13(SpecialCounts &specialCounts,
-                               uint64_t &curr_trie_size, const FPHArray &array,
-                               bool default_mode) {
+                               uint64_t &curr_trie_size, const FPHArray &array) {
   std::unique_ptr<TrieNode_13> root = CreateParentNode();
   curr_trie_size = sizeof(TrieNode_13);
 
@@ -122,7 +120,7 @@ execCreateAndInsert_TrieNode13(SpecialCounts &specialCounts,
       uint64_t fpNumber;
       std::memcpy(&fpNumber, &value, sizeof(value));
       if (!isSpecialCase(fpNumber, specialCounts)) {
-        createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+        createAndInsertFP(root.get(), fpNumber, curr_trie_size);
         if (enable_threshold_1D && curr_trie_size > threshold_1D) {
           SPDLOG_LOGGER_ERROR(logger(),
                               "Trie size exceeded threshold limit of {}.",
@@ -146,8 +144,7 @@ execCreateAndInsert_TrieNode13(SpecialCounts &specialCounts,
 std::vector<char>
 execSerialization_TrieNode13(const std::unique_ptr<TrieNode_13> &root,
                              const SpecialCounts &specialCounts,
-                             uint64_t trieSize,
-                             [[maybe_unused]] bool default_mode) {
+                             uint64_t trieSize) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_1D_Tiny, {}, countObservations(root->counts),
       specialCounts.posInfCount, specialCounts.negInfCount,

@@ -21,17 +21,17 @@ using namespace airtree::query::bin_boundary;
 static unsigned int encode_1DxP(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
-  return createInternal20Bit(fp, true);
+  return createInternal20Bit(fp);
 }
 static unsigned int encode_1DxT(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
-  return createInternal13Bit(fp, true);
+  return createInternal13Bit(fp);
 }
 static unsigned int encode_1DxF(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
-  return createInternal16Bit(fp, true);
+  return createInternal16Bit(fp);
 }
 
 // Pattern-based bin count consistency: re-encode each value, match by

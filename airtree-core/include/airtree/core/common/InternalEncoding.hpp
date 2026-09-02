@@ -14,23 +14,22 @@
 using namespace airtree::core;
 
 
-unsigned int createInternal8Bit(uint64_t fpNumber, bool default_mode);
-unsigned int createInternal8Bit_32(uint32_t fpNumber, bool default_mode);
-unsigned int createInternal10Bit(uint64_t fpNumber, bool default_mode);
-unsigned int createInternal10Bit_32(uint32_t fpNumber, bool default_mode);
-unsigned int createInternal13Bit(uint64_t fpNumber, bool default_mode);
-unsigned int createInternal13Bit_32(uint32_t fpNumber, bool default_mode);
-unsigned int createInternal16Bit(uint64_t fpNumber, bool default_mode);
-unsigned int createInternal16Bit_32(uint32_t fpNumber, bool default_mode);
-unsigned int createInternal20Bit(uint64_t fpNumber, bool default_mode);
-unsigned int createInternal20Bit_32(uint32_t fpNumber, bool default_mode);
+unsigned int createInternal8Bit(uint64_t fpNumber);
+unsigned int createInternal8Bit_32(uint32_t fpNumber);
+unsigned int createInternal10Bit(uint64_t fpNumber);
+unsigned int createInternal10Bit_32(uint32_t fpNumber);
+unsigned int createInternal13Bit(uint64_t fpNumber);
+unsigned int createInternal13Bit_32(uint32_t fpNumber);
+unsigned int createInternal16Bit(uint64_t fpNumber);
+unsigned int createInternal16Bit_32(uint32_t fpNumber);
+unsigned int createInternal20Bit(uint64_t fpNumber);
+unsigned int createInternal20Bit_32(uint32_t fpNumber);
 
 
 // internal_8bit function files the input value into the internal 8-bit
 // representation and returns the TLE and the internal 8-bit representation
 template <typename T>
-inline std::pair<TLE, unsigned int> internal_8bit(T value,
-                                                  const bool &default_mode) {
+inline std::pair<TLE, unsigned int> internal_8bit(T value) {
 
   double doubleValue;
   if constexpr (std::is_same_v<T, double>) {
@@ -49,15 +48,14 @@ inline std::pair<TLE, unsigned int> internal_8bit(T value,
   std::memcpy(&fpNumber, &doubleValue, sizeof(doubleValue));
 
   TLE tle = setTLEComponents(fpNumber);
-  unsigned int result = createInternal8Bit(fpNumber, default_mode);
+  unsigned int result = createInternal8Bit(fpNumber);
   return std::make_pair(tle, result);
 }
 
 // internal_10bit function files the input value into the internal 10-bit
 // representation and returns the TLE and the internal 10-bit representation
 template <typename T>
-inline std::pair<TLE, unsigned int> internal_10bit(T value,
-                                                   const bool &default_mode) {
+inline std::pair<TLE, unsigned int> internal_10bit(T value) {
 
   double doubleValue;
   if constexpr (std::is_same_v<T, double>) {
@@ -76,7 +74,7 @@ inline std::pair<TLE, unsigned int> internal_10bit(T value,
   std::memcpy(&fpNumber, &doubleValue, sizeof(doubleValue));
 
   TLE tle = setTLEComponents(fpNumber);
-  unsigned int result = createInternal10Bit(fpNumber, default_mode);
+  unsigned int result = createInternal10Bit(fpNumber);
   return std::make_pair(tle, result);
 }
 

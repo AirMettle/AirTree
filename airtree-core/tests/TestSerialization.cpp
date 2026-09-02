@@ -137,11 +137,11 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_4x10) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_4D_4x10> root = execCreateAndInsert_4D_4x10(
-      array0, array1, array2, array3, curr_trie_size, specialCounts, true);
+      array0, array1, array2, array3, curr_trie_size, specialCounts);
 
 
   std::vector<char> buffer =
-      execSerialize_4D_4x10(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_4D_4x10(root.get(), curr_trie_size, specialCounts);
 
   auto result = processBuffer_4DxP(buffer);
 
@@ -222,9 +222,9 @@ TEST_F(SerializationTest, VerifySerializationAndDeserialization_4x8) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_4D_4x8> root = execCreateAndInsert_4D_4x8(
-      array0, array1, array2, array3, curr_trie_size, specialCounts, true);
+      array0, array1, array2, array3, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_4D_4x8(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_4D_4x8(root.get(), curr_trie_size, specialCounts);
 
   auto result = processBuffer_4DxF(buffer);
 
@@ -291,9 +291,9 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_3x10) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_3D_3x10> root = execCreateAndInsert_3D_3x10(
-      array0, array1, array2, curr_trie_size, specialCounts, true);
+      array0, array1, array2, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_3D_3x10(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_3D_3x10(root.get(), curr_trie_size, specialCounts);
 
   auto result = processBuffer_3DxP(buffer);
 
@@ -357,9 +357,9 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_3x8) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_3D_888> root = execCreateAndInsert_3D_888(
-      array0, array1, array2, curr_trie_size, specialCounts, true);
+      array0, array1, array2, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_3D_888(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_3D_888(root.get(), curr_trie_size, specialCounts);
 
   auto result = processBuffer_3DxF(buffer);
 
@@ -433,9 +433,9 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_2x8) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLETrieNode_2D> root = execCreateAndInsert_2D(
-      array0, array1, curr_trie_size, specialCounts, true);
+      array0, array1, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_2D(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_2D(root.get(), curr_trie_size, specialCounts);
 
   auto result = processBuffer_2DxF(buffer);
 
@@ -601,9 +601,9 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_2x10) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLEoption3_2D> root = execCreateAndInsert_2D_2x10(
-      array0, array1, curr_trie_size, specialCounts, true);
+      array0, array1, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_2D_2x10(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_2D_2x10(root.get(), curr_trie_size, specialCounts);
 
   auto result = processBuffer_2DxP(buffer);
 

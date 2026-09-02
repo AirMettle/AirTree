@@ -79,7 +79,7 @@ protected:
       state.ResumeTiming();
 
       airTree1DxF_root = execCreateAndInsert_TrieNode16(
-          *specialCounts, curr_trie_size, fpharray, true);
+          *specialCounts, curr_trie_size, fpharray);
 
       benchmark::DoNotOptimize(airTree1DxF_root);
     }
@@ -115,11 +115,11 @@ protected:
     const auto &fpharray = airtree::bench::BenchmarkData<T>::fpharrays[0];
 
     airTree1DxF_root = execCreateAndInsert_TrieNode16(
-        *specialCounts, curr_trie_size, fpharray, true);
+        *specialCounts, curr_trie_size, fpharray);
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialization_TrieNode16(
-          airTree1DxF_root, *specialCounts, curr_trie_size, true);
+          airTree1DxF_root, *specialCounts, curr_trie_size);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
@@ -131,7 +131,7 @@ protected:
     // Untimed materialize: write serialized histogram once if requested.
     if (!BenchPaths::write_airtree_path.empty()) {
       auto buffer = execSerialization_TrieNode16(
-          airTree1DxF_root, *specialCounts, curr_trie_size, true);
+          airTree1DxF_root, *specialCounts, curr_trie_size);
       airtree::core::io::AirTreeWriter::Write(buffer,
                                               BenchPaths::write_airtree_path);
       BenchPaths::write_airtree_path.clear();

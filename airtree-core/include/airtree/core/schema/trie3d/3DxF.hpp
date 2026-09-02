@@ -39,16 +39,13 @@ struct Node3D_888_l0 {
 [[nodiscard]] std::unique_ptr<TLE_3D_888>
 execCreateAndInsert_3D_888(const FPHArray &array1, const FPHArray &array2,
                            const FPHArray &array3, uint64_t &curr_trie_size,
-                           std::unique_ptr<SpecialCounts> &specialCounts,
-                           bool default_mode = true);
+                           std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char>
 execSerialize_3D_888(TLE_3D_888 *root, uint64_t &curr_trie_size,
-                     std::unique_ptr<SpecialCounts> &specialCounts,
-                     bool default_mode);
+                     std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_3DxF(const FPHArray &array1,
                                               const FPHArray &array2,
-                                              const FPHArray &array3,
-                                              bool default_mode = true);
+                                              const FPHArray &array3);
 
 
 namespace airtree::core::schema::trie3d {
@@ -56,8 +53,7 @@ namespace airtree::core::schema::trie3d {
 class Generator3DxF : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie3d

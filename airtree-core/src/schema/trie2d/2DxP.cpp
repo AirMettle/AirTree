@@ -17,12 +17,11 @@ using namespace airtree::core::schema::trie2d;
 using namespace airtree::util::uuid;
 
 std::vector<char>
-Generator2DxP::generate(const std::vector<const FPHArray *> &arrays,
-                        bool default_mode) const {
+Generator2DxP::generate(const std::vector<const FPHArray *> &arrays) const {
   if (arrays.size() != 2) {
     throw std::invalid_argument("Expected exactly 2 arrays for 2D generation");
   }
-  return generate_2DxP(*arrays[0], *arrays[1], default_mode);
+  return generate_2DxP(*arrays[0], *arrays[1]);
 }
 
 std::unique_ptr<TLEoption3_2D> CreateParent_TLE2D_option3() {
@@ -32,14 +31,13 @@ std::unique_ptr<TLEoption3_2D> CreateParent_TLE2D_option3() {
   return parentNode;
 }
 
-std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2,
-                                bool default_mode) {
+std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 2DxP Trie for {} values in dim1 "
-      "and {} values in dim2 using default_mode {}.",
-      uuid, array1.length, array2.length, default_mode);
+      "and {} values in dim2.",
+      uuid, array1.length, array2.length);
   uint64_t curr_trie_size = 0;
 
   std::unique_ptr<SpecialCounts> specialCounts =
@@ -47,11 +45,11 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2,
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1 and {} "
-      "values for dim2 using "
-      "default_mode {} into 2DxP Trie.",
-      uuid, array1.length, array2.length, default_mode);
+      "values for dim2 "
+      "into 2DxP Trie.",
+      uuid, array1.length, array2.length);
   std::unique_ptr<TLEoption3_2D> root = execCreateAndInsert_2D_2x10(
-      array1, array2, curr_trie_size, specialCounts, default_mode);
+      array1, array2, curr_trie_size, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 2DxP Trie. "
@@ -62,7 +60,7 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 2DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_2D_2x10(
-      root.get(), curr_trie_size, specialCounts, default_mode);
+      root.get(), curr_trie_size, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 2DxP Trie.", uuid);
@@ -128,7 +126,7 @@ void insertintoTLETrie_2D_option3(TLEoption3_2D *root, unsigned int combined,
 
 std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
     const FPHArray &array1, const FPHArray &array2, uint64_t &curr_trie_size,
-    std::unique_ptr<SpecialCounts> &specialCounts, bool default_mode) {
+    std::unique_ptr<SpecialCounts> &specialCounts) {
   if (array1.length != array2.length) {
     throw std::invalid_argument("Dimensions must be of equal length");
     SPDLOG_LOGGER_ERROR(
@@ -143,7 +141,7 @@ std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
       for (int i = 0; i < array1.length; ++i) {
 
         createAndInsert_2DxP(root.get(), vals1[i], vals2[i], curr_trie_size,
-                             specialCounts, default_mode);
+                             specialCounts);
         if (enable_threshold_2D && curr_trie_size > threshold_2D) {
           SPDLOG_LOGGER_ERROR(logger(),
                               "Trie size exceeded threshold limit of {}.",
@@ -164,8 +162,7 @@ std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
 
 std::vector<char>
 execSerialize_2D_2x10(TLEoption3_2D *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts,
-                      [[maybe_unused]] bool default_mode) {
+                      std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_2D_Precise, {}, countObservations(root->counts), specialCounts->posInfCount,
       specialCounts->negInfCount, specialCounts->posZeroCount,

@@ -521,7 +521,7 @@ uint64_t TrieManager::getTrieSize2DxP() const {
 }
 
 std::vector<char>
-TrieManager::MockTrieHeader(int precisionBits, [[maybe_unused]] bool default_mode,
+TrieManager::MockTrieHeader(int precisionBits,
                             const SpecialCounts &specialCounts) const {
   using namespace airtree::core;
 using namespace airtree::core::common;
@@ -551,7 +551,6 @@ using namespace airtree::core::common;
 
 std::vector<char>
 TrieManager::MockTrieHeader2D(int precisionBits,
-                              [[maybe_unused]] bool default_mode,
                               const SpecialCounts &specialCounts) const {
   using namespace airtree::core;
 using namespace airtree::core::common;
@@ -650,7 +649,6 @@ uint64_t TrieManager::getTrieSize3DxP() const {
 
 std::vector<char>
 TrieManager::MockTrieHeader3D(int precisionBits,
-                              [[maybe_unused]] bool default_mode,
                               const SpecialCounts &specialCounts) const {
 using namespace airtree::core;
 using namespace airtree::core::common;

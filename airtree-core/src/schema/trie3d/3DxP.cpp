@@ -17,12 +17,11 @@ using namespace airtree::core::schema::trie3d;
 using namespace airtree::util::uuid;
 
 std::vector<char>
-Generator3DxP::generate(const std::vector<const FPHArray *> &arrays,
-                        bool default_mode) const {
+Generator3DxP::generate(const std::vector<const FPHArray *> &arrays) const {
   if (arrays.size() != 3) {
     throw std::invalid_argument("Expected exactly 3 arrays for 3D generation");
   }
-  return generate_3DxP(*arrays[0], *arrays[1], *arrays[2], default_mode);
+  return generate_3DxP(*arrays[0], *arrays[1], *arrays[2]);
 }
 
 void insertintoTrie_3D_3x10(TLE_3D_3x10 *root, unsigned int combined,
@@ -165,24 +164,24 @@ void insertintoTrie_3D_3x10(TLE_3D_3x10 *root, unsigned int combined,
 }
 
 std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
-                                const FPHArray &array3, bool default_mode) {
+                                const FPHArray &array3) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 3DxP Trie for {} values in dim1, "
-      "{} values in dim2 and {} values in dim3 using default_mode {}.",
-      uuid, array1.length, array2.length, array3.length, default_mode);
+      "{} values in dim2 and {} values in dim3.",
+      uuid, array1.length, array2.length, array3.length);
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1, {} "
-      "values for dim2 and {} values for dim3 using "
-      "default_mode {} into 3DxP Trie.",
-      uuid, array1.length, array2.length, array3.length, default_mode);
+      "values for dim2 and {} values for dim3 "
+      "into 3DxP Trie.",
+      uuid, array1.length, array2.length, array3.length);
   std::unique_ptr<TLE_3D_3x10> root = execCreateAndInsert_3D_3x10(
-      array1, array2, array3, curr_trie_size, specialCounts, default_mode);
+      array1, array2, array3, curr_trie_size, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 3DxP Trie. "
@@ -193,7 +192,7 @@ std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 3DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_3D_3x10(
-      root.get(), curr_trie_size, specialCounts, default_mode);
+      root.get(), curr_trie_size, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 3DxP Trie.", uuid);
@@ -206,8 +205,7 @@ std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
 std::unique_ptr<TLE_3D_3x10>
 execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
                             const FPHArray &array3, uint64_t &curr_trie_size,
-                            std::unique_ptr<SpecialCounts> &specialCounts,
-                            bool default_mode) {
+                            std::unique_ptr<SpecialCounts> &specialCounts) {
   if (array1.length != array2.length and array1.length != array3.length) {
     throw std::invalid_argument("Dimensions must be of equal length");
     SPDLOG_LOGGER_ERROR(
@@ -225,11 +223,11 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
         for (int i = 0; i < array1.length; ++i) {
 
           std::pair<TLE, unsigned int> input_1 =
-              internal_10bit(vals1[i], default_mode);
+              internal_10bit(vals1[i]);
           std::pair<TLE, unsigned int> input_2 =
-              internal_10bit(vals2[i], default_mode);
+              internal_10bit(vals2[i]);
           std::pair<TLE, unsigned int> input_3 =
-              internal_10bit(vals3[i], default_mode);
+              internal_10bit(vals3[i]);
 
           TLE tle1 = input_1.first;
           TLE tle2 = input_2.first;
@@ -324,8 +322,7 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
 
 std::vector<char>
 execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts,
-                      [[maybe_unused]] bool default_mode) {
+                      std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_3D_Precise, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,

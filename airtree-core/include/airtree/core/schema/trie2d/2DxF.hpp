@@ -35,10 +35,9 @@ struct TLETrieNode_2D {
 // Files one (v1, v2) point: counts its specials into specialCounts and returns where it lands.
 template <typename T1, typename T2>
 inline Encoded2D encode_2DxF(T1 v1, T2 v2,
-                             std::unique_ptr<SpecialCounts> &specialCounts,
-                             bool default_mode = true) {
-  const std::pair<TLE, unsigned int> in1 = internal_8bit(v1, default_mode);
-  const std::pair<TLE, unsigned int> in2 = internal_8bit(v2, default_mode);
+                             std::unique_ptr<SpecialCounts> &specialCounts) {
+  const std::pair<TLE, unsigned int> in1 = internal_8bit(v1);
+  const std::pair<TLE, unsigned int> in2 = internal_8bit(v2);
   const unsigned int special1 = update_special_counts(in1.first, specialCounts);
   const unsigned int special2 = update_special_counts(in2.first, specialCounts);
   Encoded2D e{static_cast<unsigned int>((in1.first.encoding << 3) | in2.first.encoding), 0,
@@ -60,30 +59,26 @@ void insertintoTLETrie_2D_88(TLETrieNode_2D *root, unsigned int combined,
 // One point into the trie: what execCreateAndInsert_2D does per element.
 template <typename T1, typename T2>
 inline void createAndInsert_2DxF(TLETrieNode_2D *root, T1 v1, T2 v2, uint64_t &curr_trie_size,
-                                 std::unique_ptr<SpecialCounts> &specialCounts,
-                                 bool default_mode = true) {
-  const Encoded2D e = encode_2DxF(v1, v2, specialCounts, default_mode);
+                                 std::unique_ptr<SpecialCounts> &specialCounts) {
+  const Encoded2D e = encode_2DxF(v1, v2, specialCounts);
   insertintoTLETrie_2D_88(root, e.combined, e.tle, static_cast<int>(e.ndims), curr_trie_size);
 }
 
 [[nodiscard]] std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
     const FPHArray &array1, const FPHArray &array2, uint64_t &curr_trie_size,
-    std::unique_ptr<SpecialCounts> &specialCounts, bool default_mode = true);
+    std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char>
 execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
-                 std::unique_ptr<SpecialCounts> &specialCounts,
-                 bool default_mode);
+                 std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_2DxF(const FPHArray &array1,
-                                              const FPHArray &array2,
-                                              bool default_mode = true);
+                                              const FPHArray &array2);
 
 namespace airtree::core::schema::trie2d {
 
 class Generator2DxF : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie2d

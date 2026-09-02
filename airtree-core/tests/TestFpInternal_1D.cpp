@@ -12,7 +12,6 @@ protected:
   double orignalNumber;
   std::unique_ptr<TrieNode_13> root = CreateParentNode();
   uint64_t curr_trie_size = 0;
-  bool default_mode = true;
 
   void setManualExponent(double number, uint64_t manualExponent) {
     uint64_t fpTemp;
@@ -39,7 +38,7 @@ TEST_F(CreateAndInsertFPTest, NormalOperation_TestCase1) {
       0b00110111; // Refer FpInternalManualTest.cpp Test Case 1
   unsigned int expectedIndex5 = 0b00111;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -56,7 +55,7 @@ TEST_F(CreateAndInsertFPTest, NormalOperation_TestCase2) {
       0b00011110; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b01010;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -74,7 +73,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase1) {
       0b01111100; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b00000;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -91,7 +90,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase2) {
       0b01000111; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b10001;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -106,13 +105,12 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase3) {
   setManualExponent(originalNumber, 1); // Orignal Number - 2.22507e-308
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
 
-  default_mode = true;
 
   unsigned int expectedIndex8 =
       0b01000011; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b11111;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -128,13 +126,12 @@ TEST_F(CreateAndInsertFPTest, EqualExponent_TestCase3) {
 
   setManualExponent(fpNumber, 1023); // Orignal Number - 2.22507e-308
 
-  default_mode = true;
 
   unsigned int expectedIndex8 =
       0b00111100; // Refer FpInternalManualTest.cpp Test Case 2
   [[maybe_unused]] unsigned int expectedIndex5 = 0b00000;
 
-  createAndInsertFP(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_EQ(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], false);
@@ -147,7 +144,6 @@ protected:
   double orignalNumber;
   std::unique_ptr<TrieNode_16> root = CreateParentNode_16();
   uint64_t curr_trie_size = 0;
-  bool default_mode = true;
 
   void setManualExponent(double number, uint64_t manualExponent) {
     uint64_t fpTemp;
@@ -174,7 +170,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NormalOperation_TestCase1) {
       0b00110111; // Refer FpInternalManualTest.cpp Test Case 1
   unsigned int expectedLast8 = 0b00111011;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -191,7 +187,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NormalOperation_TestCase2) {
       0b00011110; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b01010100;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -209,7 +205,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase1) {
       0b01111100; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b00000000;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -226,7 +222,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase2) {
       0b01000111; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b10001000;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -241,13 +237,12 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase3) {
   setManualExponent(originalNumber, 1); // Orignal Number - 2.22507e-308
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
 
-  default_mode = true;
 
   unsigned int expectedIndex8 =
       0b01000011; // Refer FpInternalManualTest.cpp Test Case 2
   unsigned int expectedIndex5 = 0b11111010;
 
-  createAndInsertFP16(root.get(), fpNumber, curr_trie_size, default_mode);
+  createAndInsertFP16(root.get(), fpNumber, curr_trie_size);
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);

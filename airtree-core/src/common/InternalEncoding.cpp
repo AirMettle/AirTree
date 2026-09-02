@@ -12,13 +12,13 @@
 
 using namespace airtree::core;
 
-unsigned int createInternal8Bit_32(uint32_t fpNumber, bool default_mode) {
+unsigned int createInternal8Bit_32(uint32_t fpNumber) {
   uint32_t exponent = (fpNumber >> 23) & 0xFF;
   bool placed_signedExponentBit = (exponent < 127);
 
   uint32_t adjustedExponent =
       placed_signedExponentBit ? (127 - exponent) : (exponent - 127);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0xFF);
   }
 
@@ -59,13 +59,13 @@ unsigned int createInternal8Bit_32(uint32_t fpNumber, bool default_mode) {
   return (zeroCount << 5) | precisionBits;
 }
 
-unsigned int createInternal8Bit(uint64_t fpNumber, bool default_mode) {
+unsigned int createInternal8Bit(uint64_t fpNumber) {
   uint64_t exponent = (fpNumber >> 52) & 0x7FF;
   bool placed_signedExponentBit = ((exponent <= 1023) ? 1 : 0);
 
   uint64_t adjustedExponent =
       placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
   }
 
@@ -107,14 +107,14 @@ unsigned int createInternal8Bit(uint64_t fpNumber, bool default_mode) {
   return (zeroCount << 5) | precisionBits;
 }
 
-unsigned int createInternal10Bit(uint64_t fpNumber, bool default_mode) {
+unsigned int createInternal10Bit(uint64_t fpNumber) {
 
   uint64_t exponent = (fpNumber >> 52) & 0x7FF;
   bool placed_signedExponentBit = ((exponent < 1023) ? 1 : 0);
 
   uint64_t adjustedExponent =
       placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
   }
 
@@ -155,14 +155,14 @@ unsigned int createInternal10Bit(uint64_t fpNumber, bool default_mode) {
   return (zeroCount << 6) | precisionBits;
 }
 
-unsigned int createInternal10Bit_32(uint32_t fpNumber, bool default_mode) {
+unsigned int createInternal10Bit_32(uint32_t fpNumber) {
 
   uint32_t exponent = (fpNumber >> 23) & 0xFF;
   bool placed_signedExponentBit = (exponent < 127);
 
   uint32_t adjustedExponent =
       placed_signedExponentBit ? (127 - exponent) : (exponent - 127);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0xFF);
   }
 
@@ -209,7 +209,7 @@ unsigned int createInternal10Bit_32(uint32_t fpNumber, bool default_mode) {
 // 16-bit internal representation for Apollo16 (1DxF) configuration
 // Returns a 16-bit value: upper 8 bits (level 0 index) + lower 8 bits (level 1
 // index)
-unsigned int createInternal16Bit(uint64_t fpNumber, bool default_mode) {
+unsigned int createInternal16Bit(uint64_t fpNumber) {
   // Extract sign bit
   bool placed_sign_bit = ((fpNumber >> 63) & 1);
 
@@ -219,7 +219,7 @@ unsigned int createInternal16Bit(uint64_t fpNumber, bool default_mode) {
 
   uint64_t adjustedExponent =
       placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
   }
 
@@ -274,7 +274,7 @@ unsigned int createInternal16Bit(uint64_t fpNumber, bool default_mode) {
 // 16-bit internal representation for Apollo16 (1DxF) configuration
 // Returns a 16-bit value: upper 8 bits (level 0 index) + lower 8 bits (level 1
 // index)
-unsigned int createInternal16Bit_32(uint32_t fpNumber, bool default_mode) {
+unsigned int createInternal16Bit_32(uint32_t fpNumber) {
   // Extract sign bit
   bool placed_sign_bit = ((fpNumber >> 31) & 1);
 
@@ -284,7 +284,7 @@ unsigned int createInternal16Bit_32(uint32_t fpNumber, bool default_mode) {
 
   uint32_t adjustedExponent =
       placed_signedExponentBit ? (127 - exponent) : (exponent - 127);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0xFF);
   }
 
@@ -337,7 +337,7 @@ unsigned int createInternal16Bit_32(uint32_t fpNumber, bool default_mode) {
 // 13-bit internal representation for 13Colonies (1DxT) configuration
 // Returns a 13-bit value: upper 8 bits (level 0 index) + lower 5 bits (level 1
 // index)
-unsigned int createInternal13Bit(uint64_t fpNumber, bool default_mode) {
+unsigned int createInternal13Bit(uint64_t fpNumber) {
   // Extract sign bit
   bool placed_sign_bit = ((fpNumber >> 63) & 1);
 
@@ -347,7 +347,7 @@ unsigned int createInternal13Bit(uint64_t fpNumber, bool default_mode) {
 
   uint64_t adjustedExponent =
       placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
   }
 
@@ -406,7 +406,7 @@ unsigned int createInternal13Bit(uint64_t fpNumber, bool default_mode) {
 // 13-bit internal representation for 13Colonies (1DxT) configuration
 // Returns a 13-bit value: upper 8 bits (level 0 index) + lower 5 bits (level 1
 // index)
-unsigned int createInternal13Bit_32(uint32_t fpNumber, bool default_mode) {
+unsigned int createInternal13Bit_32(uint32_t fpNumber) {
   // Extract sign bit
   bool placed_sign_bit = ((fpNumber >> 31) & 1);
 
@@ -416,7 +416,7 @@ unsigned int createInternal13Bit_32(uint32_t fpNumber, bool default_mode) {
 
   uint32_t adjustedExponent =
       placed_signedExponentBit ? (127 - exponent) : (exponent - 127);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0xFF);
   }
 
@@ -469,7 +469,7 @@ unsigned int createInternal13Bit_32(uint32_t fpNumber, bool default_mode) {
 // 20-bit internal representation for Roaring20 (1DxP) configuration
 // Returns a 20-bit value: bits 12-19 (level 0), bits 6-11 (level 1), bits 0-5
 // (level 2)
-unsigned int createInternal20Bit(uint64_t fpNumber, bool default_mode) {
+unsigned int createInternal20Bit(uint64_t fpNumber) {
   // Extract sign bit
   bool placed_sign_bit = ((fpNumber >> 63) & 1);
 
@@ -479,7 +479,7 @@ unsigned int createInternal20Bit(uint64_t fpNumber, bool default_mode) {
 
   uint64_t adjustedExponent =
       placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
   }
 
@@ -538,7 +538,7 @@ unsigned int createInternal20Bit(uint64_t fpNumber, bool default_mode) {
 // 20-bit internal representation for Roaring20 (1DxP) configuration
 // Returns a 20-bit value: bits 12-19 (level 0), bits 6-11 (level 1), bits 0-5
 // (level 2)
-unsigned int createInternal20Bit_32(uint32_t fpNumber, bool default_mode) {
+unsigned int createInternal20Bit_32(uint32_t fpNumber) {
   // Extract sign bit
   bool placed_sign_bit = ((fpNumber >> 31) & 1);
 
@@ -548,7 +548,7 @@ unsigned int createInternal20Bit_32(uint32_t fpNumber, bool default_mode) {
 
   uint32_t adjustedExponent =
       placed_signedExponentBit ? (127 - exponent) : (exponent - 127);
-  if (default_mode && placed_signedExponentBit) {
+  if (placed_signedExponentBit) {
     adjustedExponent = ((adjustedExponent - 1) & 0xFF);
   }
 

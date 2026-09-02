@@ -17,13 +17,12 @@ using namespace airtree::core::schema::trie4d;
 using namespace airtree::util::uuid;
 
 std::vector<char>
-Generator4DxF::generate(const std::vector<const FPHArray *> &arrays,
-                        bool default_mode) const {
+Generator4DxF::generate(const std::vector<const FPHArray *> &arrays) const {
   if (arrays.size() != 4) {
     throw std::invalid_argument("Expected exactly 4 arrays for 4D generation");
   }
   return generate_4DxF(
-      *arrays[0], *arrays[1], *arrays[2], *arrays[3], default_mode);
+      *arrays[0], *arrays[1], *arrays[2], *arrays[3]);
 }
 
 std::unique_ptr<TLE_4D_4x8> CreateParentNode_TLE4D_4x8() {
@@ -186,29 +185,26 @@ void insertintoTrie_4D_4x8(TLE_4D_4x8 *root, unsigned int combined,
 }
 
 std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
-                                const FPHArray &array3, const FPHArray &array4,
-                                bool default_mode) {
+                                const FPHArray &array3, const FPHArray &array4) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 4DxF Trie for {} values in dim1, "
       "{} values in dim2, {} values in dim3 and {} values in "
-      "dim4 using default_mode {}.",
-      uuid, array1.length, array2.length, array3.length, array4.length,
-      default_mode);
+      "dim4.",
+      uuid, array1.length, array2.length, array3.length, array4.length);
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1, {} "
-      "values for dim2, {} values for dim3 and {} values for dim4 using "
-      "default_mode {} into 4DxF Trie.",
-      uuid, array1.length, array2.length, array3.length, array4.length,
-      default_mode);
+      "values for dim2, {} values for dim3 and {} values for dim4 "
+      "into 4DxF Trie.",
+      uuid, array1.length, array2.length, array3.length, array4.length);
   std::unique_ptr<TLE_4D_4x8> root =
       execCreateAndInsert_4D_4x8(array1, array2, array3, array4, curr_trie_size,
-                                 specialCounts, default_mode);
+                                 specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 4DxF Trie. "
@@ -219,7 +215,7 @@ std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 4DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_4D_4x8(
-      root.get(), curr_trie_size, specialCounts, default_mode);
+      root.get(), curr_trie_size, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 4DxF Trie.", uuid);
@@ -233,7 +229,7 @@ std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
 std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
     const FPHArray &array1, const FPHArray &array2, const FPHArray &array3,
     const FPHArray &array4, uint64_t &curr_trie_size,
-    std::unique_ptr<SpecialCounts> &specialCounts, bool default_mode) {
+    std::unique_ptr<SpecialCounts> &specialCounts) {
   if (array1.length != array2.length && array1.length != array3.length
       && array1.length != array4.length) {
     throw std::invalid_argument("Dimensions must be of equal length");
@@ -253,13 +249,13 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
           for (int i = 0; i < array1.length; ++i) {
 
             std::pair<TLE, unsigned int> input_1 =
-                internal_8bit(vals1[i], default_mode);
+                internal_8bit(vals1[i]);
             std::pair<TLE, unsigned int> input_2 =
-                internal_8bit(vals2[i], default_mode);
+                internal_8bit(vals2[i]);
             std::pair<TLE, unsigned int> input_3 =
-                internal_8bit(vals3[i], default_mode);
+                internal_8bit(vals3[i]);
             std::pair<TLE, unsigned int> input_4 =
-                internal_8bit(vals4[i], default_mode);
+                internal_8bit(vals4[i]);
 
             TLE tle1 = input_1.first;
             TLE tle2 = input_2.first;
@@ -379,8 +375,7 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
 
 std::vector<char>
 execSerialize_4D_4x8(TLE_4D_4x8 *root, uint64_t &curr_trie_size,
-                     std::unique_ptr<SpecialCounts> &specialCounts,
-                     [[maybe_unused]] bool default_mode) {
+                     std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_4D_Fast, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,

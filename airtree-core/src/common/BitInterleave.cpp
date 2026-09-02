@@ -48,8 +48,7 @@ unsigned int interleave_2D(unsigned int x, unsigned int y) {
 }
 
 unsigned int createInternalAndInterleave_2D(uint64_t fpNumber1,
-                                            uint64_t fpNumber2,
-                                            bool default_mode) {
+                                            uint64_t fpNumber2) {
   uint64_t exponent1 = (fpNumber1 >> 52) & 0x7FF;
   uint64_t exponent2 = (fpNumber2 >> 52) & 0x7FF;
 
@@ -61,10 +60,10 @@ unsigned int createInternalAndInterleave_2D(uint64_t fpNumber1,
   uint64_t adjustedExponent2 =
       placed_signedExponentBit2 ? (1023 - exponent2) : (exponent2 - 1023);
 
-  if (default_mode && placed_signedExponentBit1) {
+  if (placed_signedExponentBit1) {
     adjustedExponent1 = ((adjustedExponent1 - 1) & 0x7FF);
   }
-  if (default_mode && placed_signedExponentBit2) {
+  if (placed_signedExponentBit2) {
     adjustedExponent2 = ((adjustedExponent2 - 1) & 0x7FF);
   }
 

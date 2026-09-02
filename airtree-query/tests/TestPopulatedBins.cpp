@@ -55,21 +55,21 @@ TEST(PopulatedBins, StreamedFromBytesEqualsTheTreeWalk) {
   for (size_t n : {1u, 40u, 1345u, 20000u}) {
     const auto v = sample(n, static_cast<unsigned>(n));
     const FPHArray a = buildFPHArray(v.data(), static_cast<int>(v.size()));
-    expectStreamedEqualsTreeWalk<TrieNode_13>(generate_1DxT(a, true), 13);
-    expectStreamedEqualsTreeWalk<TrieNode_16>(generate_1DxF(a, true), 16);
-    expectStreamedEqualsTreeWalk<TrieNode_20>(generate_1DxP(a, true), 20);
+    expectStreamedEqualsTreeWalk<TrieNode_13>(generate_1DxT(a), 13);
+    expectStreamedEqualsTreeWalk<TrieNode_16>(generate_1DxF(a), 16);
+    expectStreamedEqualsTreeWalk<TrieNode_20>(generate_1DxP(a), 20);
   }
 }
 
 TEST(PopulatedBins, RejectsTruncatedAndNonOneDimensionalBuffers) {
   const auto v = sample(500, 7);
   const FPHArray a = buildFPHArray(v.data(), static_cast<int>(v.size()));
-  const auto buf = generate_1DxP(a, true);
+  const auto buf = generate_1DxP(a);
   const auto header = airtree::core::common::deserializeHeader(buf);
   Histogram h(20);
   const std::vector<char> cut(buf.begin(), buf.begin() + static_cast<long>(buf.size() - 40));
   EXPECT_THROW(airtree::query::meta::populatedBins(cut, header, h), std::runtime_error);
-  const auto two = generate_2DxP(a, a, true);
+  const auto two = generate_2DxP(a, a);
   EXPECT_THROW(airtree::query::meta::populatedBins(two, airtree::core::common::deserializeHeader(two), Histogram(12)), std::runtime_error);
 }
 

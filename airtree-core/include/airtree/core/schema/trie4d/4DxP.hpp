@@ -68,14 +68,12 @@ struct Node4D_4x10_l3 {
 std::unique_ptr<TLE_4D_4x10> execCreateAndInsert_4D_4x10(
     const FPHArray &array1, const FPHArray &array2, const FPHArray &array3,
     const FPHArray &array4, uint64_t &curr_trie_size,
-    std::unique_ptr<SpecialCounts> &specialCounts, bool default_mode = true);
+    std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char>
 execSerialize_4D_4x10(TLE_4D_4x10 *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts,
-                      bool default_mode);
+                      std::unique_ptr<SpecialCounts> &specialCounts);
 std::vector<char> generate_4DxP(const FPHArray &array1, const FPHArray &array2,
-                                const FPHArray &array3, const FPHArray &array4,
-                                bool default_mode = true);
+                                const FPHArray &array3, const FPHArray &array4);
 
 
 namespace airtree::core::schema::trie4d {
@@ -83,8 +81,7 @@ namespace airtree::core::schema::trie4d {
 class Generator4DxP : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie4d
