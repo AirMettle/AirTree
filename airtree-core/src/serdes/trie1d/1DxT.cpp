@@ -17,21 +17,16 @@ using namespace airtree::core::common;
 void serialize_1DxT(const TrieNode_13 *node,
                                      std::vector<char> &buffer,
                                      bool recursive) {
-  // Convert populated bitset to compact BooleanArray
-  uint64_t mask[(BINS_256 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_256, node->counts, buffer);
+  writeNode(node->populated.words, BINS_256, node->counts, buffer);
 
   if (!recursive)
     return;
 
 
-  // Recursively serialize child nodes
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (node->populated[i] && node->nodes[i]) {
+  forEachSetBit(node->populated.words, BINS_256, [&](size_t i) {
+    if (node->nodes[i])
       serialize_1DxT_l1(node->nodes[i].get(), buffer);
-    }
-  }
+  });
 
   // Add end of file marker
   writeEndOfFileMarker(buffer);
@@ -69,16 +64,16 @@ deserialize_1DxT(std::span<const char> buffer, size_t &offset,
   setPopulated(node->populated, mask);
   if (!recursive)
     return node;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (!node->populated[i])
-      continue;
-    node->nodes[i] = deserialize_1DxT_l1(buffer, offset);
-    if (!node->nodes[i]) {
-      SPDLOG_LOGGER_ERROR(
-          logger(), "Deserialization of child node failed at index {}", i);
-      return nullptr;
+  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + std::countr_zero(m);
+      node->nodes[i] = deserialize_1DxT_l1(buffer, offset);
+      if (!node->nodes[i]) {
+        SPDLOG_LOGGER_ERROR(
+            logger(), "Deserialization of child node failed at index {}", i);
+        return nullptr;
+      }
     }
-  }
   if (!verifyEndOfFileMarker(buffer, offset)) {
     return nullptr;
   }

@@ -30,14 +30,14 @@ TEST(Insert2D, PerValueInsertMatchesBatchGenerate) {
     uint64_t size = sizeof(TLEoption3_2D);
     auto specials = std::make_unique<SpecialCounts>();
     for (size_t i = 0; i < x.size(); ++i) createAndInsert_2DxP(root.get(), x[i], y[i], size, specials);
-    EXPECT_EQ(execSerialize_2D_2x10(root.get(), size, specials), generate_2DxP(ax, ay));
+    EXPECT_EQ(execSerialize_2D_2x10(root.get(), specials), generate_2DxP(ax, ay));
   }
   {
     auto root = CreateParentNode_TLE2D88();
     uint64_t size = sizeof(TLETrieNode_2D);
     auto specials = std::make_unique<SpecialCounts>();
     for (size_t i = 0; i < x.size(); ++i) createAndInsert_2DxF(root.get(), x[i], y[i], size, specials);
-    EXPECT_EQ(execSerialize_2D(root.get(), size, specials), generate_2DxF(ax, ay));
+    EXPECT_EQ(execSerialize_2D(root.get(), specials), generate_2DxF(ax, ay));
   }
 }
 

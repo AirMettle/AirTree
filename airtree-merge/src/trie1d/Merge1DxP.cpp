@@ -22,7 +22,7 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
   SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
-  std::bitset<BINS_256> pop0_1, pop0_2;
+  PopulatedBins<BINS_256> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TrieNode_20, BINS_256>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_1DxP(mergedRoot.get(), mergedBuffer, false);

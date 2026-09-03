@@ -7,6 +7,7 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie3d/3DxP.hpp>
 #include <airtree/util/UUID.hpp>
 
@@ -27,140 +28,40 @@ Generator3DxP::generate(const std::vector<const FPHArray *> &arrays) const {
 void insertintoTrie_3D_3x10(TLE_3D_3x10 *root, unsigned int combined,
                             unsigned int combinedTLE, int ndims,
                             uint64_t &curr_trie_size) {
-  if (!root) {
-    SPDLOG_LOGGER_ERROR(logger(), "Root is null.");
-    return;
-  }
-
-  // update TLE level and setup child node
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
+  root->populated.set(combinedTLE);
   root->counts[combinedTLE]++;
-
-  if (ndims == 0) {
+  static constexpr uint8_t kDepth[8] = {0, 1, 1, 2, 1, 2, 2, 3};
+  const int depth = kDepth[ndims & 0x7];
+  if (depth == 0)
     return;
+  std::unique_ptr<Node3D_3x10_l0> &l0 = root->nodes[combinedTLE];
+  if (!l0) {
+    l0 = std::make_unique<Node3D_3x10_l0>();
+    curr_trie_size += sizeof(Node3D_3x10_l0);
   }
-
-  // if ndims is one of 1, 2 or 4 then we are processing a 10 bit value (max).
-  if (ndims == 1 || ndims == 2 || ndims == 4) {
-    // combined is a 10 bit number
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
-      curr_trie_size += sizeof(Node3D_3x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(combined)) {
-      root->nodes[combinedTLE]->populated.set(combined);
-      root->nodes[combinedTLE]->counts[combined]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[combined]++;
+  const unsigned int c0 = (combined >> (10 * (depth - 1))) & 0x3FF;
+  l0->populated.set(c0);
+  l0->counts[c0]++;
+  if (depth == 1)
+    return;
+  std::unique_ptr<Node3D_3x10_l1> &l1 = l0->nodes[c0];
+  if (!l1) {
+    l1 = std::make_unique<Node3D_3x10_l1>();
+    curr_trie_size += sizeof(Node3D_3x10_l1);
   }
-
-  // if ndims is one of 3, 5 or 6 then we are processing a 20 bit value (max).
-  if (ndims == 3 || ndims == 5 || ndims == 6) {
-    // combined is a 20 bit number
-    unsigned int l0_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l1_10 = combined & 0x3FF;         // 10 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
-      curr_trie_size += sizeof(Node3D_3x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node3D_3x10_l1>();
-      curr_trie_size += sizeof(Node3D_3x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
+  const unsigned int c1 = (combined >> (10 * (depth - 2))) & 0x3FF;
+  l1->populated.set(c1);
+  l1->counts[c1]++;
+  if (depth == 2)
+    return;
+  std::unique_ptr<Node3D_3x10_l2> &l2 = l1->nodes[c1];
+  if (!l2) {
+    l2 = std::make_unique<Node3D_3x10_l2>();
+    curr_trie_size += sizeof(Node3D_3x10_l2);
   }
-
-  // if ndims is 7 then we are processing a 30 bit value (max).
-  if (ndims == 7) {
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
-      curr_trie_size += sizeof(Node3D_3x10_l0);
-    }
-
-    // combined is a 30 bit number
-    unsigned int l0_10 = (combined >> 20) & 0x3FF; // 10 bits
-    unsigned int l1_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l2_10 = combined & 0x3FF;         // 10 bits
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node3D_3x10_l1>();
-      curr_trie_size += sizeof(Node3D_3x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node3D_3x10_l2>();
-      curr_trie_size += sizeof(Node3D_3x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node3D_3x10_l2>();
-      curr_trie_size += sizeof(Node3D_3x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-
-    // if populated of l0_10 is set, l1_10 is set and l2_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.test(
-            l2_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // l0_10 is set, l1_10 is set and l2_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-  }
+  const unsigned int c2 = combined & 0x3FF;
+  l2->populated.set(c2);
+  l2->counts[c2]++;
 }
 
 std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
@@ -192,7 +93,7 @@ std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 3DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_3D_3x10(
-      root.get(), curr_trie_size, specialCounts);
+      root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 3DxP Trie.", uuid);
@@ -321,8 +222,7 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
 }
 
 std::vector<char>
-execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts) {
+execSerialize_3D_3x10(TLE_3D_3x10 *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_3D_Precise, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
@@ -330,7 +230,6 @@ execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
       specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_3DxP(root, buffer);

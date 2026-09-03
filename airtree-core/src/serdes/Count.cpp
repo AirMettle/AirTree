@@ -166,6 +166,30 @@ bool deserializeCounts(std::span<const char> buffer, size_t &offset,
   return true;
 }
 
+void serializeCountsPacked(const uint32_t *values, size_t n, std::vector<char> &out) {
+  uint32_t maxCount = 0;
+  for (size_t i = 0; i < n; ++i)
+    maxCount = std::max(maxCount, values[i]);
+  const int minBits = minimumBits(maxCount);
+  const size_t start = out.size();
+  out.resize(start + 1 + (n * static_cast<size_t>(minBits) + 7) / 8);
+  char *p = out.data() + start;
+  *p++ = static_cast<char>(minBits);
+  uint64_t bitBuffer = 0;
+  int bitCount = 0;
+  for (size_t i = 0; i < n; ++i) {
+    bitBuffer |= static_cast<uint64_t>(values[i]) << bitCount;
+    bitCount += minBits;
+    while (bitCount >= 8) {
+      *p++ = static_cast<char>(bitBuffer & 0xFF);
+      bitBuffer >>= 8;
+      bitCount -= 8;
+    }
+  }
+  if (bitCount > 0)
+    *p++ = static_cast<char>(bitBuffer & 0xFF);
+}
+
 void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
                      std::vector<char> &out) {
   const size_t nWords = (bins + 63) / 64;

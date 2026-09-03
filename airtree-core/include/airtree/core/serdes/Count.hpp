@@ -24,6 +24,7 @@ deserializeCounts(std::span<const char> buffer, size_t &offset, size_t len);
 // serializeCounts(counts, bins) when counts are non-zero exactly at the mask bits.
 void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
                      std::vector<char> &out);
+void serializeCountsPacked(const uint32_t *values, std::size_t n, std::vector<char> &out);
 
 // Advances past a count payload without decoding it; false on underflow.
 [[nodiscard]] bool skipCounts(std::span<const char> buffer, size_t &offset,

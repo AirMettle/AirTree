@@ -7,6 +7,7 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie2d/2DxF.hpp>
 #include <airtree/util/UUID.hpp>
 #include <string>
@@ -111,7 +112,7 @@ std::vector<char> generate_2DxF(const FPHArray &array1, const FPHArray &array2) 
       "[serialization] [traceID: {}] Serializing 2DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer =
-      execSerialize_2D(root.get(), curr_trie_size, specialCounts);
+      execSerialize_2D(root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 2DxF Trie.", uuid);
@@ -157,8 +158,7 @@ std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
 }
 
 std::vector<char>
-execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
-                 std::unique_ptr<SpecialCounts> &specialCounts) {
+execSerialize_2D(TLETrieNode_2D *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_2D_Fast, {}, countObservations(root->TLEcounts),
       specialCounts->posInfCount, specialCounts->negInfCount,
@@ -166,7 +166,6 @@ execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
       specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_2DxF(root, buffer);

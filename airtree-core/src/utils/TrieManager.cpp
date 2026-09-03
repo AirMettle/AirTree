@@ -237,39 +237,27 @@ void TrieManager::insert2DxP(uint32_t combinedTLE, uint32_t combined20Bits,
     return;
   }
 
-  if (specialCounts == 1) {
-    if (!root2DxP->nodes[combinedTLE]) {
-      root2DxP->nodes[combinedTLE] = std::make_unique<TrieNode_2D_10>();
-      trieSize2DxP += sizeof(TrieNode_2D_10);
-    }
-
-    if (!root2DxP->nodes[combinedTLE]->populated.test(combined20Bits)) {
-      root2DxP->nodes[combinedTLE]->populated.set(combined20Bits);
-    }
-    root2DxP->nodes[combinedTLE]->counts[combined20Bits]++;
-    return;
-  }
-
-  unsigned int first10 = (combined20Bits >> 10) & 0x3FF;
-  unsigned int last10 = combined20Bits & 0x3FF;
-
   if (!root2DxP->nodes[combinedTLE]) {
     root2DxP->nodes[combinedTLE] = std::make_unique<TrieNode_2D_10>();
     trieSize2DxP += sizeof(TrieNode_2D_10);
   }
-
-  if (!root2DxP->nodes[combinedTLE]->populated.test(first10)) {
-    root2DxP->nodes[combinedTLE]->populated.set(first10);
-    root2DxP->nodes[combinedTLE]->nodes[first10] =
-        std::make_unique<TrieNode_2D_10_Level1>();
+  TrieNode_2D_10 &l0 = *root2DxP->nodes[combinedTLE];
+  if (specialCounts == 1) {
+    l0.populated.set(combined20Bits);
+    l0.counts[combined20Bits]++;
+    return;
+  }
+  unsigned int first10 = (combined20Bits >> 10) & 0x3FF;
+  unsigned int last10 = combined20Bits & 0x3FF;
+  if (!l0.nodes[first10]) {
+    l0.nodes[first10] = std::make_unique<TrieNode_2D_10_Level1>();
     trieSize2DxP += sizeof(TrieNode_2D_10_Level1);
   }
-
-  root2DxP->nodes[combinedTLE]->counts[first10]++;
-  root2DxP->nodes[combinedTLE]->nodes[first10]->counts[last10]++;
+  l0.populated.set(first10);
+  l0.counts[first10]++;
+  l0.nodes[first10]->counts[last10]++;
 }
 
-// Helper: Given a quadrant, returns the starting level0 index for that region.
 static unsigned int quadrantToStartIndex(Quadrant q) {
   switch (q) {
   case Quadrant::POS_POS:
@@ -602,41 +590,22 @@ void TrieManager::insert3DxP(uint32_t combinedTLE, uint64_t combined30Bits,
     root3DxP->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
     trieSize3DxP += sizeof(Node3D_3x10_l0);
   }
-
-  // Set Level 0 populated
-  if (!root3DxP->nodes[combinedTLE]->populated.test(l0_10)) {
-    root3DxP->nodes[combinedTLE]->populated.set(l0_10);
-  }
-  root3DxP->nodes[combinedTLE]->counts[l0_10] += count;
-
-  // Create Level 1 node if needed
-  if (!root3DxP->nodes[combinedTLE]->nodes[l0_10]) {
-    root3DxP->nodes[combinedTLE]->nodes[l0_10] =
-        std::make_unique<Node3D_3x10_l1>();
+  Node3D_3x10_l0 &l0 = *root3DxP->nodes[combinedTLE];
+  l0.populated.set(l0_10);
+  l0.counts[l0_10] += count;
+  if (!l0.nodes[l0_10]) {
+    l0.nodes[l0_10] = std::make_unique<Node3D_3x10_l1>();
     trieSize3DxP += sizeof(Node3D_3x10_l1);
   }
-
-  // Set Level 1 populated
-  if (!root3DxP->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-    root3DxP->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-  }
-  root3DxP->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10] += count;
-
-  // Create Level 2 node if needed
-  if (!root3DxP->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]) {
-    root3DxP->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-        std::make_unique<Node3D_3x10_l2>();
+  Node3D_3x10_l1 &l1 = *l0.nodes[l0_10];
+  l1.populated.set(l1_10);
+  l1.counts[l1_10] += count;
+  if (!l1.nodes[l1_10]) {
+    l1.nodes[l1_10] = std::make_unique<Node3D_3x10_l2>();
     trieSize3DxP += sizeof(Node3D_3x10_l2);
   }
-
-  // Set Level 2 populated and count
-  if (!root3DxP->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.test(
-          l2_10)) {
-    root3DxP->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-        l2_10);
-  }
-  root3DxP->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10] +=
-      count;
+  l1.nodes[l1_10]->populated.set(l2_10);
+  l1.nodes[l1_10]->counts[l2_10] += count;
 }
 
 const TLE_3D_3x10 &TrieManager::getRoot3DxP() const {

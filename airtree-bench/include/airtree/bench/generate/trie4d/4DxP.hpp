@@ -32,34 +32,21 @@ inline uint64_t countPreciseBins4DxP(const TLE_4D_4x10 *root) {
   if (!root) {
     return 0;
   }
-
   uint64_t precise_bins = 0;
   for (unsigned int i = 0; i < BINS_4096; ++i) {
     if (!root->populated.test(i) || !root->nodes[i]) {
       continue;
     }
-    for (unsigned int j = 0; j < BINS_1024; ++j) {
-      if (!root->nodes[i]->populated.test(j) || !root->nodes[i]->nodes[j]) {
-        continue;
-      }
-      for (unsigned int k = 0; k < BINS_1024; ++k) {
-        if (!root->nodes[i]->nodes[j]->populated.test(k) ||
-            !root->nodes[i]->nodes[j]->nodes[k]) {
-          continue;
-        }
-        for (unsigned int l = 0; l < BINS_1024; ++l) {
-          if (!root->nodes[i]->nodes[j]->nodes[k]->populated.test(l) ||
-              !root->nodes[i]->nodes[j]->nodes[k]->nodes[l]) {
-            continue;
-          }
-          for (unsigned int m = 0; m < BINS_1024; ++m) {
-            if (root->nodes[i]->nodes[j]->nodes[k]->nodes[l]->counts[m] > 0) {
-              ++precise_bins;
-            }
-          }
-        }
-      }
-    }
+    root->nodes[i]->forEach([&](size_t, uint32_t, const Node4D_4x10_l1 *l1) {
+      if (!l1) return;
+      l1->forEach([&](size_t, uint32_t, const Node4D_4x10_l2 *l2) {
+        if (!l2) return;
+        l2->forEach([&](size_t, uint32_t, const Node4D_4x10_l3 *l3) {
+          if (!l3) return;
+          l3->forEach([&](size_t, uint32_t count) { precise_bins += count > 0; });
+        });
+      });
+    });
   }
   return precise_bins;
 }
@@ -153,7 +140,7 @@ protected:
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_4D_4x10(
-          airTree4DxP_root.get(), curr_trie_size, specialCounts);
+          airTree4DxP_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
@@ -165,7 +152,7 @@ protected:
     // Untimed materialize: write serialized histogram once if requested.
     if (!BenchPaths::write_airtree_path.empty()) {
       auto buffer = execSerialize_4D_4x10(
-          airTree4DxP_root.get(), curr_trie_size, specialCounts);
+          airTree4DxP_root.get(), specialCounts);
       airtree::core::io::AirTreeWriter::Write(buffer,
                                               BenchPaths::write_airtree_path);
       BenchPaths::write_airtree_path.clear();

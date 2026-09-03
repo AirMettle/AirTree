@@ -139,7 +139,7 @@ protected:
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_2D(
-          airTree2DxF_root.get(), curr_trie_size, specialCounts);
+          airTree2DxF_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();

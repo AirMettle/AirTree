@@ -4,6 +4,7 @@
 #define AIRTREE_CORE_SCHEMA_TRIE1D_1DXT_HPP
 
 #include <airtree/core/common/Bins.hpp>
+#include <airtree/core/common/Populated.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
@@ -44,7 +45,7 @@ struct TrieNode_13_Level1; // Forward Declaration
  * @param counts Array to store the count of values in the bucket.
  */
 struct TrieNode_13 {
-  std::bitset<BINS_256> populated;
+  PopulatedBins<BINS_256> populated;
   std::unique_ptr<TrieNode_13_Level1> nodes[BINS_256];
   uint32_t counts[BINS_256] = {0};
 
@@ -87,8 +88,7 @@ execCreateAndInsert_TrieNode13(SpecialCounts &specialCounts,
 
 [[nodiscard]] std::vector<char>
 execSerialization_TrieNode13(const std::unique_ptr<TrieNode_13> &root,
-                             const SpecialCounts &specialCounts,
-                             uint64_t trieSize);
+                             const SpecialCounts &specialCounts);
 
 
 /**

@@ -7,6 +7,7 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie2d/2DxP.hpp>
 #include <airtree/util/UUID.hpp>
 
@@ -60,7 +61,7 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2) 
       "[serialization] [traceID: {}] Serializing 2DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_2D_2x10(
-      root.get(), curr_trie_size, specialCounts);
+      root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 2DxP Trie.", uuid);
@@ -73,54 +74,30 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2) 
 void insertintoTLETrie_2D_option3(TLEoption3_2D *root, unsigned int combined,
                                   unsigned int combinedTLE, int ndims,
                                   uint64_t &curr_trie_size) {
-  if (!root) {
-    SPDLOG_LOGGER_ERROR(
-        logger(), "Root is null in insertintoTLETrie_2D_option3.");
-    return;
-  }
-
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
-
+  root->populated.set(combinedTLE);
   root->counts[combinedTLE]++;
-
-  if (ndims == 0) {
+  if (ndims == 0)
+    return;
+  std::unique_ptr<TrieNode_2D_10> &l0 = root->nodes[combinedTLE];
+  if (!l0) {
+    l0 = std::make_unique<TrieNode_2D_10>();
+    curr_trie_size += sizeof(TrieNode_2D_10);
+  }
+  if (ndims != 3) {
+    l0->populated.set(combined);
+    l0->counts[combined]++;
     return;
   }
-
-  if (ndims == 3) {
-    unsigned int first10 = (combined >> 10) & 0x3FF;
-    unsigned int last10 = combined & 0x3FF;
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<TrieNode_2D_10>();
-      curr_trie_size += sizeof(TrieNode_2D_10);
-    }
-
-    if (!root->nodes[combinedTLE]->populated.test(first10)) {
-      root->nodes[combinedTLE]->populated.set(first10);
-      root->nodes[combinedTLE]->nodes[first10] =
-          std::make_unique<TrieNode_2D_10_Level1>();
-      curr_trie_size += sizeof(TrieNode_2D_10_Level1);
-    }
-
-    root->nodes[combinedTLE]->counts[first10]++;
-    root->nodes[combinedTLE]->nodes[first10]->counts[last10]++;
+  const unsigned int first10 = (combined >> 10) & 0x3FF;
+  const unsigned int last10 = combined & 0x3FF;
+  std::unique_ptr<TrieNode_2D_10_Level1> &l1 = l0->nodes[first10];
+  if (!l1) {
+    l1 = std::make_unique<TrieNode_2D_10_Level1>();
+    curr_trie_size += sizeof(TrieNode_2D_10_Level1);
   }
-
-  if (ndims == 1 || ndims == 2) {
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<TrieNode_2D_10>();
-      curr_trie_size += sizeof(TrieNode_2D_10);
-    }
-
-    if (!root->nodes[combinedTLE]->populated.test(combined)) {
-      root->nodes[combinedTLE]->populated.set(combined);
-    }
-    root->nodes[combinedTLE]->counts[combined]++;
-  }
+  l0->populated.set(first10);
+  l0->counts[first10]++;
+  l1->counts[last10]++;
 }
 
 
@@ -161,15 +138,13 @@ std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
 }
 
 std::vector<char>
-execSerialize_2D_2x10(TLEoption3_2D *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts) {
+execSerialize_2D_2x10(TLEoption3_2D *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_2D_Precise, {}, countObservations(root->counts), specialCounts->posInfCount,
       specialCounts->negInfCount, specialCounts->posZeroCount,
       specialCounts->negZeroCount, specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_2DxP(root, buffer);

@@ -5,6 +5,7 @@
 
 
 #include <airtree/core/schema/trie1d/1DxF.hpp>
+#include <airtree/core/common/Populated.hpp>
 
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
@@ -24,7 +25,7 @@
 * @see TriNode_16 definition in FloatingPointTrie/1-D.h
 */
 struct TLETrieNode_2D {
-  std::bitset<BINS_64> populated;
+  PopulatedBins<BINS_64> populated;
   uint32_t TLEcounts[BINS_64];
   std::unique_ptr<TrieNode_16> nodes[BINS_64];
 };
@@ -68,8 +69,7 @@ inline void createAndInsert_2DxF(TLETrieNode_2D *root, T1 v1, T2 v2, uint64_t &c
     const FPHArray &array1, const FPHArray &array2, uint64_t &curr_trie_size,
     std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char>
-execSerialize_2D(TLETrieNode_2D *root, uint64_t &curr_trie_size,
-                 std::unique_ptr<SpecialCounts> &specialCounts);
+execSerialize_2D(TLETrieNode_2D *root, std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_2DxF(const FPHArray &array1,
                                               const FPHArray &array2);
 

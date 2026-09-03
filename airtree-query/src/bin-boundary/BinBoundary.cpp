@@ -7,7 +7,6 @@
 #include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/core/serdes/Count.hpp>
 #include <algorithm>
-#include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -15,32 +14,27 @@
 #include <memory>
 #include <queue>
 #include <stdexcept>
+#include <airtree/core/common/Populated.hpp>
 #include <spdlog/spdlog.h>
 #include <sys/types.h>
 #include <vector>
 
 using namespace airtree::query::bin_boundary;
 
-// Populated bitset of one node plus its raw mask words (the count decoder needs the words).
-template <size_t N> struct Populated : std::bitset<N> {
-  uint64_t words[(N + 63) / 64];
-};
-
 template <size_t N>
-[[nodiscard]] Populated<N> deserializeBitset(std::span<const char> buffer,
-                                             size_t &offset, int /*len*/) {
-  Populated<N> populated;
+[[nodiscard]] PopulatedBins<N> deserializeBitset(std::span<const char> buffer,
+                                                 size_t &offset, int /*len*/) {
+  PopulatedBins<N> populated;
   if (!readPopulatedMask(buffer, offset, populated.words, N)) {
     throw std::runtime_error("BinBoundary: truncated populated mask");
   }
-  setPopulated(populated, populated.words);
   return populated;
 }
 
 template <size_t N>
 [[nodiscard]] std::vector<uint32_t>
 deserializeCountsToOriginalLen(std::span<const char> buffer, size_t &offset,
-                               const Populated<N> &populated) {
+                               const PopulatedBins<N> &populated) {
   std::vector<uint32_t> counts(N, 0);
   if (!deserializeCounts(buffer, offset, populated.words, N, counts.data())) {
     throw std::runtime_error("BinBoundary: truncated counts");
@@ -94,19 +88,17 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxT() {
   auto l0_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
 
-  for (size_t l0_idx = 0; l0_idx < BINS_256; ++l0_idx) {
-    if (!l0_populated[l0_idx]) {
-      continue; // Skip if this l0 node is not populated
-    }
+  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
+  for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+    const size_t l0_idx = w * 64 + std::countr_zero(m);
     // Deserialize l1 populated bitset
     auto l1_populated = deserializeBitset<BINS_32>(buffer_, offset_, 1);
     // Deserialize l1 counts
     auto l1_counts =
         deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-    for (size_t l1_idx = 0; l1_idx < BINS_32; ++l1_idx) {
-      if (!l1_populated[l1_idx]) {
-        continue; // Skip if this l1 node is not populated
-      }
+    for (size_t w = 0; w < PopulatedBins<BINS_32>::kWords; ++w)
+    for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+      const size_t l1_idx = w * 64 + std::countr_zero(m);
 
       // Start by saving the count
       auto count = l1_counts[l1_idx];
@@ -133,20 +125,18 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxF() {
   auto l0_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
 
-  for (size_t l0_idx = 0; l0_idx < BINS_256; ++l0_idx) {
-    if (!l0_populated[l0_idx]) {
-      continue; // Skip if this l0 node is not populated
-    }
+  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
+  for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+    const size_t l0_idx = w * 64 + std::countr_zero(m);
     // Deserialize l1 populated bitset
     auto l1_populated =
         deserializeBitset<BINS_256>(buffer_, offset_, BINS_256 / 64);
     // Deserialize l1 counts
     auto l1_counts =
         deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-    for (size_t l1_idx = 0; l1_idx < BINS_256; ++l1_idx) {
-      if (!l1_populated[l1_idx]) {
-        continue; // Skip if this l1 node is not populated
-      }
+    for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
+    for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+      const size_t l1_idx = w * 64 + std::countr_zero(m);
 
       // Start by saving the count
       auto count = l1_counts[l1_idx];
@@ -174,20 +164,18 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxP() {
   auto l0_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
 
-  for (size_t l0_idx = 0; l0_idx < BINS_256; ++l0_idx) {
-    if (!l0_populated[l0_idx]) {
-      continue; // Skip if this l0 node is not populated
-    }
+  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
+  for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+    const size_t l0_idx = w * 64 + std::countr_zero(m);
     // Deserialize l1 populated bitset
     auto l1_populated =
         deserializeBitset<BINS_64>(buffer_, offset_, BINS_64 / 64);
     // Deserialize l1 counts
     auto l1_counts =
         deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-    for (size_t l1_idx = 0; l1_idx < BINS_64; ++l1_idx) {
-      if (!l1_populated[l1_idx]) {
-        continue; // Skip if this l1 node is not populated
-      }
+    for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
+    for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+      const size_t l1_idx = w * 64 + std::countr_zero(m);
 
       // Deserialize l2 populated bitset
       auto l2_populated =
@@ -195,10 +183,9 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxP() {
       // Deserialize l2 counts
       auto l2_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-      for (size_t l2_idx = 0; l2_idx < BINS_64; ++l2_idx) {
-        if (!l2_populated[l2_idx]) {
-          continue; // Skip if this l2 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
+      for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l2_idx = w * 64 + std::countr_zero(m);
 
         // Start by saving the count
         auto count = l2_counts[l2_idx];
@@ -227,10 +214,9 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
   auto tle_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, tle_populated);
 
-  for (size_t tle_idx = 0; tle_idx < BINS_64; ++tle_idx) {
-    if (!tle_populated[tle_idx]) {
-      continue; // Skip if this TLE is not populated
-    }
+  for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
+  for (uint64_t m = tle_populated.words[w]; m != 0; m &= m - 1) {
+    const size_t tle_idx = w * 64 + std::countr_zero(m);
 
     auto [dimensionInfoVec, specialCount] =
         deconstructTLE(tle_idx, 2); // Deconstruct TLE for 2D
@@ -259,10 +245,9 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Start by saving the count
         auto count = l0_counts[l0_idx];
         // generate bin boundaries
@@ -303,20 +288,18 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
       // deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t l1_idx = 0; l1_idx < BINS_1024; ++l1_idx) {
-          if (!l1_populated[l1_idx]) {
-            continue; // Skip if this l1 node is not populated
-          }
+        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+          const size_t l1_idx = w * 64 + std::countr_zero(m);
 
           // Start by saving the count
           auto count = l1_counts[l1_idx];
@@ -366,10 +349,9 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       deserializeCountsToOriginalLen(buffer_, offset_, tle_populated);
 
   // iterate through TLEs
-  for (size_t tle_idx = 0; tle_idx < BINS_512; ++tle_idx) {
-    if (!tle_populated[tle_idx]) {
-      continue; // Skip if this TLE is not populated
-    }
+  for (size_t w = 0; w < PopulatedBins<BINS_512>::kWords; ++w)
+  for (uint64_t m = tle_populated.words[w]; m != 0; m &= m - 1) {
+    const size_t tle_idx = w * 64 + std::countr_zero(m);
 
     // Deconstruct TLE for 3D
     auto [dimensionInfoVec, specialCount] = deconstructTLE(tle_idx, 3);
@@ -398,10 +380,9 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; l0_idx++) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Start by saving the count
         auto count = l0_counts[l0_idx];
         // generate bin boundaries
@@ -445,20 +426,18 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t l1_idx = 0; l1_idx < BINS_1024; ++l1_idx) {
-          if (!l1_populated[l1_idx]) {
-            continue; // Skip if this l1 node is not populated
-          }
+        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+          const size_t l1_idx = w * 64 + std::countr_zero(m);
 
           // Start by saving the count
           auto count = l1_counts[l1_idx];
@@ -510,30 +489,27 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       // deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t l1_idx = 0; l1_idx < BINS_1024; ++l1_idx) {
-          if (!l1_populated[l1_idx]) {
-            continue; // Skip if this l1 node is not populated
-          }
+        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+          const size_t l1_idx = w * 64 + std::countr_zero(m);
           // Deserialize l2 populated bitset
           auto l2_populated =
               deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
           // Deserialize l2 counts
           auto l2_counts =
               deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-          for (size_t l2_idx = 0; l2_idx < BINS_1024; ++l2_idx) {
-            if (!l2_populated[l2_idx]) {
-              continue; // Skip if this l2 node is not populated
-            }
+          for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+          for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
+            const size_t l2_idx = w * 64 + std::countr_zero(m);
             // Start by saving the count
             auto count = l2_counts[l2_idx];
             // generate bin boundaries
@@ -590,10 +566,9 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       deserializeCountsToOriginalLen(buffer_, offset_, tle_populated);
 
   // iterate through TLEs
-  for (size_t tle_idx = 0; tle_idx < BINS_4096; ++tle_idx) {
-    if (!tle_populated[tle_idx]) {
-      continue; // Skip if this TLE is not populated
-    }
+  for (size_t w = 0; w < PopulatedBins<BINS_4096>::kWords; ++w)
+  for (uint64_t m = tle_populated.words[w]; m != 0; m &= m - 1) {
+    const size_t tle_idx = w * 64 + std::countr_zero(m);
     // Deconstruct TLE for 4D
     auto [dimensionInfoVec, specialCount] = deconstructTLE(tle_idx, 4);
 
@@ -621,10 +596,9 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Start by saving the count
         auto count = l0_counts[l0_idx];
         // generate bin boundaries
@@ -667,20 +641,18 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t l1_idx = 0; l1_idx < BINS_1024; ++l1_idx) {
-          if (!l1_populated[l1_idx]) {
-            continue; // Skip if this l1 node is not populated
-          }
+        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+          const size_t l1_idx = w * 64 + std::countr_zero(m);
           // Start by saving the count
           auto count = l1_counts[l1_idx];
           // generate bin boundaries
@@ -732,30 +704,27 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t l1_idx = 0; l1_idx < BINS_1024; ++l1_idx) {
-          if (!l1_populated[l1_idx]) {
-            continue; // Skip if this l1 node is not populated
-          }
+        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+          const size_t l1_idx = w * 64 + std::countr_zero(m);
           // deserialize l2 populated bitset
           auto l2_populated =
               deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
           // deserialize l2 counts
           auto l2_counts =
               deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-          for (size_t l2_idx = 0; l2_idx < BINS_1024; ++l2_idx) {
-            if (!l2_populated[l2_idx]) {
-              continue; // Skip if this l2 node is not populated
-            }
+          for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+          for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
+            const size_t l2_idx = w * 64 + std::countr_zero(m);
             // Start by saving the count
             auto count = l2_counts[l2_idx];
             // generate bin boundaries
@@ -810,40 +779,36 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t l0_idx = 0; l0_idx < BINS_1024; ++l0_idx) {
-        if (!l0_populated[l0_idx]) {
-          continue; // Skip if this l0 node is not populated
-        }
+      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
+        const size_t l0_idx = w * 64 + std::countr_zero(m);
         // deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t l1_idx = 0; l1_idx < BINS_1024; ++l1_idx) {
-          if (!l1_populated[l1_idx]) {
-            continue; // Skip if this l1 node is not populated
-          }
+        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
+          const size_t l1_idx = w * 64 + std::countr_zero(m);
           // deserialize l2 populated bitset
           auto l2_populated =
               deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
           // deserialize l2 counts
           auto l2_counts =
               deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-          for (size_t l2_idx = 0; l2_idx < BINS_1024; ++l2_idx) {
-            if (!l2_populated[l2_idx]) {
-              continue; // Skip if this l2 node is not populated
-            }
+          for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+          for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
+            const size_t l2_idx = w * 64 + std::countr_zero(m);
             // deserialize l3 populated bitset
             auto l3_populated =
                 deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
             // deserialize l3 counts
             auto l3_counts =
                 deserializeCountsToOriginalLen(buffer_, offset_, l3_populated);
-            for (size_t l3_idx = 0; l3_idx < BINS_1024; ++l3_idx) {
-              if (!l3_populated[l3_idx]) {
-                continue; // Skip if this l3 node is not populated
-              }
+            for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
+            for (uint64_t m = l3_populated.words[w]; m != 0; m &= m - 1) {
+              const size_t l3_idx = w * 64 + std::countr_zero(m);
               // Start by saving the count
               auto count = l3_counts[l3_idx];
               // generate bin boundaries

@@ -5,12 +5,13 @@
 
 #include <span>
 #include <bit>
-#include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
 #include <airtree/core/common/BooleanArray.hpp>
+#include <airtree/core/common/Populated.hpp>
+#include <cstring>
 
 [[nodiscard]] std::vector<char>
 serializeCompactBooleanArray(const BooleanArray &array);
@@ -38,8 +39,8 @@ void forEachSetBit(const uint64_t *words, std::size_t bins, Fn &&fn) {
 }
 
 template <std::size_t N>
-void setPopulated(std::bitset<N> &populated, const uint64_t *words) {
-  forEachSetBit(words, N, [&](std::size_t i) { populated.set(i); });
+void setPopulated(PopulatedBins<N> &populated, const uint64_t *words) {
+  std::memcpy(populated.words, words, sizeof(populated.words));
 }
 
 #endif // AIRTREE_CORE_SERDES_BOOLEANARRAYSER_HPP

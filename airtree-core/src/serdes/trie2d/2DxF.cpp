@@ -34,18 +34,15 @@ processBuffer_2DxF(std::span<const char> buffer) {
 
 void serialize_2DxF(const TLETrieNode_2D *node, std::vector<char> &buffer,
                     bool recursive) {
-  uint64_t mask[(BINS_64 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_64, node->TLEcounts, buffer);
+  writeNode(node->populated.words, BINS_64, node->TLEcounts, buffer);
 
   if (!recursive)
     return;
 
-  for (size_t i = 0; i < BINS_64; i++) {
-    if (node->populated[i] && node->nodes[i]) {
+  forEachSetBit(node->populated.words, BINS_64, [&](size_t i) {
+    if (node->nodes[i])
       serializeTrieNode_16_ND(node->nodes[i].get(), buffer);
-    }
-  }
+  });
 
   // add end of file marker
   writeEndOfFileMarker(buffer);
@@ -78,11 +75,11 @@ deserialize_2DxF_l0(std::span<const char> buffer, size_t &offset, int level,
   }
   if (!recursive)
     return node;
-  for (size_t i = 0; i < BINS_256; i++) {
-    if (node->populated[i]) {
-      node->nodes[i] = deserialize_2DxF_l1(buffer, offset, level);
+  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + std::countr_zero(m);
+    node->nodes[i] = deserialize_2DxF_l1(buffer, offset, level);
     }
-  }
   return node;
 }
 
@@ -95,24 +92,24 @@ std::unique_ptr<TLETrieNode_2D> deserialize_2DxF(std::span<const char> buffer,
     return nullptr;
   }
   setPopulated(node->populated, mask);
-  for (int i = 0; i < BINS_64; i++) {
-    if (node->populated[i]) {
-      int nDims = getNumDims2D(i);
-      switch (nDims) {
-      case 0:
-        continue;
-      case 1:
-      case 2:
-        node->nodes[i] = deserialize_2DxF_l0(buffer, offset, 1);
-        break;
-      case 3:
-        node->nodes[i] = deserialize_2DxF_l0(buffer, offset, 2);
-        break;
-      default:
-        break;
-      }
+  for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + std::countr_zero(m);
+    int nDims = getNumDims2D(i);
+    switch (nDims) {
+    case 0:
+      continue;
+    case 1:
+    case 2:
+      node->nodes[i] = deserialize_2DxF_l0(buffer, offset, 1);
+      break;
+    case 3:
+      node->nodes[i] = deserialize_2DxF_l0(buffer, offset, 2);
+      break;
+    default:
+      break;
     }
-  }
+    }
   if (!verifyEndOfFileMarker(buffer, offset)) {
     SPDLOG_LOGGER_ERROR(logger(), "End of file marker not found");
     return node;

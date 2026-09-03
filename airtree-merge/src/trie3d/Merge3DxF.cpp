@@ -21,7 +21,7 @@ std::vector<char> Merge3DxF::merge(const std::vector<char> &buffer1,
   size_t header_end = mergedBuffer.size();
 
   // Deserialize the root nodes.
-  std::bitset<BINS_512> pop0_1, pop0_2;
+  PopulatedBins<BINS_512> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLE_3D_888, BINS_512>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_3DxF(mergedRoot.get(), mergedBuffer, false);

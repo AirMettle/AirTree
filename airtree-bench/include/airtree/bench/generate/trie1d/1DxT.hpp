@@ -120,7 +120,7 @@ protected:
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialization_TrieNode13(
-          airTree1DxT_root, *specialCounts, curr_trie_size);
+          airTree1DxT_root, *specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
@@ -132,7 +132,7 @@ protected:
     // Untimed materialize: write serialized histogram once if requested.
     if (!BenchPaths::write_airtree_path.empty()) {
       auto buffer = execSerialization_TrieNode13(
-          airTree1DxT_root, *specialCounts, curr_trie_size);
+          airTree1DxT_root, *specialCounts);
       airtree::core::io::AirTreeWriter::Write(buffer,
                                               BenchPaths::write_airtree_path);
       BenchPaths::write_airtree_path.clear();

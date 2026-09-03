@@ -7,6 +7,7 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie3d/3DxF.hpp>
 #include <airtree/util/UUID.hpp>
 
@@ -155,7 +156,7 @@ std::vector<char> generate_3DxF(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 3DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_3D_888(
-      root.get(), curr_trie_size, specialCounts);
+      root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 3DxF Trie.", uuid);
@@ -274,8 +275,7 @@ execCreateAndInsert_3D_888(const FPHArray &array1, const FPHArray &array2,
 }
 
 std::vector<char>
-execSerialize_3D_888(TLE_3D_888 *root, uint64_t &curr_trie_size,
-                     std::unique_ptr<SpecialCounts> &specialCounts) {
+execSerialize_3D_888(TLE_3D_888 *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_3D_Fast, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
@@ -283,7 +283,6 @@ execSerialize_3D_888(TLE_3D_888 *root, uint64_t &curr_trie_size,
       specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_3DxF(root, buffer);

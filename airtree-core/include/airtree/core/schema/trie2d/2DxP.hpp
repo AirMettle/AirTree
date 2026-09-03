@@ -4,6 +4,7 @@
 #define AIRTREE_CORE_SCHEMA_TRIE2D_2DXP_HPP
 
 #include <bitset>
+#include <airtree/core/common/Populated.hpp>
 #include <airtree/core/common/Bins.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
@@ -20,13 +21,13 @@ struct TrieNode_2D_10_Level1 {
 };
 
 struct TrieNode_2D_10 {
-  std::bitset<BINS_1024> populated;
+  PopulatedBins<BINS_1024> populated;
   uint32_t counts[BINS_1024] = {0};
   std::unique_ptr<TrieNode_2D_10_Level1> nodes[BINS_1024];
 };
 
 struct TLEoption3_2D {
-  std::bitset<BINS_64> populated;
+  PopulatedBins<BINS_64> populated;
   uint32_t counts[BINS_64] = {0};
   std::unique_ptr<TrieNode_2D_10> nodes[BINS_64];
 };
@@ -81,8 +82,7 @@ inline void createAndInsert_2DxP(TLEoption3_2D *root, T1 v1, T2 v2, uint64_t &cu
     std::unique_ptr<SpecialCounts> &specialCounts);
 
 [[nodiscard]] std::vector<char>
-execSerialize_2D_2x10(TLEoption3_2D *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts);
+execSerialize_2D_2x10(TLEoption3_2D *root, std::unique_ptr<SpecialCounts> &specialCounts);
 
 
 [[nodiscard]] std::vector<char> generate_2DxP(const FPHArray &array1,

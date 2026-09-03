@@ -149,7 +149,7 @@ protected:
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_3D_888(
-          airTree3DxF_root.get(), curr_trie_size, specialCounts);
+          airTree3DxF_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();

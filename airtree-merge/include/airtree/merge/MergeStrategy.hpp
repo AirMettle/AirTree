@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
-#include <bitset>
 #include <stdexcept>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -38,11 +37,10 @@ public:
                                    const std::string &outputFile);
 };
 
-template <typename NodeType, size_t BucketCount>
+template <typename NodeType, size_t BucketCount, typename Pop>
 std::unique_ptr<NodeType>
 Root_merge(const std::vector<char> &buffer1, const std::vector<char> &buffer2,
-           size_t &offset1, size_t &offset2, std::bitset<BucketCount> &pop1,
-           std::bitset<BucketCount> &pop2) {
+           size_t &offset1, size_t &offset2, Pop &pop1, Pop &pop2) {
   auto mergedRoot = std::make_unique<NodeType>();
   uint64_t mask1[(BucketCount + 63) / 64], mask2[(BucketCount + 63) / 64];
   uint32_t counts2[BucketCount] = {0};
@@ -59,11 +57,10 @@ Root_merge(const std::vector<char> &buffer1, const std::vector<char> &buffer2,
   return mergedRoot;
 }
 
-template <typename NodeType, size_t BucketCount>
+template <typename NodeType, size_t BucketCount, typename Pop>
 std::unique_ptr<NodeType>
 Root_merge_TLE(const std::vector<char> &buffer1, const std::vector<char> &buffer2,
-           size_t &offset1, size_t &offset2, std::bitset<BucketCount> &pop1,
-           std::bitset<BucketCount> &pop2) {
+           size_t &offset1, size_t &offset2, Pop &pop1, Pop &pop2) {
   auto mergedRoot = std::make_unique<NodeType>();
   uint64_t mask1[(BucketCount + 63) / 64], mask2[(BucketCount + 63) / 64];
   uint32_t counts2[BucketCount] = {0};

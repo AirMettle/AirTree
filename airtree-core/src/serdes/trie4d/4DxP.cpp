@@ -34,73 +34,66 @@ processBuffer_4DxP(std::span<const char> buffer) {
 }
 
 void serialize_4DxP_l3(const Node4D_4x10_l3 *node, std::vector<char> &buffer) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
+  uint32_t values[BINS_1024];
+  size_t n = 0;
+  node->forEach([&](size_t, uint32_t count) { values[n++] = count; });
+  writePopulatedMask(node->populated.words, BINS_1024, buffer);
+  serializeCountsPacked(values, n, buffer);
 }
 
-void serialize_4DxP_l2(const Node4D_4x10_l2 *node, std::vector<char> &buffer,
-                       bool recursive) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
-
+void serialize_4DxP_l2(const Node4D_4x10_l2 *node, std::vector<char> &buffer, bool recursive) {
+  uint32_t values[BINS_1024];
+  size_t n = 0;
+  node->forEach([&](size_t, uint32_t count, const auto *) { values[n++] = count; });
+  writePopulatedMask(node->populated.words, BINS_1024, buffer);
+  serializeCountsPacked(values, n, buffer);
   if (!recursive)
     return;
-
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i] && node->nodes[i]) {
-      serialize_4DxP_l3(node->nodes[i].get(), buffer);
-    }
-  }
+  node->forEach([&](size_t, uint32_t, const auto *child) {
+    if (child)
+      serialize_4DxP_l3(child, buffer);
+  });
 }
 
-void serialize_4DxP_l1(const Node4D_4x10_l1 *node, std::vector<char> &buffer,
-                       bool recursive) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
-
+void serialize_4DxP_l1(const Node4D_4x10_l1 *node, std::vector<char> &buffer, bool recursive) {
+  uint32_t values[BINS_1024];
+  size_t n = 0;
+  node->forEach([&](size_t, uint32_t count, const auto *) { values[n++] = count; });
+  writePopulatedMask(node->populated.words, BINS_1024, buffer);
+  serializeCountsPacked(values, n, buffer);
   if (!recursive)
     return;
-
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i] && node->nodes[i]) {
-      serialize_4DxP_l2(node->nodes[i].get(), buffer);
-    }
-  }
+  node->forEach([&](size_t, uint32_t, const auto *child) {
+    if (child)
+      serialize_4DxP_l2(child, buffer);
+  });
 }
 
-void serialize_4DxP_l0(const Node4D_4x10_l0 *node, std::vector<char> &buffer,
-                       bool recursive) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
-
+void serialize_4DxP_l0(const Node4D_4x10_l0 *node, std::vector<char> &buffer, bool recursive) {
+  uint32_t values[BINS_1024];
+  size_t n = 0;
+  node->forEach([&](size_t, uint32_t count, const auto *) { values[n++] = count; });
+  writePopulatedMask(node->populated.words, BINS_1024, buffer);
+  serializeCountsPacked(values, n, buffer);
   if (!recursive)
     return;
-
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i] && node->nodes[i]) {
-      serialize_4DxP_l1(node->nodes[i].get(), buffer);
-    }
-  }
+  node->forEach([&](size_t, uint32_t, const auto *child) {
+    if (child)
+      serialize_4DxP_l1(child, buffer);
+  });
 }
 
 void serialize_4DxP(const TLE_4D_4x10 *node, std::vector<char> &buffer,
                     bool recursive) {
-  uint64_t mask[(BINS_4096 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_4096, node->counts, buffer);
+  writeNode(node->populated.words, BINS_4096, node->counts, buffer);
 
   if (!recursive)
     return;
 
-  for (size_t i = 0; i < BINS_4096; i++) {
-    if (node->populated[i] && node->nodes[i]) {
+  forEachSetBit(node->populated.words, BINS_4096, [&](size_t i) {
+    if (node->nodes[i])
       serialize_4DxP_l0(node->nodes[i].get(), buffer);
-    }
-  }
+  });
 
   // add end of file marker
   writeEndOfFileMarker(buffer);
@@ -117,40 +110,40 @@ std::unique_ptr<TLE_4D_4x10> deserialize_4DxP(std::span<const char> buffer,
   setPopulated(node->populated, mask);
 
   // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_4096; i++) {
-    if (node->populated[i]) {
-      size_t nDims = getNumDims4D(i);
-      switch (nDims) {
-      case 0:
-        continue;
-      case 1:
-      case 2:
-      case 4:
-      case 8:
-        node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 1);
-        break;
-      case 3:
-      case 5:
-      case 6:
-      case 9:
-      case 10:
-      case 12:
-        node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 2);
-        break;
-      case 7:
-      case 11:
-      case 13:
-      case 14:
-        node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 3);
-        break;
-      case 15:
-        node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 4);
-        break;
-      default:
-        break;
-      }
+  for (size_t w = 0; w < PopulatedBins<BINS_4096>::kWords; ++w)
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + std::countr_zero(m);
+    size_t nDims = getNumDims4D(i);
+    switch (nDims) {
+    case 0:
+      continue;
+    case 1:
+    case 2:
+    case 4:
+    case 8:
+      node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 1);
+      break;
+    case 3:
+    case 5:
+    case 6:
+    case 9:
+    case 10:
+    case 12:
+      node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 2);
+      break;
+    case 7:
+    case 11:
+    case 13:
+    case 14:
+      node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 3);
+      break;
+    case 15:
+      node->nodes[i] = deserialize_4DxP_l0(buffer, offset, 4);
+      break;
+    default:
+      break;
     }
-  }
+    }
 
   // verify end of file marker
   if (!verifyEndOfFileMarker(buffer, offset)) {
@@ -161,86 +154,53 @@ std::unique_ptr<TLE_4D_4x10> deserialize_4DxP(std::span<const char> buffer,
 }
 
 std::unique_ptr<Node4D_4x10_l0>
-deserialize_4DxP_l0(std::span<const char> buffer, size_t &offset, int level,
-                    bool recursive) {
+deserialize_4DxP_l0(std::span<const char> buffer, size_t &offset,
+                    int level, bool recursive) {
   auto node = std::make_unique<Node4D_4x10_l0>();
   uint64_t mask[(BINS_1024 + 63) / 64];
+  uint32_t counts[BINS_1024] = {0};
   if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
-      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, counts)) {
     return nullptr;
   }
-  setPopulated(node->populated, mask);
-
-  if (level == 1) {
+  node->load(mask, counts);
+  if (level == 1 || !recursive)
     return node;
-  }
-
-  if (!recursive)
-    return node;
-
-  // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->nodes[i] = deserialize_4DxP_l1(buffer, offset, level);
-    }
-  }
-
+  forEachSetBit(mask, BINS_1024, [&](size_t i) { node->childRef(i) = deserialize_4DxP_l1(buffer, offset, level); });
   return node;
 }
 
 std::unique_ptr<Node4D_4x10_l1>
-deserialize_4DxP_l1(std::span<const char> buffer, size_t &offset, int level,
-                    bool recursive) {
+deserialize_4DxP_l1(std::span<const char> buffer, size_t &offset,
+                    int level, bool recursive) {
   auto node = std::make_unique<Node4D_4x10_l1>();
   uint64_t mask[(BINS_1024 + 63) / 64];
+  uint32_t counts[BINS_1024] = {0};
   if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
-      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, counts)) {
     return nullptr;
   }
-  setPopulated(node->populated, mask);
-
-  if (level == 2) {
+  node->load(mask, counts);
+  if (level == 2 || !recursive)
     return node;
-  }
-
-  if (!recursive)
-    return node;
-
-  // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->nodes[i] = deserialize_4DxP_l2(buffer, offset, level);
-    }
-  }
-
+  forEachSetBit(mask, BINS_1024, [&](size_t i) { node->childRef(i) = deserialize_4DxP_l2(buffer, offset, level); });
   return node;
 }
 
 std::unique_ptr<Node4D_4x10_l2>
-deserialize_4DxP_l2(std::span<const char> buffer, size_t &offset, int level,
-                    bool recursive) {
+deserialize_4DxP_l2(std::span<const char> buffer, size_t &offset,
+                    int level, bool recursive) {
   auto node = std::make_unique<Node4D_4x10_l2>();
   uint64_t mask[(BINS_1024 + 63) / 64];
+  uint32_t counts[BINS_1024] = {0};
   if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
-      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, counts)) {
     return nullptr;
   }
-  setPopulated(node->populated, mask);
-
-  if (level == 3) {
+  node->load(mask, counts);
+  if (level == 3 || !recursive)
     return node;
-  }
-
-  if (!recursive)
-    return node;
-
-  // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->nodes[i] = deserialize_4DxP_l3(buffer, offset, level);
-    }
-  }
-
+  forEachSetBit(mask, BINS_1024, [&](size_t i) { node->childRef(i) = deserialize_4DxP_l3(buffer, offset, level); });
   return node;
 }
 
@@ -249,11 +209,11 @@ deserialize_4DxP_l3(std::span<const char> buffer, size_t &offset,
                     int level [[maybe_unused]]) {
   auto node = std::make_unique<Node4D_4x10_l3>();
   uint64_t mask[(BINS_1024 + 63) / 64];
+  uint32_t counts[BINS_1024] = {0};
   if (!readPopulatedMask(buffer, offset, mask, BINS_1024)
-      || !deserializeCounts(buffer, offset, mask, BINS_1024, node->counts)) {
+      || !deserializeCounts(buffer, offset, mask, BINS_1024, counts)) {
     return nullptr;
   }
-  setPopulated(node->populated, mask);
-
+  node->load(mask, counts);
   return node;
 }

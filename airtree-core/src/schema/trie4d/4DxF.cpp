@@ -6,6 +6,7 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie4d/4DxF.hpp>
 #include <airtree/util/UUID.hpp>
 #include <string>
@@ -215,7 +216,7 @@ std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 4DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_4D_4x8(
-      root.get(), curr_trie_size, specialCounts);
+      root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 4DxF Trie.", uuid);
@@ -374,8 +375,7 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
 }
 
 std::vector<char>
-execSerialize_4D_4x8(TLE_4D_4x8 *root, uint64_t &curr_trie_size,
-                     std::unique_ptr<SpecialCounts> &specialCounts) {
+execSerialize_4D_4x8(TLE_4D_4x8 *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_4D_Fast, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
@@ -383,7 +383,6 @@ execSerialize_4D_4x8(TLE_4D_4x8 *root, uint64_t &curr_trie_size,
       specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_4DxF(root, buffer);

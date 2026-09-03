@@ -1,11 +1,13 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
 #include <airtree/core/schema/trie4d/4DxP.hpp>
+#include <bit>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie4d/4DxP.hpp>
 #include <airtree/util/UUID.hpp>
 
@@ -33,280 +35,36 @@ std::unique_ptr<TLE_4D_4x10> CreateParentNode_TLE4D_4x10() {
 void insertintoTrie_4D_4x10(TLE_4D_4x10 *root, uint64_t combined,
                             unsigned int combinedTLE, int ndims,
                             uint64_t &curr_trie_size) {
-  if (!root) {
-    SPDLOG_LOGGER_ERROR(logger(), "Root is null.");
-    return;
-  }
-
-  // update TLE level and setup child node
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
+  root->populated.set(combinedTLE);
   root->counts[combinedTLE]++;
-
-  // We are going to handle 5 specific cases. 40, 30, 20, 10 bit values
-  // and special cases with 0 dimensions and special values.
-
-  // if ndims == 0, then that mean we only have to update the TLE level
-  // since all the 3 dimensions have special values
-  if (ndims == 0) { // combined == 0
+  static constexpr uint8_t kDepth[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+  const int depth = kDepth[ndims & 0xF];
+  if (depth == 0)
+    return;
+  std::unique_ptr<Node4D_4x10_l0> &l0p = root->nodes[combinedTLE];
+  if (!l0p) {
+    l0p = std::make_unique<Node4D_4x10_l0>();
+    curr_trie_size += sizeof(Node4D_4x10_l0);
+  }
+  const unsigned int c0 = (combined >> (10 * (depth - 1))) & 0x3FF;
+  if (depth == 1) {
+    sparse_node::bumpSlot(*l0p, c0, curr_trie_size);
     return;
   }
-
-  // if ndims is one of 1, 2, 4 or 8then we are processing a 10 bit value (max).
-  if (ndims == 1 || ndims == 2 || ndims == 4 || ndims == 8) {
-    // combined is a 10 bit number
-    unsigned int l0_10 = combined & 0x3FF; // Ensuring just 10 LSBs are picked
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x10_l0>();
-      curr_trie_size += sizeof(Node4D_4x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
+  Node4D_4x10_l1 *l1 = sparse_node::descendInto<Node4D_4x10_l1>(*l0p, c0, curr_trie_size);
+  const unsigned int c1 = (combined >> (10 * (depth - 2))) & 0x3FF;
+  if (depth == 2) {
+    sparse_node::bumpSlot(*l1, c1, curr_trie_size);
     return;
   }
-
-  // if ndims is one of 3, 5, 6, 9, 10, 12 then we are processing a 20 bit value
-  // (max).
-  if (ndims == 3 || ndims == 5 || ndims == 6 || ndims == 9 || ndims == 10
-      || ndims == 12) {
-    // combined is a 20 bit number
-    unsigned int l0_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l1_10 = combined & 0x3FF;         // 10 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x10_l0>();
-      curr_trie_size += sizeof(Node4D_4x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node4D_4x10_l1>();
-      curr_trie_size += sizeof(Node4D_4x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
+  Node4D_4x10_l2 *l2 = sparse_node::descendInto<Node4D_4x10_l2>(*l1, c1, curr_trie_size);
+  const unsigned int c2 = (combined >> (10 * (depth - 3))) & 0x3FF;
+  if (depth == 3) {
+    sparse_node::bumpSlot(*l2, c2, curr_trie_size);
     return;
   }
-
-  // if ndims is 7, 11, 13, 14 then we are processing a 30 bit value (max).
-  if (ndims == 7 || ndims == 11 || ndims == 13 || ndims == 14) {
-    // combined is a 30 bit number
-    unsigned int l0_10 = (combined >> 20) & 0x3FF; // 10 bits
-    unsigned int l1_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l2_10 = combined & 0x3FF;         // 10 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x10_l0>();
-      curr_trie_size += sizeof(Node4D_4x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node4D_4x10_l1>();
-      curr_trie_size += sizeof(Node4D_4x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node4D_4x10_l2>();
-      curr_trie_size += sizeof(Node4D_4x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node4D_4x10_l2>();
-      curr_trie_size += sizeof(Node4D_4x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-
-    // if populated of l0_10 is set, l1_10 is set and l2_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.test(
-            l2_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // l0_10 is set, l1_10 is set and l2_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-    return;
-  }
-
-  // if ndims is 15 then we are processing a 40 bit value (max).
-  if (ndims == 15) {
-    // combined is a 40 bit number
-    unsigned int l0_10 = (combined >> 30) & 0x3FF; // 10 bits
-    unsigned int l1_10 = (combined >> 20) & 0x3FF; // 10 bits
-    unsigned int l2_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l3_10 = combined & 0x3FF;         // 10 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x10_l0>();
-      curr_trie_size += sizeof(Node4D_4x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node4D_4x10_l1>();
-      curr_trie_size += sizeof(Node4D_4x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node4D_4x10_l2>();
-      curr_trie_size += sizeof(Node4D_4x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->nodes[l2_10] =
-          std::make_unique<Node4D_4x10_l3>();
-      curr_trie_size += sizeof(Node4D_4x10_l3);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->populated.set(l3_10);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->counts[l3_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node4D_4x10_l2>();
-      curr_trie_size += sizeof(Node4D_4x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->nodes[l2_10] =
-          std::make_unique<Node4D_4x10_l3>();
-      curr_trie_size += sizeof(Node4D_4x10_l3);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->populated.set(l3_10);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->counts[l3_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-
-    // if populated of l0_10 is set, l1_10 is set and l2_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.test(
-            l2_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->nodes[l2_10] =
-          std::make_unique<Node4D_4x10_l3>();
-      curr_trie_size += sizeof(Node4D_4x10_l3);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->populated.set(l3_10);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->counts[l3_10]++;
-      return;
-    }
-
-    // l0_10 is set, l1_10 is set and l2_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-
-    // if populated of l0_10 is set, l1_10 is set, l2_10 is set and l3_10 is not
-    // set
-    if (!root->nodes[combinedTLE]
-             ->nodes[l0_10]
-             ->nodes[l1_10]
-             ->nodes[l2_10]
-             ->populated.test(l3_10)) {
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->populated.set(l3_10);
-      root->nodes[combinedTLE]
-          ->nodes[l0_10]
-          ->nodes[l1_10]
-          ->nodes[l2_10]
-          ->counts[l3_10]++;
-      return;
-    }
-
-    // l0_10 is set, l1_10 is set, l2_10 is set and l3_10 is set so just
-    // increment count
-    root->nodes[combinedTLE]
-        ->nodes[l0_10]
-        ->nodes[l1_10]
-        ->nodes[l2_10]
-        ->counts[l3_10]++;
-  }
+  Node4D_4x10_l3 *l3 = sparse_node::descendInto<Node4D_4x10_l3>(*l2, c2, curr_trie_size);
+  sparse_node::bumpSlot(*l3, combined & 0x3FF, curr_trie_size);
 }
 
 
@@ -341,7 +99,7 @@ std::vector<char> generate_4DxP(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 4DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_4D_4x10(
-      root.get(), curr_trie_size, specialCounts);
+      root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 4DxP Trie.", uuid);
@@ -500,8 +258,7 @@ std::unique_ptr<TLE_4D_4x10> execCreateAndInsert_4D_4x10(
 }
 
 std::vector<char>
-execSerialize_4D_4x10(TLE_4D_4x10 *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts) {
+execSerialize_4D_4x10(TLE_4D_4x10 *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_4D_Precise, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
@@ -509,7 +266,6 @@ execSerialize_4D_4x10(TLE_4D_4x10 *root, uint64_t &curr_trie_size,
       specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_4DxP(root, buffer);

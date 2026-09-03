@@ -32,58 +32,43 @@ processBuffer_3DxP(std::span<const char> buffer) {
 }
 
 void serialize_3DxP_l2(const Node3D_3x10_l2 *node, std::vector<char> &buffer) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
+  writeNode(node->populated.words, BINS_1024, node->counts, buffer);
 }
 
 void serialize_3DxP_l1(const Node3D_3x10_l1 *node, std::vector<char> &buffer,
                        bool recursive) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
-
+  writeNode(node->populated.words, BINS_1024, node->counts, buffer);
   if (!recursive)
     return;
-
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i] && node->nodes[i]) {
+  forEachSetBit(node->populated.words, BINS_1024, [&](size_t i) {
+    if (node->nodes[i])
       serialize_3DxP_l2(node->nodes[i].get(), buffer);
-    }
-  }
+  });
 }
 
 void serialize_3DxP_l0(const Node3D_3x10_l0 *node, std::vector<char> &buffer,
                        bool recursive) {
-  uint64_t mask[(BINS_1024 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_1024, node->counts, buffer);
-
+  writeNode(node->populated.words, BINS_1024, node->counts, buffer);
   if (!recursive)
     return;
-
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i] && node->nodes[i]) {
+  forEachSetBit(node->populated.words, BINS_1024, [&](size_t i) {
+    if (node->nodes[i])
       serialize_3DxP_l1(node->nodes[i].get(), buffer);
-    }
-  }
+  });
 }
 
 
 void serialize_3DxP(const TLE_3D_3x10 *node, std::vector<char> &buffer,
                     bool recursive) {
-  uint64_t mask[(BINS_512 + 63) / 64];
-  maskFromBitset(node->populated, mask);
-  writeNode(mask, BINS_512, node->counts, buffer);
+  writeNode(node->populated.words, BINS_512, node->counts, buffer);
 
   if (!recursive)
     return;
 
-  for (size_t i = 0; i < BINS_512; i++) {
-    if (node->populated[i] && node->nodes[i]) {
+  forEachSetBit(node->populated.words, BINS_512, [&](size_t i) {
+    if (node->nodes[i])
       serialize_3DxP_l0(node->nodes[i].get(), buffer);
-    }
-  }
+  });
 
   // add end of file marker
   writeEndOfFileMarker(buffer);
@@ -98,7 +83,6 @@ deserialize_3DxP_l2(std::span<const char> buffer, size_t &offset) {
     return nullptr;
   }
   setPopulated(node->populated, mask);
-
   return node;
 }
 
@@ -113,21 +97,9 @@ deserialize_3DxP_l1(std::span<const char> buffer, size_t &offset, int level,
     return nullptr;
   }
   setPopulated(node->populated, mask);
-
-  if (level == 2) {
+  if (level == 2 || !recursive)
     return node;
-  }
-
-  if (!recursive)
-    return node;
-
-  // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->nodes[i] = deserialize_3DxP_l2(buffer, offset);
-    }
-  }
-
+  forEachSetBit(mask, BINS_1024, [&](size_t i) { node->nodes[i] = deserialize_3DxP_l2(buffer, offset); });
   return node;
 }
 
@@ -141,21 +113,9 @@ deserialize_3DxP_l0(std::span<const char> buffer, size_t &offset, int level,
     return nullptr;
   }
   setPopulated(node->populated, mask);
-
-  if (level == 1) {
+  if (level == 1 || !recursive)
     return node;
-  }
-
-  if (!recursive)
-    return node;
-
-  // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node->populated[i]) {
-      node->nodes[i] = deserialize_3DxP_l1(buffer, offset, level);
-    }
-  }
-
+  forEachSetBit(mask, BINS_1024, [&](size_t i) { node->nodes[i] = deserialize_3DxP_l1(buffer, offset, level); });
   return node;
 }
 
@@ -171,30 +131,30 @@ std::unique_ptr<TLE_3D_3x10> deserialize_3DxP(std::span<const char> buffer,
   setPopulated(node->populated, mask);
 
   // Recursively deserialize child nodes
-  for (size_t i = 0; i < BINS_512; i++) {
-    if (node->populated[i]) {
-      size_t nDims = getNumDims3D(i);
-      switch (nDims) {
-      case 0:
-        continue;
-      case 1:
-      case 2:
-      case 4:
-        node->nodes[i] = deserialize_3DxP_l0(buffer, offset, 1);
-        break;
-      case 3:
-      case 5:
-      case 6:
-        node->nodes[i] = deserialize_3DxP_l0(buffer, offset, 2);
-        break;
-      case 7:
-        node->nodes[i] = deserialize_3DxP_l0(buffer, offset, 3);
-        break;
-      default:
-        break;
-      }
+  for (size_t w = 0; w < PopulatedBins<BINS_512>::kWords; ++w)
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + std::countr_zero(m);
+    size_t nDims = getNumDims3D(i);
+    switch (nDims) {
+    case 0:
+      continue;
+    case 1:
+    case 2:
+    case 4:
+      node->nodes[i] = deserialize_3DxP_l0(buffer, offset, 1);
+      break;
+    case 3:
+    case 5:
+    case 6:
+      node->nodes[i] = deserialize_3DxP_l0(buffer, offset, 2);
+      break;
+    case 7:
+      node->nodes[i] = deserialize_3DxP_l0(buffer, offset, 3);
+      break;
+    default:
+      break;
     }
-  }
+    }
 
   // verify end of file marker
   if (!verifyEndOfFileMarker(buffer, offset)) {

@@ -6,7 +6,7 @@
 #include <airtree/core/serdes/Node.hpp>
 #include <gtest/gtest.h>
 
-#include <bitset>
+#include <airtree/core/common/Populated.hpp>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -107,9 +107,9 @@ TEST(CountCodec, WriteNodeMatchesTheLegacyWriters) {
   }
 }
 
-TEST(CountCodec, MaskFromBitsetMatchesMaskFromCounts) {
+TEST(CountCodec, PopulatedBinsMatchMaskFromCounts) {
   std::mt19937_64 rng(7);
-  std::bitset<4096> populated;
+  PopulatedBins<4096> populated;
   std::vector<uint32_t> counts(4096, 0);
   for (size_t i = 0; i < 4096; ++i) {
     if (std::bernoulli_distribution(0.3)(rng)) {
@@ -117,16 +117,14 @@ TEST(CountCodec, MaskFromBitsetMatchesMaskFromCounts) {
       counts[i] = 1 + static_cast<uint32_t>(i);
     }
   }
-  uint64_t a[64], b[64];
-  maskFromBitset(populated, a);
+  uint64_t b[64];
   maskFromCounts(counts.data(), 4096, b);
-  EXPECT_EQ(std::vector<uint64_t>(a, a + 64), std::vector<uint64_t>(b, b + 64));
-  std::bitset<32> small;
+  EXPECT_EQ(std::vector<uint64_t>(populated.words, populated.words + 64), std::vector<uint64_t>(b, b + 64));
+  PopulatedBins<32> small;
   small.set(0);
   small.set(31);
-  uint64_t w = 0;
-  maskFromBitset(small, &w);
-  EXPECT_EQ(w, (uint64_t(1) << 31) | 1u);
+  EXPECT_EQ(small.words[0], 0x80000001ull);
+  EXPECT_EQ(small.count(), 2u);
 }
 
 TEST(CountCodec, EndOfFileMarkerRoundTrips) {

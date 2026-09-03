@@ -4,6 +4,7 @@
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/Conversion.hpp>
 #include <airtree/core/Logger.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie1d/1DxF.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/util/UUID.hpp>
@@ -56,7 +57,7 @@ std::vector<char> generate_1DxF(const FPHArray &array) {
       "[serialization] [traceID: {}] Serializing 1DxF trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialization_TrieNode16(
-      root, specialCounts, curr_trie_size);
+      root, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 1DxF Trie.", uuid);
@@ -88,8 +89,7 @@ execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
 
 std::vector<char>
 execSerialization_TrieNode16(const std::unique_ptr<TrieNode_16> &root,
-                             const SpecialCounts &specialCounts,
-                             uint64_t trieSize) {
+                             const SpecialCounts &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_1D_Fast, {}, countObservations(root->counts),
       specialCounts.posInfCount, specialCounts.negInfCount,
@@ -97,7 +97,6 @@ execSerialization_TrieNode16(const std::unique_ptr<TrieNode_16> &root,
       specialCounts.nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + trieSize);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_1DxF(root.get(), buffer);
