@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/merge/trie4d/Merge4DxP.hpp>
 #include <airtree/merge/MergeStrategy.hpp>
 #include <airtree/merge/Logger.hpp>
@@ -285,11 +286,11 @@ Merge4DxP::mergeNode4D_4x10_l0(std::unique_ptr<Node4D_4x10_l0> node1,
     return node2;
   if (!node2)
     return node1;
-  node2->forEachMut([&](size_t i, uint32_t &count2, auto &child2) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
     node1->populated.set(i);
-    node1->countRef(i) += count2;
-    auto &child1 = node1->childRef(i);
-    child1 = child1 ? mergeNode4D_4x10_l1(std::move(child1), std::move(child2)) : std::move(child2);
+    node1->counts[i] += node2->counts[i];
+    auto &child1 = node1->nodes[i];
+    child1 = child1 ? mergeNode4D_4x10_l1(std::move(child1), std::move(node2->nodes[i])) : std::move(node2->nodes[i]);
   });
   return node1;
 }
@@ -301,11 +302,11 @@ Merge4DxP::mergeNode4D_4x10_l1(std::unique_ptr<Node4D_4x10_l1> node1,
     return node2;
   if (!node2)
     return node1;
-  node2->forEachMut([&](size_t i, uint32_t &count2, auto &child2) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
     node1->populated.set(i);
-    node1->countRef(i) += count2;
-    auto &child1 = node1->childRef(i);
-    child1 = child1 ? mergeNode4D_4x10_l2(std::move(child1), std::move(child2)) : std::move(child2);
+    node1->counts[i] += node2->counts[i];
+    auto &child1 = node1->nodes[i];
+    child1 = child1 ? mergeNode4D_4x10_l2(std::move(child1), std::move(node2->nodes[i])) : std::move(node2->nodes[i]);
   });
   return node1;
 }
@@ -317,11 +318,11 @@ Merge4DxP::mergeNode4D_4x10_l2(std::unique_ptr<Node4D_4x10_l2> node1,
     return node2;
   if (!node2)
     return node1;
-  node2->forEachMut([&](size_t i, uint32_t &count2, auto &child2) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
     node1->populated.set(i);
-    node1->countRef(i) += count2;
-    auto &child1 = node1->childRef(i);
-    child1 = child1 ? mergeNode4D_4x10_l3(std::move(child1), std::move(child2)) : std::move(child2);
+    node1->counts[i] += node2->counts[i];
+    auto &child1 = node1->nodes[i];
+    child1 = child1 ? mergeNode4D_4x10_l3(std::move(child1), std::move(node2->nodes[i])) : std::move(node2->nodes[i]);
   });
   return node1;
 }
@@ -333,9 +334,9 @@ Merge4DxP::mergeNode4D_4x10_l3(std::unique_ptr<Node4D_4x10_l3> node1,
     return node2;
   if (!node2)
     return node1;
-  node2->forEach([&](size_t i, uint32_t count2) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
     node1->populated.set(i);
-    node1->countRef(i) += count2;
+    node1->counts[i] += node2->counts[i];
   });
   return node1;
 }

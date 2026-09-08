@@ -2,6 +2,7 @@
 
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie2d/2DxP.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -74,31 +75,21 @@ std::vector<char> generate_2DxP(const FPHArray &array1, const FPHArray &array2) 
 void insertintoTLETrie_2D_option3(TLEoption3_2D *root, unsigned int combined,
                                   unsigned int combinedTLE, int ndims,
                                   uint64_t &curr_trie_size) {
-  root->populated.set(combinedTLE);
-  root->counts[combinedTLE]++;
-  if (ndims == 0)
+  if (ndims == 0) {
+    bumpCount(root->populated, root->counts, combinedTLE);
     return;
-  std::unique_ptr<TrieNode_2D_10> &l0 = root->nodes[combinedTLE];
-  if (!l0) {
-    l0 = std::make_unique<TrieNode_2D_10>();
-    curr_trie_size += sizeof(TrieNode_2D_10);
   }
+  TrieNode_2D_10 *l0 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
   if (ndims != 3) {
-    l0->populated.set(combined);
-    l0->counts[combined]++;
+    bumpCount(l0->populated, l0->counts, combined);
     return;
   }
-  const unsigned int first10 = (combined >> 10) & 0x3FF;
-  const unsigned int last10 = combined & 0x3FF;
-  std::unique_ptr<TrieNode_2D_10_Level1> &l1 = l0->nodes[first10];
-  if (!l1) {
-    l1 = std::make_unique<TrieNode_2D_10_Level1>();
-    curr_trie_size += sizeof(TrieNode_2D_10_Level1);
-  }
-  l0->populated.set(first10);
-  l0->counts[first10]++;
-  l1->counts[last10]++;
+  TrieNode_2D_10_Level1 *l1 =
+      descend(l0->populated, l0->nodes, (combined >> 10) & 0x3FF, curr_trie_size);
+  l1->counts[combined & 0x3FF]++;
 }
+
+void rollUpCounts(TLEoption3_2D *root) { rollUpNode(root); }
 
 
 std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
@@ -134,6 +125,7 @@ std::unique_ptr<TLEoption3_2D> execCreateAndInsert_2D_2x10(
     });
   });
 
+  rollUpCounts(root.get());
   return root;
 }
 

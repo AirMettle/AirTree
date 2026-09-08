@@ -2,6 +2,7 @@
 
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie2d/2DxF.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -41,47 +42,25 @@ void insertintoTLETrie_2D_88(TLETrieNode_2D *root, unsigned int combined,
     SPDLOG_LOGGER_ERROR(logger(), "Root is null in insertintoTLETrie_2D_88.");
     return;
   }
-
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
-
-  root->TLEcounts[combinedTLE]++;
-
   if (ndims == 0) {
+    bumpCount(root->populated, root->TLEcounts, combinedTLE);
     return;
   }
-
-  if (ndims == 1 || ndims == 2) {
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<TrieNode_16>();
-      curr_trie_size += sizeof(TrieNode_16);
-    }
-    if (!root->nodes[combinedTLE]->populated.test(combined)) {
-      root->nodes[combinedTLE]->populated.set(combined);
-    }
-    root->nodes[combinedTLE]->counts[combined]++;
+  TrieNode_16 *level1 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
+  if (ndims != 3) {
+    bumpCount(level1->populated, level1->counts, combined);
+    return;
   }
+  TrieNode_16_Level1 *level2 =
+      descend(level1->populated, level1->nodes, (combined >> 8) & 0xFF, curr_trie_size);
+  level2->counts[combined & 0xFF]++;
+}
 
-  if (ndims == 3) {
-    unsigned int first8 = combined >> 8 & 0xFF;
-    unsigned int last8 = combined & 0xFF;
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<TrieNode_16>();
-      curr_trie_size += sizeof(TrieNode_16);
-    }
-
-    if (!root->nodes[combinedTLE]->populated.test(first8)) {
-      root->nodes[combinedTLE]->populated.set(first8);
-      root->nodes[combinedTLE]->nodes[first8] =
-          std::make_unique<TrieNode_16_Level1>();
-      curr_trie_size += sizeof(TrieNode_16_Level1);
-    }
-
-    root->nodes[combinedTLE]->counts[first8]++;
-    root->nodes[combinedTLE]->nodes[first8]->counts[last8]++;
-  }
+void rollUpCounts(TLETrieNode_2D *root) {
+  forEachSetBit(root->populated.words, BINS_64, [&](std::size_t t) {
+    if (root->nodes[t])
+      root->TLEcounts[t] = rollUpNode(root->nodes[t].get());
+  });
 }
 
 std::vector<char> generate_2DxF(const FPHArray &array1, const FPHArray &array2) {
@@ -153,7 +132,7 @@ std::unique_ptr<TLETrieNode_2D> execCreateAndInsert_2D(
       }
     });
   });
-
+  rollUpCounts(root.get());
   return root;
 }
 

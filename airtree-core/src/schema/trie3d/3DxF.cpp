@@ -2,6 +2,7 @@
 
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie3d/3DxF.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -29,103 +30,33 @@ Generator3DxF::generate(const std::vector<const FPHArray *> &arrays) const {
 void insertintoTrie_3D_888(TLE_3D_888 *root, unsigned int combined,
                            unsigned int combinedTLE, int ndims,
                            uint64_t &curr_trie_size) {
-
   if (!root) {
     SPDLOG_LOGGER_ERROR(logger(), "Root is null.");
     return;
   }
-
-  // update TLE level
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
-  root->counts[combinedTLE]++;
-
-  if (ndims == 0) {
+  static constexpr uint8_t kDepth[8] = {0, 1, 1, 2, 1, 2, 2, 3};
+  const int depth = kDepth[ndims & 0x7];
+  if (depth == 0) {
+    bumpCount(root->populated, root->counts, combinedTLE);
     return;
   }
-
-  // if ndims is one of 1, 2 or 4 then we are processing a 8 bit value (max).
-  if (ndims == 1 || ndims == 2 || ndims == 4) {
-    // combined is a 8 bit number
-    unsigned int l0_8 = combined;
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_888_l0>();
-      curr_trie_size += sizeof(Node3D_888_l0);
-    }
-
-    // if populated of l0_8 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_8)) {
-      root->nodes[combinedTLE]->populated.set(l0_8);
-    }
-
-    root->nodes[combinedTLE]->counts[l0_8]++;
+  Node3D_888_l0 *l0 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
+  const unsigned int c0 = (combined >> (8 * (depth - 1))) & 0xFF;
+  if (depth == 1) {
+    bumpCount(l0->populated, l0->counts, c0);
+    return;
   }
-
-  // if ndims is one of 3, 5 or 6 then we are processing a 16 bit value (max).
-  if (ndims == 3 || ndims == 5 || ndims == 6) {
-    unsigned int first8 = combined >> 8 & 0xFF;
-    unsigned int last8 = combined & 0xFF;
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_888_l0>();
-      curr_trie_size += sizeof(Node3D_888_l0);
-    }
-
-    if (!root->nodes[combinedTLE]->populated.test(first8)) {
-      root->nodes[combinedTLE]->populated.set(first8);
-      root->nodes[combinedTLE]->nodes[first8] = std::make_unique<TrieNode_16>();
-      curr_trie_size += sizeof(TrieNode_16);
-    }
-
-    root->nodes[combinedTLE]->counts[first8]++;
-
-    if (!root->nodes[combinedTLE]->nodes[first8]->populated.test(last8)) {
-      root->nodes[combinedTLE]->nodes[first8]->populated.set(last8);
-    }
-
-    root->nodes[combinedTLE]
-        ->nodes[first8]
-        ->counts[last8]++; // Trienode_16 count update
+  TrieNode_16 *l1 = descend(l0->populated, l0->nodes, c0, curr_trie_size);
+  const unsigned int c1 = (combined >> (8 * (depth - 2))) & 0xFF;
+  if (depth == 2) {
+    bumpCount(l1->populated, l1->counts, c1);
+    return;
   }
-
-  // if ndims is 7 then we are processing a 24 bit value (max).
-  if (ndims == 7) {
-
-    unsigned int first8 = combined >> 16 & 0xFF;
-    unsigned int middle8 = combined >> 8 & 0xFF;
-    unsigned int last8 = combined & 0xFF;
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_888_l0>();
-      curr_trie_size += sizeof(Node3D_888_l0);
-    }
-
-    if (!root->nodes[combinedTLE]->populated.test(first8)) {
-      root->nodes[combinedTLE]->populated.set(first8);
-      root->nodes[combinedTLE]->nodes[first8] = std::make_unique<TrieNode_16>();
-      curr_trie_size += sizeof(TrieNode_16);
-    }
-
-    root->nodes[combinedTLE]->counts[first8]++;
-
-    if (!root->nodes[combinedTLE]->nodes[first8]->populated.test(middle8)) {
-      root->nodes[combinedTLE]->nodes[first8]->populated.set(middle8);
-      root->nodes[combinedTLE]->nodes[first8]->nodes[middle8] =
-          std::make_unique<TrieNode_16_Level1>();
-      curr_trie_size += sizeof(TrieNode_16_Level1);
-    }
-
-    root->nodes[combinedTLE]
-        ->nodes[first8]
-        ->counts[middle8]++; // Trienode_16 count update
-    root->nodes[combinedTLE]
-        ->nodes[first8]
-        ->nodes[middle8]
-        ->counts[last8]++; // Trienode_16_l1 count update
-  }
+  TrieNode_16_Level1 *l2 = descend(l1->populated, l1->nodes, c1, curr_trie_size);
+  l2->counts[combined & 0xFF]++;
 }
+
+void rollUpCounts(TLE_3D_888 *root) { rollUpNode(root); }
 
 std::vector<char> generate_3DxF(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3) {
@@ -271,6 +202,7 @@ execCreateAndInsert_3D_888(const FPHArray &array1, const FPHArray &array2,
   });
 
 
+  rollUpCounts(root.get());
   return root;
 }
 

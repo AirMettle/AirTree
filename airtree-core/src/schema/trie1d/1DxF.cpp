@@ -30,6 +30,17 @@ std::unique_ptr<TrieNode_16> CreateParentNode_16() {
   return parentNode;
 }
 
+void rollUpCounts(TrieNode_16 *root) {
+  for (unsigned int i = 0; i < BINS_256; ++i) {
+    uint32_t total = 0;
+    for (uint32_t count : root->nodes[i]->counts)
+      total += count;
+    root->counts[i] = total;
+    if (total)
+      root->populated.set(i);
+  }
+}
+
 std::vector<char> generate_1DxF(const FPHArray &array) {
   // generate a UUID for this trie
   std::string uuid = AirTreeUUID::generateUUID();
@@ -84,6 +95,7 @@ execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
   };
 
   dispatchFPHArray(array, process_array);
+  rollUpCounts(root.get());
   return root;
 }
 

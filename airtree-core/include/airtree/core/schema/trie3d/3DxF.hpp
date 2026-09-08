@@ -41,6 +41,7 @@ struct Node3D_888_l0 {
 execCreateAndInsert_3D_888(const FPHArray &array1, const FPHArray &array2,
                            const FPHArray &array3, uint64_t &curr_trie_size,
                            std::unique_ptr<SpecialCounts> &specialCounts);
+void rollUpCounts(TLE_3D_888 *root);
 [[nodiscard]] std::vector<char>
 execSerialize_3D_888(TLE_3D_888 *root, std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_3DxF(const FPHArray &array1,

@@ -44,6 +44,7 @@ struct TLEoption3_2D {
 */
 
 [[nodiscard]] std::unique_ptr<TLEoption3_2D> CreateParent_TLE2D_option3();
+void rollUpCounts(TLEoption3_2D *root);
 
 // Files one (v1, v2) point: counts its specials into specialCounts and returns where it lands.
 template <typename T1, typename T2>

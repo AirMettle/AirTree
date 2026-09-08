@@ -1,6 +1,7 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
 #include <airtree/core/schema/trie4d/4DxP.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <bit>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
@@ -35,38 +36,36 @@ std::unique_ptr<TLE_4D_4x10> CreateParentNode_TLE4D_4x10() {
 void insertintoTrie_4D_4x10(TLE_4D_4x10 *root, uint64_t combined,
                             unsigned int combinedTLE, int ndims,
                             uint64_t &curr_trie_size) {
-  root->populated.set(combinedTLE);
-  root->counts[combinedTLE]++;
   static constexpr uint8_t kDepth[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
   const int depth = kDepth[ndims & 0xF];
-  if (depth == 0)
+  if (depth == 0) {
+    bumpCount(root->populated, root->counts, combinedTLE);
     return;
-  std::unique_ptr<Node4D_4x10_l0> &l0p = root->nodes[combinedTLE];
-  if (!l0p) {
-    l0p = std::make_unique<Node4D_4x10_l0>();
-    curr_trie_size += sizeof(Node4D_4x10_l0);
   }
+  Node4D_4x10_l0 *l0 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
   const unsigned int c0 = (combined >> (10 * (depth - 1))) & 0x3FF;
   if (depth == 1) {
-    sparse_node::bumpSlot(*l0p, c0, curr_trie_size);
+    bumpCount(l0->populated, l0->counts, c0);
     return;
   }
-  Node4D_4x10_l1 *l1 = sparse_node::descendInto<Node4D_4x10_l1>(*l0p, c0, curr_trie_size);
+  Node4D_4x10_l1 *l1 = descend(l0->populated, l0->nodes, c0, curr_trie_size);
   const unsigned int c1 = (combined >> (10 * (depth - 2))) & 0x3FF;
   if (depth == 2) {
-    sparse_node::bumpSlot(*l1, c1, curr_trie_size);
+    bumpCount(l1->populated, l1->counts, c1);
     return;
   }
-  Node4D_4x10_l2 *l2 = sparse_node::descendInto<Node4D_4x10_l2>(*l1, c1, curr_trie_size);
+  Node4D_4x10_l2 *l2 = descend(l1->populated, l1->nodes, c1, curr_trie_size);
   const unsigned int c2 = (combined >> (10 * (depth - 3))) & 0x3FF;
   if (depth == 3) {
-    sparse_node::bumpSlot(*l2, c2, curr_trie_size);
+    bumpCount(l2->populated, l2->counts, c2);
     return;
   }
-  Node4D_4x10_l3 *l3 = sparse_node::descendInto<Node4D_4x10_l3>(*l2, c2, curr_trie_size);
-  sparse_node::bumpSlot(*l3, combined & 0x3FF, curr_trie_size);
+  Node4D_4x10_l3 *l3 = descend(l2->populated, l2->nodes, c2, curr_trie_size);
+  bumpCount(l3->populated, l3->counts, combined & 0x3FF);
 }
 
+
+void rollUpCounts(TLE_4D_4x10 *root) { rollUpNode(root); }
 
 std::vector<char> generate_4DxP(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3, const FPHArray &array4) {
@@ -254,6 +253,7 @@ std::unique_ptr<TLE_4D_4x10> execCreateAndInsert_4D_4x10(
     });
   });
 
+  rollUpCounts(root.get());
   return root;
 }
 

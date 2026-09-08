@@ -38,6 +38,7 @@ TEST_F(CreateAndInsertFPTest, NormalOperation_TestCase1) {
   unsigned int expectedIndex5 = 0b00111;
 
   createAndInsertFP(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -55,6 +56,7 @@ TEST_F(CreateAndInsertFPTest, NormalOperation_TestCase2) {
   unsigned int expectedIndex5 = 0b01010;
 
   createAndInsertFP(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -73,6 +75,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase1) {
   unsigned int expectedIndex5 = 0b00000;
 
   createAndInsertFP(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -90,6 +93,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase2) {
   unsigned int expectedIndex5 = 0b10001;
 
   createAndInsertFP(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -110,6 +114,7 @@ TEST_F(CreateAndInsertFPTest, NegativeExponent_TestCase3) {
   unsigned int expectedIndex5 = 0b11111;
 
   createAndInsertFP(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -131,6 +136,7 @@ TEST_F(CreateAndInsertFPTest, EqualExponent_TestCase3) {
   unsigned int expectedIndex5 = 0b00000;
 
   createAndInsertFP(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   EXPECT_EQ(root->nodes[expectedIndex8]->counts[expectedIndex5], 0);
   EXPECT_EQ(root->populated[expectedIndex8], false);
@@ -169,6 +175,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NormalOperation_TestCase1) {
   unsigned int expectedLast8 = 0b00111011;
 
   createAndInsertFP16(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -186,6 +193,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NormalOperation_TestCase2) {
   unsigned int expectedIndex5 = 0b01010100;
 
   createAndInsertFP16(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -204,6 +212,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase1) {
   unsigned int expectedIndex5 = 0b00000000;
 
   createAndInsertFP16(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -221,6 +230,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase2) {
   unsigned int expectedIndex5 = 0b10001000;
 
   createAndInsertFP16(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);
@@ -241,6 +251,7 @@ TEST_F(CreateAndInsertFPTest_Apollo16, NegativeExponent_TestCase3) {
   unsigned int expectedIndex5 = 0b11111010;
 
   createAndInsertFP16(root.get(), fpNumber);
+  rollUpCounts(root.get());
 
   ASSERT_NE(root->nodes[expectedIndex8], nullptr);
   EXPECT_EQ(root->populated[expectedIndex8], true);

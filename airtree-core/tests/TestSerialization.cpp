@@ -69,29 +69,29 @@ TEST_F(SerializationTest, RoundTripsLargeCountsNeedingOver26Bits) {
   EXPECT_EQ(in_sum, out_sum) << "total count must be preserved on round-trip";
 }
 
-bool compareNodesl3(const Node4D_4x10_l3 *node1, const Node4D_4x10_l3 *node2) {
+bool compareNodesl3(const std::unique_ptr<Node4D_4x10_l3> &node1, const std::unique_ptr<Node4D_4x10_l3> &node2) {
   for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i] || node1->count(i) != node2->count(i)) {
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
   }
   return true;
 }
 template <class Node, class Cmp>
-bool compareInner(const Node *node1, const Node *node2, Cmp cmp) {
+bool compareInner(const std::unique_ptr<Node> &node1, const std::unique_ptr<Node> &node2, Cmp cmp) {
   for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i] || node1->count(i) != node2->count(i)) {
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
-    if (node1->child(i) != nullptr && node2->child(i) != nullptr) {
-      EXPECT_EQ(cmp(node1->child(i), node2->child(i)), true);
+    if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
+      EXPECT_EQ(cmp(node1->nodes[i], node2->nodes[i]), true);
     }
   }
   return true;
 }
-bool compareNodesl2(const Node4D_4x10_l2 *node1, const Node4D_4x10_l2 *node2) { return compareInner(node1, node2, compareNodesl3); }
-bool compareNodesl1(const Node4D_4x10_l1 *node1, const Node4D_4x10_l1 *node2) { return compareInner(node1, node2, compareNodesl2); }
-bool compareNodesl0(const Node4D_4x10_l0 *node1, const Node4D_4x10_l0 *node2) { return compareInner(node1, node2, compareNodesl1); }
+bool compareNodesl2(const std::unique_ptr<Node4D_4x10_l2> &node1, const std::unique_ptr<Node4D_4x10_l2> &node2) { return compareInner(node1, node2, compareNodesl3); }
+bool compareNodesl1(const std::unique_ptr<Node4D_4x10_l1> &node1, const std::unique_ptr<Node4D_4x10_l1> &node2) { return compareInner(node1, node2, compareNodesl2); }
+bool compareNodesl0(const std::unique_ptr<Node4D_4x10_l0> &node1, const std::unique_ptr<Node4D_4x10_l0> &node2) { return compareInner(node1, node2, compareNodesl1); }
 TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_4x10) {
 
   uint64_t curr_trie_size = 0;
@@ -113,7 +113,7 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_4x10) {
     EXPECT_EQ(root->counts[i], deserializedRoot->counts[i]);
 
     if (root->nodes[i] != nullptr && deserializedRoot->nodes[i] != nullptr) {
-      EXPECT_EQ(compareNodesl0(root->nodes[i].get(), deserializedRoot->nodes[i].get()), true);
+      EXPECT_EQ(compareNodesl0(root->nodes[i], deserializedRoot->nodes[i]), true);
     }
   }
 }

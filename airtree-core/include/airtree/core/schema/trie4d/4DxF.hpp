@@ -49,6 +49,7 @@ struct Node4D_4x8_l1 {
     const FPHArray &array1, const FPHArray &array2, const FPHArray &array3,
     const FPHArray &array4, uint64_t &curr_trie_size,
     std::unique_ptr<SpecialCounts> &specialCounts);
+void rollUpCounts(TLE_4D_4x8 *root);
 [[nodiscard]] std::vector<char>
 execSerialize_4D_4x8(TLE_4D_4x8 *root, std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_4DxF(const FPHArray &array1,

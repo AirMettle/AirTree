@@ -37,16 +37,27 @@ inline uint64_t countPreciseBins4DxP(const TLE_4D_4x10 *root) {
     if (!root->populated.test(i) || !root->nodes[i]) {
       continue;
     }
-    root->nodes[i]->forEach([&](size_t, uint32_t, const Node4D_4x10_l1 *l1) {
-      if (!l1) return;
-      l1->forEach([&](size_t, uint32_t, const Node4D_4x10_l2 *l2) {
-        if (!l2) return;
-        l2->forEach([&](size_t, uint32_t, const Node4D_4x10_l3 *l3) {
-          if (!l3) return;
-          l3->forEach([&](size_t, uint32_t count) { precise_bins += count > 0; });
-        });
-      });
-    });
+    for (unsigned int j = 0; j < BINS_1024; ++j) {
+      const Node4D_4x10_l1 *l1 = root->nodes[i]->nodes[j].get();
+      if (!l1) {
+        continue;
+      }
+      for (unsigned int k = 0; k < BINS_1024; ++k) {
+        const Node4D_4x10_l2 *l2 = l1->nodes[k].get();
+        if (!l2) {
+          continue;
+        }
+        for (unsigned int l = 0; l < BINS_1024; ++l) {
+          const Node4D_4x10_l3 *l3 = l2->nodes[l].get();
+          if (!l3) {
+            continue;
+          }
+          for (unsigned int m = 0; m < BINS_1024; ++m) {
+            precise_bins += l3->counts[m] > 0;
+          }
+        }
+      }
+    }
   }
   return precise_bins;
 }

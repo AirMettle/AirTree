@@ -382,37 +382,49 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
       splitChunks(combined, dims, chunks);
       emitRecord(4, e.axes, chunks, bt, c, cb);
     };
-    n0->forEach([&](size_t a, uint32_t c0, const Node4D_4x10_l1 *n1) {
+    for (size_t a = 0; a < BINS_1024; ++a) {
+      if (!n0->populated[a]) {
+        continue;
+      }
       if (finiteDims == 1) {
-        emit(a, 1, c0);
-        return;
+        emit(a, 1, n0->counts[a]);
+        continue;
       }
+      const Node4D_4x10_l1 *n1 = n0->nodes[a].get();
       if (!n1) {
-        return;
+        continue;
       }
-      n1->forEach([&](size_t b, uint32_t c1, const Node4D_4x10_l2 *n2) {
+      for (size_t b = 0; b < BINS_1024; ++b) {
+        if (!n1->populated[b]) {
+          continue;
+        }
         if (finiteDims == 2) {
-          emit((static_cast<uint64_t>(a) << 10) | b, 2, c1);
-          return;
+          emit((static_cast<uint64_t>(a) << 10) | b, 2, n1->counts[b]);
+          continue;
         }
+        const Node4D_4x10_l2 *n2 = n1->nodes[b].get();
         if (!n2) {
-          return;
+          continue;
         }
-        n2->forEach([&](size_t c3, uint32_t c2, const Node4D_4x10_l3 *n3) {
+        for (size_t c3 = 0; c3 < BINS_1024; ++c3) {
+          if (!n2->populated[c3]) {
+            continue;
+          }
           if (finiteDims == 3) {
-            emit((static_cast<uint64_t>(a) << 20) | (static_cast<uint64_t>(b) << 10) | c3, 3, c2);
-            return;
+            emit((static_cast<uint64_t>(a) << 20) | (static_cast<uint64_t>(b) << 10) | c3, 3, n2->counts[c3]);
+            continue;
           }
+          const Node4D_4x10_l3 *n3 = n2->nodes[c3].get();
           if (!n3) {
-            return;
+            continue;
           }
-          n3->forEach([&](size_t d4, uint32_t c) {
+          for (size_t d4 = 0; d4 < BINS_1024; ++d4) {
             emit((static_cast<uint64_t>(a) << 30) | (static_cast<uint64_t>(b) << 20) |
-                     (static_cast<uint64_t>(c3) << 10) | d4, 4, c);
-          });
-        });
-      });
-    });
+                     (static_cast<uint64_t>(c3) << 10) | d4, 4, n3->counts[d4]);
+          }
+        }
+      }
+    }
   }
 }
 

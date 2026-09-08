@@ -2,6 +2,7 @@
 
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie3d/3DxP.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -28,41 +29,29 @@ Generator3DxP::generate(const std::vector<const FPHArray *> &arrays) const {
 void insertintoTrie_3D_3x10(TLE_3D_3x10 *root, unsigned int combined,
                             unsigned int combinedTLE, int ndims,
                             uint64_t &curr_trie_size) {
-  root->populated.set(combinedTLE);
-  root->counts[combinedTLE]++;
   static constexpr uint8_t kDepth[8] = {0, 1, 1, 2, 1, 2, 2, 3};
   const int depth = kDepth[ndims & 0x7];
-  if (depth == 0)
+  if (depth == 0) {
+    bumpCount(root->populated, root->counts, combinedTLE);
     return;
-  std::unique_ptr<Node3D_3x10_l0> &l0 = root->nodes[combinedTLE];
-  if (!l0) {
-    l0 = std::make_unique<Node3D_3x10_l0>();
-    curr_trie_size += sizeof(Node3D_3x10_l0);
   }
+  Node3D_3x10_l0 *l0 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
   const unsigned int c0 = (combined >> (10 * (depth - 1))) & 0x3FF;
-  l0->populated.set(c0);
-  l0->counts[c0]++;
-  if (depth == 1)
+  if (depth == 1) {
+    bumpCount(l0->populated, l0->counts, c0);
     return;
-  std::unique_ptr<Node3D_3x10_l1> &l1 = l0->nodes[c0];
-  if (!l1) {
-    l1 = std::make_unique<Node3D_3x10_l1>();
-    curr_trie_size += sizeof(Node3D_3x10_l1);
   }
+  Node3D_3x10_l1 *l1 = descend(l0->populated, l0->nodes, c0, curr_trie_size);
   const unsigned int c1 = (combined >> (10 * (depth - 2))) & 0x3FF;
-  l1->populated.set(c1);
-  l1->counts[c1]++;
-  if (depth == 2)
+  if (depth == 2) {
+    bumpCount(l1->populated, l1->counts, c1);
     return;
-  std::unique_ptr<Node3D_3x10_l2> &l2 = l1->nodes[c1];
-  if (!l2) {
-    l2 = std::make_unique<Node3D_3x10_l2>();
-    curr_trie_size += sizeof(Node3D_3x10_l2);
   }
-  const unsigned int c2 = combined & 0x3FF;
-  l2->populated.set(c2);
-  l2->counts[c2]++;
+  Node3D_3x10_l2 *l2 = descend(l1->populated, l1->nodes, c1, curr_trie_size);
+  bumpCount(l2->populated, l2->counts, combined & 0x3FF);
 }
+
+void rollUpCounts(TLE_3D_3x10 *root) { rollUpNode(root); }
 
 std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3) {
@@ -218,6 +207,7 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
     });
   });
 
+  rollUpCounts(root.get());
   return root;
 }
 

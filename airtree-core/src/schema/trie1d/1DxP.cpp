@@ -36,6 +36,27 @@ std::unique_ptr<TrieNode_20> CreateParentNode_20() {
   return parentNode;
 }
 
+void rollUpCounts(TrieNode_20 *root) {
+  for (unsigned int i = 0; i < BINS_256; ++i) {
+    TrieNode_20_Level1 *level1 = root->nodes[i].get();
+    uint32_t total = 0;
+    for (unsigned int j = 0; j < BINS_64; ++j) {
+      const TrieNode_20_Level2 *level2 = level1->nodes[j].get();
+      if (!level2)
+        continue;
+      uint32_t sum = 0;
+      for (uint32_t count : level2->counts)
+        sum += count;
+      level1->counts[j] = sum;
+      level1->populated.set(j);
+      total += sum;
+    }
+    root->counts[i] = total;
+    if (total)
+      root->populated.set(i);
+  }
+}
+
 std::vector<char> generate_1DxP(const FPHArray &array) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(logger(),
@@ -86,6 +107,7 @@ execCreateAndInsert_TrieNode20(SpecialCounts &specialCounts,
   };
 
   dispatchFPHArray(array, process_array);
+  rollUpCounts(root.get());
 
   curr_trie_size = sizeof(TrieNode_20) + BINS_256 * sizeof(TrieNode_20_Level1);
   for (const auto &level1 : root->nodes)

@@ -33,6 +33,17 @@ std::unique_ptr<TrieNode_13> CreateParentNode() {
   return parentNode;
 }
 
+void rollUpCounts(TrieNode_13 *root) {
+  for (unsigned int i = 0; i < BINS_256; ++i) {
+    uint32_t total = 0;
+    for (uint32_t count : root->nodes[i]->counts)
+      total += count;
+    root->counts[i] = total;
+    if (total)
+      root->populated.set(i);
+  }
+}
+
 std::vector<char> generate_1DxT(const FPHArray &array) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(logger(),
@@ -85,7 +96,7 @@ execCreateAndInsert_TrieNode13(SpecialCounts &specialCounts,
   };
 
   dispatchFPHArray(array, process_array);
-
+  rollUpCounts(root.get());
   return root;
 }
 

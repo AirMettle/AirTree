@@ -1,6 +1,7 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
 #include <airtree/core/schema/trie4d/4DxF.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -35,155 +36,39 @@ std::unique_ptr<TLE_4D_4x8> CreateParentNode_TLE4D_4x8() {
 void insertintoTrie_4D_4x8(TLE_4D_4x8 *root, unsigned int combined,
                            unsigned int combinedTLE, int ndims,
                            uint64_t &curr_trie_size) {
-
   if (!root) {
     SPDLOG_LOGGER_ERROR(logger(), "Root is null.");
     return;
   }
-
-  // update TLE level and setup child node
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
-  root->counts[combinedTLE]++;
-
-  // We are going to handle 5 specific cases. 40, 30, 20, 10 bit values
-
-  if (ndims == 0) { // combined == 0
+  static constexpr uint8_t kDepth[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+  const int depth = kDepth[ndims & 0xF];
+  if (depth == 0) {
+    bumpCount(root->populated, root->counts, combinedTLE);
     return;
   }
-
-  // if ndims is one of 1, 2, 4 or 8 then we are processing a 8 bit value (max).
-
-  if (ndims == 1 || ndims == 2 || ndims == 4 || ndims == 8) {
-    // combined is a 8 bit number
-    unsigned int l0_8 = combined;
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x8_l0>();
-      curr_trie_size += sizeof(Node4D_4x8_l0);
-    }
-
-    // if populated of l0_8 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_8)) {
-      root->nodes[combinedTLE]->populated.set(l0_8);
-    }
-
-    root->nodes[combinedTLE]->counts[l0_8]++;
+  Node4D_4x8_l0 *l0 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
+  const unsigned int c0 = (combined >> (8 * (depth - 1))) & 0xFF;
+  if (depth == 1) {
+    bumpCount(l0->populated, l0->counts, c0);
+    return;
   }
-
-  // if ndims is one of 3, 5, 6 or 7 then we are processing a 16 bit value
-  // (max).
-  if (ndims == 3 || ndims == 5 || ndims == 6 || ndims == 9 || ndims == 10
-      || ndims == 12) {
-    unsigned int l0_8 = (combined >> 8) & 0xFF; // 8 bits
-    unsigned int l1_8 = combined & 0xFF;        // 8 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x8_l0>();
-      curr_trie_size += sizeof(Node4D_4x8_l0);
-    }
-
-
-    // if populated of l0_8 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_8)) {
-      root->nodes[combinedTLE]->populated.set(l0_8);
-      root->nodes[combinedTLE]->nodes[l0_8] = std::make_unique<Node4D_4x8_l1>();
-      curr_trie_size += sizeof(Node4D_4x8_l1);
-    }
-    root->nodes[combinedTLE]->counts[l0_8]++;
-
-    // if populated of l0_8 is set and l1_8 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_8]->populated.test(l1_8)) {
-      root->nodes[combinedTLE]->nodes[l0_8]->populated.set(l1_8);
-    }
-    root->nodes[combinedTLE]->nodes[l0_8]->counts[l1_8]++;
+  Node4D_4x8_l1 *l1 = descend(l0->populated, l0->nodes, c0, curr_trie_size);
+  const unsigned int c1 = (combined >> (8 * (depth - 2))) & 0xFF;
+  if (depth == 2) {
+    bumpCount(l1->populated, l1->counts, c1);
+    return;
   }
-
-  // if ndims is 11 then we are processing a 24 bit value (max).
-  if (ndims == 7 || ndims == 11 || ndims == 13 || ndims == 14) {
-    unsigned int l0_8 = (combined >> 16) & 0xFF; // 8 bits
-    unsigned int l1_8 = (combined >> 8) & 0xFF;  // 8 bits
-    unsigned int l2_8 = combined & 0xFF;         // 8 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x8_l0>();
-      curr_trie_size += sizeof(Node4D_4x8_l0);
-    }
-
-
-    // if populated of l0_8 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_8)) {
-      root->nodes[combinedTLE]->populated.set(l0_8);
-      root->nodes[combinedTLE]->nodes[l0_8] = std::make_unique<Node4D_4x8_l1>();
-      curr_trie_size += sizeof(Node4D_4x8_l1);
-    }
-    root->nodes[combinedTLE]->counts[l0_8]++;
-
-    // if populated of l0_8 is set and l1_8 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_8]->populated.test(l1_8)) {
-      root->nodes[combinedTLE]->nodes[l0_8]->populated.set(l1_8);
-      root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8] =
-          std::make_unique<TrieNode_16>();
-      curr_trie_size += sizeof(TrieNode_16);
-    }
-    root->nodes[combinedTLE]->nodes[l0_8]->counts[l1_8]++;
-
-    // if populated of l0_8 is set, l1_8 is set and l2_8 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->populated.test(
-            l2_8)) {
-      root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->populated.set(l2_8);
-    }
-    root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->counts[l2_8]++;
+  TrieNode_16 *l2 = descend(l1->populated, l1->nodes, c1, curr_trie_size);
+  const unsigned int c2 = (combined >> (8 * (depth - 3))) & 0xFF;
+  if (depth == 3) {
+    bumpCount(l2->populated, l2->counts, c2);
+    return;
   }
-
-  // if ndims is 15 then we are processing a 32 bit value (max).
-  if (ndims == 15) {
-    unsigned int l0_8 = (combined >> 24) & 0xFF; // 8 bits
-    unsigned int l1_8 = (combined >> 16) & 0xFF; // 8 bits
-    unsigned int l2_8 = (combined >> 8) & 0xFF;  // 8 bits
-    unsigned int l3_8 = combined & 0xFF;         // 8 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node4D_4x8_l0>();
-      curr_trie_size += sizeof(Node4D_4x8_l0);
-    }
-
-
-    // if populated of l0_8 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_8)) {
-      root->nodes[combinedTLE]->populated.set(l0_8);
-      root->nodes[combinedTLE]->nodes[l0_8] = std::make_unique<Node4D_4x8_l1>();
-      curr_trie_size += sizeof(Node4D_4x8_l1);
-    }
-    root->nodes[combinedTLE]->counts[l0_8]++;
-
-    // if populated of l0_8 is set and TriNode_16 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_8]->populated.test(l1_8)) {
-      root->nodes[combinedTLE]->nodes[l0_8]->populated.set(l1_8);
-      root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8] =
-          std::make_unique<TrieNode_16>();
-      curr_trie_size += sizeof(TrieNode_16);
-    }
-    root->nodes[combinedTLE]->nodes[l0_8]->counts[l1_8]++;
-
-    // if populated of l0_8 is set, TriNode_16 is set and TrieNode_16_level1 is
-    // not set
-    if (!root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->populated.test(
-            l2_8)) {
-      root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->populated.set(l2_8);
-      root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->nodes[l2_8] =
-          std::make_unique<TrieNode_16_Level1>();
-      curr_trie_size += sizeof(TrieNode_16_Level1);
-    }
-    root->nodes[combinedTLE]->nodes[l0_8]->nodes[l1_8]->counts[l2_8]++;
-    root->nodes[combinedTLE]
-        ->nodes[l0_8]
-        ->nodes[l1_8]
-        ->nodes[l2_8]
-        ->counts[l3_8]++;
-  }
+  TrieNode_16_Level1 *l3 = descend(l2->populated, l2->nodes, c2, curr_trie_size);
+  l3->counts[combined & 0xFF]++;
 }
+
+void rollUpCounts(TLE_4D_4x8 *root) { rollUpNode(root); }
 
 std::vector<char> generate_4DxF(const FPHArray &array1, const FPHArray &array2,
                                 const FPHArray &array3, const FPHArray &array4) {
@@ -371,6 +256,7 @@ std::unique_ptr<TLE_4D_4x8> execCreateAndInsert_4D_4x8(
     });
   });
 
+  rollUpCounts(root.get());
   return root;
 }
 

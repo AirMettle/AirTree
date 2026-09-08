@@ -32,6 +32,7 @@ struct TLETrieNode_2D {
 
 
 [[nodiscard]] std::unique_ptr<TLETrieNode_2D> CreateParentNode_TLE2D88();
+void rollUpCounts(TLETrieNode_2D *root);
 
 // Files one (v1, v2) point: counts its specials into specialCounts and returns where it lands.
 template <typename T1, typename T2>

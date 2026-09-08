@@ -79,6 +79,7 @@ struct TrieNode_16_Level1 {
  * @return The root node of the Trie.
  */
 std::unique_ptr<TrieNode_16> CreateParentNode_16();
+void rollUpCounts(TrieNode_16 *root);
 
 
 /**
@@ -92,16 +93,12 @@ inline void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber) {
   const unsigned int code = createInternal16Bit(fpNumber);
   const unsigned int index8 = (code >> 8) & 0xFF;
   const unsigned int index8_level2 = code & 0xFF;
-  node->populated.set(index8);
-  node->counts[index8]++;
   node->nodes[index8]->counts[index8_level2]++;
 }
 inline void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber) {
   const unsigned int code = createInternal16Bit_32(fpNumber);
   const unsigned int index8 = (code >> 8) & 0xFF;
   const unsigned int index8_level2 = code & 0xFF;
-  node->populated.set(index8);
-  node->counts[index8]++;
   node->nodes[index8]->counts[index8_level2]++;
 }
 

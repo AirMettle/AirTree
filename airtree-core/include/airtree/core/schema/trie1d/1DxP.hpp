@@ -86,6 +86,7 @@ struct TrieNode_20_Level2 {
  * @return The root node of the Trie.
  */
 std::unique_ptr<TrieNode_20> CreateParentNode_20();
+void rollUpCounts(TrieNode_20 *root);
 
 /**
  * Function to generate the Roaring20 Trie.
@@ -117,11 +118,7 @@ inline void createAndInsertFP20(TrieNode_20 *node, uint64_t fpNumber) {
   const unsigned int index8 = (code >> 12) & 0xFF;
   const unsigned int index6_level1 = (code >> 6) & 0x3F;
   const unsigned int index6_level2 = code & 0x3F;
-  node->populated.set(index8);
-  node->counts[index8]++;
   TrieNode_20_Level1 *level1 = node->nodes[index8].get();
-  level1->populated.set(index6_level1);
-  level1->counts[index6_level1]++;
   TrieNode_20_Level2 *level2 = level1->nodes[index6_level1].get();
   if (!level2) [[unlikely]]
     level2 = newLevel2(level1, index6_level1);
@@ -132,11 +129,7 @@ inline void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber) {
   const unsigned int index8 = (code >> 12) & 0xFF;
   const unsigned int index6_level1 = (code >> 6) & 0x3F;
   const unsigned int index6_level2 = code & 0x3F;
-  node->populated.set(index8);
-  node->counts[index8]++;
   TrieNode_20_Level1 *level1 = node->nodes[index8].get();
-  level1->populated.set(index6_level1);
-  level1->counts[index6_level1]++;
   TrieNode_20_Level2 *level2 = level1->nodes[index6_level1].get();
   if (!level2) [[unlikely]]
     level2 = newLevel2(level1, index6_level1);

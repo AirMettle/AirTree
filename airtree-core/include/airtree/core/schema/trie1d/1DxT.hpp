@@ -79,6 +79,7 @@ struct TrieNode_13_Level1 {
  * @return The root node of the Trie.
  */
 std::unique_ptr<TrieNode_13> CreateParentNode();
+void rollUpCounts(TrieNode_13 *root);
 
 [[nodiscard]] std::vector<char> generate_1DxT(const FPHArray &array);
 
@@ -103,16 +104,12 @@ inline void createAndInsertFP(TrieNode_13 *node, uint64_t fpNumber) {
   const unsigned int code = createInternal13Bit(fpNumber);
   const unsigned int index8 = (code >> 5) & 0xFF;
   const unsigned int index5 = code & 0x1F;
-  node->populated.set(index8);
-  node->counts[index8]++;
   node->nodes[index8]->counts[index5]++;
 }
 inline void createAndInsertFP_32(TrieNode_13 *node, uint32_t fpNumber) {
   const unsigned int code = createInternal13Bit_32(fpNumber);
   const unsigned int index8 = (code >> 5) & 0xFF;
   const unsigned int index5 = code & 0x1F;
-  node->populated.set(index8);
-  node->counts[index8]++;
   node->nodes[index8]->counts[index5]++;
 }
 

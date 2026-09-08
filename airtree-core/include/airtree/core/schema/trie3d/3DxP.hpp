@@ -47,6 +47,7 @@ struct Node3D_3x10_l2 {
 execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
                             const FPHArray &array3, uint64_t &curr_trie_size,
                             std::unique_ptr<SpecialCounts> &specialCounts);
+void rollUpCounts(TLE_3D_3x10 *root);
 [[nodiscard]] std::vector<char>
 execSerialize_3D_3x10(TLE_3D_3x10 *root, std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_3DxP(const FPHArray &array1,
