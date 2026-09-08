@@ -2,20 +2,26 @@
 
 set -eou pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd )"
+ROOT_DIR="${SCRIPT_DIR%/tools*}"
+cd "$SCRIPT_DIR"
+
 . "$ROOT_DIR/tools/utils/import.sh"
 import utils/common_func.sh
 import utils/build_utils.sh
 
-log_info "Running 1D benchmarks..."
-
-bash $ROOT_DIR/tools/build/partial_build.sh
-if [ $? -ne 0 ]; then
-    log_error "Build failed"
+log_info "Ensuring host toolchain via tools/setup/setup.sh"
+if ! bash "$ROOT_DIR/tools/setup/setup.sh"; then
+    log_error "Host setup failed"
     exit 1
 fi
 
-SCRIPT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+log_info "Running 1D benchmarks..."
+
+if ! bash "$ROOT_DIR/tools/build/partial_build.sh"; then
+    log_error "Build failed"
+    exit 1
+fi
 
 BENCH_DATA_DIR="$CMAKE_BUILD_DIR/bench_data"
 DATE_FOLDER="$(date +%d-%m-%Y)"
@@ -25,8 +31,7 @@ BENCH_REPS="${BENCH_REPS:-5}"
 
 if [ ! -d "$BENCH_DATA_DIR" ]; then
     log_warn "Benchmark data directory $BENCH_DATA_DIR does not exist. Fetching benchmark data..."
-    bash "$ROOT_DIR/tools/bench/get_bench_datasets.sh" "$BENCH_DATA_DIR"
-    if [ $? -ne 0 ]; then
+    if ! bash "$SCRIPT_DIR/get_bench_datasets.sh" "$BENCH_DATA_DIR"; then
         log_error "Failed to fetch benchmark data"
         exit 1
     fi
@@ -39,6 +44,18 @@ mkdir -p "$OUTPUT_DIR"
 
 mkdir -p "$OUTPUT_DIR/airtree_files"
 AIRTREE_DIR="$OUTPUT_DIR/airtree_files"
+
+# Pin to CPU 0 on Linux for stable benches. macOS/Windows have no taskset;
+# run the binary directly so those hosts do not fail at generate/query.
+if command -v taskset >/dev/null 2>&1; then
+    PIN=(taskset -c 0)
+else
+    log_warn "taskset not found; running airtree_bench unpinned"
+    PIN=()
+fi
+run_bench() {
+    "${PIN[@]}" "$@"
+}
 
 parquet_schemas=( "1DxF" "1DxP" "2DxF" "2DxP" "3DxF" "3DxP" "4DxF" "4DxP")
 binary_schemas=( "1DxT" "1DxF" "1DxP")
@@ -170,77 +187,43 @@ echo "Benchmarks completed."
 
 echo "Starting query benchmarks on $AIRTREE_DIR ..."
 
-# yellow 1D — TopK, MinMax, Percentile
-for schema in 1DxF 1DxP; do
-    hist="$AIRTREE_DIR/yellow_tripdata_${schema}.airtree"
+run_query_suite() {
+    local hist="$1"
+    local schema="$2"
+    local query_csv="$3"
+    shift 3
     if [ ! -f "$hist" ]; then
-        log_error "missing $hist"
-        exit 1
+        log_warn "Skipping query for schema $schema: missing $hist"
+        return 0
     fi
-    query_csv="$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv"
     log_info "Query phase: $hist -> $query_csv"
-    "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
+    if ! run_bench "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
         --benchmark_out="$query_csv" --benchmark_out_format=csv \
         query --input "$hist" --schema "$schema" \
-        --queries topk minmax percentile
-    if [ $? -ne 0 ]; then
-        log_error "Query benchmark failed for $hist"
-        exit 1
+        --queries "$@"; then
+        log_warn "Query benchmark failed for $hist (continuing)"
     fi
+}
+
+# yellow 1D — TopK, MinMax, Percentile
+for schema in 1DxF 1DxP; do
+    run_query_suite "$AIRTREE_DIR/yellow_tripdata_${schema}.airtree" "$schema" \
+        "$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv" topk minmax percentile
 done
 
 # yellow 2D/3D Precise — Grid + BoundingBox
 for schema in 2DxP 3DxP; do
-    hist="$AIRTREE_DIR/yellow_tripdata_${schema}.airtree"
-    if [ ! -f "$hist" ]; then
-        log_error "missing $hist"
-        exit 1
-    fi
-    query_csv="$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv"
-    log_info "Query phase: $hist -> $query_csv"
-    "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
-        --benchmark_out="$query_csv" --benchmark_out_format=csv \
-        query --input "$hist" --schema "$schema" \
-        --queries grid boundingbox
-    if [ $? -ne 0 ]; then
-        log_error "Query benchmark failed for $hist"
-        exit 1
-    fi
+    run_query_suite "$AIRTREE_DIR/yellow_tripdata_${schema}.airtree" "$schema" \
+        "$OUTPUT_DIR/query_yellow_tripdata_${schema}.csv" grid boundingbox
 done
 
 # yellow 4D Precise — Grid only
-hist="$AIRTREE_DIR/yellow_tripdata_4DxP.airtree"
-if [ ! -f "$hist" ]; then
-    log_error "missing $hist"
-    exit 1
-fi
-query_csv="$OUTPUT_DIR/query_yellow_tripdata_4DxP.csv"
-log_info "Query phase: $hist -> $query_csv"
-"$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
-    --benchmark_out="$query_csv" --benchmark_out_format=csv \
-    query --input "$hist" --schema 4DxP \
-    --queries grid
-if [ $? -ne 0 ]; then
-    log_error "Query benchmark failed for $hist"
-    exit 1
-fi
+run_query_suite "$AIRTREE_DIR/yellow_tripdata_4DxP.airtree" 4DxP \
+    "$OUTPUT_DIR/query_yellow_tripdata_4DxP.csv" grid
 
 # jane_street 1DxT
-hist="$AIRTREE_DIR/jane_street_1DxT.airtree"
-if [ ! -f "$hist" ]; then
-    log_error "missing $hist"
-    exit 1
-fi
-query_csv="$OUTPUT_DIR/query_jane_street_1DxT.csv"
-log_info "Query phase: $hist -> $query_csv"
-"$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" \
-    --benchmark_out="$query_csv" --benchmark_out_format=csv \
-    query --input "$hist" --schema 1DxT \
-    --queries topk minmax percentile
-if [ $? -ne 0 ]; then
-    log_error "Query benchmark failed for $hist"
-    exit 1
-fi
+run_query_suite "$AIRTREE_DIR/jane_street_1DxT.airtree" 1DxT \
+    "$OUTPUT_DIR/query_jane_street_1DxT.csv" topk minmax percentile
 
 echo "Query benchmarks completed."
 
@@ -252,5 +235,37 @@ bash "$SCRIPT_DIR"/consolidate_query_bench_data.sh "$OUTPUT_DIR"
 
 echo "consolidating system info in system_info.csv"
 bash "$SCRIPT_DIR"/consolidate_systeminfo.sh "$OUTPUT_DIR"
+
+echo "Generating plots in $OUTPUT_DIR/plots"
+# Plot deps live in the project venv, not system python3. Create the venv
+# and pip-install requirements-plot.txt when this machine has never plotted.
+PLOT_REQ="$SCRIPT_DIR/requirements-plot.txt"
+PLOT_PYTHON=""
+if [[ ! -x "$CMAKE_BUILD_DIR/venv/bin/python" ]]; then
+    log_info "No project venv at $CMAKE_BUILD_DIR/venv; creating via tools/setup/venv.sh"
+    if ! bash "$ROOT_DIR/tools/setup/venv.sh"; then
+        log_warn "Skipping plots: failed to create $CMAKE_BUILD_DIR/venv (bench CSVs are still valid)."
+    fi
+fi
+if [[ -x "$CMAKE_BUILD_DIR/venv/bin/python" ]]; then
+    PLOT_PYTHON="$CMAKE_BUILD_DIR/venv/bin/python"
+    if ! "$PLOT_PYTHON" -c "import matplotlib, seaborn, pandas" >/dev/null 2>&1; then
+        log_info "Installing plot deps into $CMAKE_BUILD_DIR/venv from $PLOT_REQ"
+        if ! "$PLOT_PYTHON" -m pip install -r "$PLOT_REQ"; then
+            log_warn "pip install of $PLOT_REQ failed; will skip plots if imports still fail."
+            log_warn "Retry: $PLOT_PYTHON -m pip install -r $PLOT_REQ"
+        fi
+    fi
+fi
+if [[ -n "$PLOT_PYTHON" ]] && "$PLOT_PYTHON" -c "import matplotlib, seaborn, pandas" >/dev/null 2>&1; then
+    log_info "Writing plots with $PLOT_PYTHON $SCRIPT_DIR/plot_benchmarks.py $OUTPUT_DIR --format png,svg"
+    "$PLOT_PYTHON" "$SCRIPT_DIR/plot_benchmarks.py" "$OUTPUT_DIR" --format png,svg
+    log_info "Plots written to $OUTPUT_DIR/plots"
+elif [[ -n "$PLOT_PYTHON" ]]; then
+    log_warn "Skipping plots: $PLOT_PYTHON still cannot import matplotlib, seaborn, and pandas (bench CSVs are still valid)."
+    log_warn "Or plot later: $PLOT_PYTHON $SCRIPT_DIR/plot_benchmarks.py $OUTPUT_DIR --format png,svg"
+else
+    log_warn "Or plot later: python3 $SCRIPT_DIR/plot_benchmarks.py $OUTPUT_DIR --format png,svg"
+fi
 
 echo "Benchmark files saved in $OUTPUT_DIR"

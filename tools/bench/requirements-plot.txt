@@ -1,0 +1,9 @@
+# Plot stack for tools/bench/plot_benchmarks.py.
+# Install into the project venv:
+#   $CMAKE_BUILD_DIR/venv/bin/python -m pip install -r tools/bench/requirements-plot.txt
+#
+# pandas 2.3.3 matches the version already used by get_bench_datasets.sh /
+# csv_to_parquet.py. Do not bump to pandas 3 without re-checking those scripts.
+pandas==2.3.3
+matplotlib==3.11.1
+seaborn==0.13.2
