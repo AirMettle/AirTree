@@ -12,7 +12,7 @@
 using namespace airtree::query::bounding_box;
 using namespace airtree::core::io;
 
-BoundingBox::BoundingBox(std::vector<char> buffer) {
+BoundingBox::BoundingBox(std::span<const char> buffer) {
   AirTreeReader reader;
   reader.read(buffer);
 
@@ -78,9 +78,8 @@ uint32_t getCount(const std::unique_ptr<NodeType> &node, uint64_t internal_rep,
     // }
     if (node->populated.test(combined_tle)
         && node->nodes[combined_tle]->populated.test(prefix_10)
+        && node->nodes[combined_tle]->nodes[prefix_10]
         && node->nodes[combined_tle]->nodes[prefix_10]->counts[suffix_10] > 0) {
-      // std::cout << "Node populated for TLE: " << combined_tle
-      // << ", Internal Rep: " << internal_rep << std::endl;
       return node->nodes[combined_tle]->nodes[prefix_10]->counts[suffix_10];
     }
   } else {
@@ -127,24 +126,18 @@ uint32_t getCount3D(const std::unique_ptr<NodeType> &node,
     if (!node->nodes[combined_tle]->populated.test(l0_10)) {
       return 0;
     }
-
-    // If no L1 node, this is ndims=1,2,4 case
-    if (!node->nodes[combined_tle]->nodes[l0_10]) {
+    const Node3D_3x10_l1 *l1 = node->nodes[combined_tle]->nodes[l0_10].get();
+    if (!l1) {
       return node->nodes[combined_tle]->counts[l0_10];
     }
-
-    // Check L1
-    if (!node->nodes[combined_tle]->nodes[l0_10]->populated.test(l1_10)) {
+    if (!l1->populated.test(l1_10)) {
       return 0;
     }
-
-    // If no L2 node, this is ndims=3,5,6 case
-    if (!node->nodes[combined_tle]->nodes[l0_10]->nodes[l1_10]) {
-      return node->nodes[combined_tle]->nodes[l0_10]->counts[l1_10];
+    const Node3D_3x10_l2 *l2 = l1->nodes[l1_10].get();
+    if (!l2) {
+      return l1->counts[l1_10];
     }
-
-    // Check L2 (ndims=7 case)
-    return node->nodes[combined_tle]->nodes[l0_10]->nodes[l1_10]->counts[l2_10];
+    return l2->counts[l2_10];
 
   } else {
     throw std::runtime_error("Unsupported node type for 3D count retrieval.");

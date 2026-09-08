@@ -91,12 +91,13 @@ protected:
 
     for (auto _ : state) {
       state.PauseTiming();
+      airTree2DxF_root.reset();
       specialCounts = std::make_unique<SpecialCounts>();
       curr_trie_size = 0;
       state.ResumeTiming();
 
       airTree2DxF_root = execCreateAndInsert_2D(
-          fpharray1, fpharray2, curr_trie_size, specialCounts, true);
+          fpharray1, fpharray2, curr_trie_size, specialCounts);
 
       benchmark::DoNotOptimize(airTree2DxF_root);
     }
@@ -134,11 +135,11 @@ protected:
     const auto &fpharray2 = airtree::bench::BenchmarkData<T>::fpharrays[1];
 
     airTree2DxF_root = execCreateAndInsert_2D(
-        fpharray1, fpharray2, curr_trie_size, specialCounts, true);
+        fpharray1, fpharray2, curr_trie_size, specialCounts);
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_2D(
-          airTree2DxF_root.get(), curr_trie_size, specialCounts, true);
+          airTree2DxF_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();

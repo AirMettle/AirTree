@@ -22,7 +22,7 @@ std::vector<char> Merge1DxF::merge(const std::vector<char> &buffer1,
   SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
-  std::bitset<BINS_256> pop1, pop2;
+  PopulatedBins<BINS_256> pop1, pop2;
   auto mergedRoot = Root_merge<TrieNode_16, BINS_256>(
       buffer1, buffer2, offset1, offset2, pop1, pop2);
   serialize_1DxF(mergedRoot.get(), mergedBuffer, false);

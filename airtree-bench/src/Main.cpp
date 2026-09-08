@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
     gb_args.push_back(argv[0]);
     gb_args.push_back("--benchmark_filter="
                       + benchmark_filter_for(config_name, data_type));
-    std::vector<std::string> remaining_args = app.remaining();
+    std::vector<std::string> remaining_args = app.remaining(true);
     for (const auto &arg : remaining_args) {
       gb_args.push_back(arg);
     }
@@ -300,7 +300,7 @@ int main(int argc, char *argv[]) {
     gb_args.push_back(argv[0]);
     gb_args.push_back("--benchmark_filter="
                       + benchmark_filter_for(config_name, loaded_type));
-    std::vector<std::string> remaining_args = app.remaining();
+    std::vector<std::string> remaining_args = app.remaining(true);
     for (const auto &arg : remaining_args) {
       gb_args.push_back(arg);
     }
@@ -378,7 +378,7 @@ int main(int argc, char *argv[]) {
     gb_args.push_back(argv[0]);
     gb_args.push_back("--benchmark_filter="
                       + query_benchmark_filter(query_schema, selected));
-    std::vector<std::string> remaining_args = app.remaining();
+    std::vector<std::string> remaining_args = app.remaining(true);
     for (const auto &arg : remaining_args) {
       gb_args.push_back(arg);
     }
@@ -430,7 +430,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> gb_args;
     gb_args.push_back(argv[0]);
     gb_args.push_back("--benchmark_filter=AirTreeMerge/.*");
-    std::vector<std::string> remaining_args = app.remaining();
+    std::vector<std::string> remaining_args = app.remaining(true);
     for (const auto &arg : remaining_args) {
       gb_args.push_back(arg);
     }

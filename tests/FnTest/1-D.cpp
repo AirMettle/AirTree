@@ -293,21 +293,21 @@ static void verifyBinAccuracy1D(const std::vector<char> &buffer,
   }
 }
 
-// Encoder wrappers matching each 1D config's path (Double, default_mode=true)
+// Encoder wrappers matching each 1D config's path (Double)
 static unsigned int encode_1DxP(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
-  return createInternal20Bit(fp, true);
+  return createInternal20Bit(fp);
 }
 static unsigned int encode_1DxT(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
-  return createInternal13Bit(fp, true);
+  return createInternal13Bit(fp);
 }
 static unsigned int encode_1DxF(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
-  return createInternal16Bit(fp, true);
+  return createInternal16Bit(fp);
 }
 
 // --- Test 1: Sanity + accuracy with real data for each 1D config ---

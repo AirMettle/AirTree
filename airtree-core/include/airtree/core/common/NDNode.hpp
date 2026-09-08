@@ -13,7 +13,6 @@ struct NDNode {
  *
  * @param node The root node of the Trie.
  * @param fpNumber The floating-point number to file to internal rep.
- * @param default_mode The default mode to use.
  */
 
 

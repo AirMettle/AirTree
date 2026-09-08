@@ -8,10 +8,8 @@ set(SOURCE_FILES
     ${SRC_DIR}/common/BooleanArray.cpp
     ${SRC_DIR}/common/Conversion.cpp
     ${SRC_DIR}/common/FPHArray.cpp
-    ${SRC_DIR}/common/InternalEncoding.cpp
     ${SRC_DIR}/common/NDims.cpp
     ${SRC_DIR}/common/Reconstruct.cpp
-    ${SRC_DIR}/common/SpecialCounts.cpp
     ${SRC_DIR}/common/TLE.cpp
 
     ${SRC_DIR}/io/AirTreeReader.cpp
@@ -31,6 +29,7 @@ set(SOURCE_FILES
     ${SRC_DIR}/serdes/Count.cpp
     ${SRC_DIR}/serdes/EOF.cpp
     ${SRC_DIR}/serdes/ND.cpp
+    ${SRC_DIR}/serdes/Node.cpp
     ${SRC_DIR}/serdes/trie1d/1DxF.cpp
     ${SRC_DIR}/serdes/trie1d/1DxP.cpp
     ${SRC_DIR}/serdes/trie1d/1DxT.cpp
@@ -80,6 +79,7 @@ add_executable(ut_core
     tests/TestHeaderDeserialization.cpp
     tests/TestReconstructEquivalence.cpp
     tests/TestCountCodec.cpp
+    tests/TestInsert2D.cpp
     tests/TestInterleave.cpp
     tests/TestReconstuctionOrignalFP.cpp
     tests/TestSerialization.cpp

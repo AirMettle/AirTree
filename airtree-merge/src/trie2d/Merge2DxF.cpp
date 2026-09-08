@@ -21,7 +21,7 @@ std::vector<char> Merge2DxF::merge(const std::vector<char> &buffer1,
   size_t header_end = mergedBuffer.size();
 
   // Deserialize the root nodes.
-  std::bitset<BINS_64> pop0_1, pop0_2;
+  PopulatedBins<BINS_64> pop0_1, pop0_2;
   auto mergedRoot = Root_merge_TLE<TLETrieNode_2D, BINS_64>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
 

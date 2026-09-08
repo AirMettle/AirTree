@@ -3,23 +3,25 @@
 #ifndef AIRTREE_CORE_SERDES_BOOLEANARRAYSER_HPP
 #define AIRTREE_CORE_SERDES_BOOLEANARRAYSER_HPP
 
+#include <span>
 #include <bit>
-#include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
 #include <airtree/core/common/BooleanArray.hpp>
+#include <airtree/core/common/Populated.hpp>
+#include <cstring>
 
 [[nodiscard]] std::vector<char>
 serializeCompactBooleanArray(const BooleanArray &array);
 [[nodiscard]] std::vector<uint64_t>
-deserializeCompactBooleanArray(const std::vector<char> &buffer, size_t &offset,
+deserializeCompactBooleanArray(std::span<const char> buffer, size_t &offset,
                                std::size_t len);
 
 
 // Populated-mask words for `bins` slots, as written by serializeCompactBooleanArray; false on underflow.
-[[nodiscard]] bool readPopulatedMask(const std::vector<char> &buffer,
+[[nodiscard]] bool readPopulatedMask(std::span<const char> buffer,
                                      size_t &offset, uint64_t *words,
                                      std::size_t bins);
 
@@ -37,8 +39,8 @@ void forEachSetBit(const uint64_t *words, std::size_t bins, Fn &&fn) {
 }
 
 template <std::size_t N>
-void setPopulated(std::bitset<N> &populated, const uint64_t *words) {
-  forEachSetBit(words, N, [&](std::size_t i) { populated.set(i); });
+void setPopulated(PopulatedBins<N> &populated, const uint64_t *words) {
+  std::memcpy(populated.words, words, sizeof(populated.words));
 }
 
 #endif // AIRTREE_CORE_SERDES_BOOLEANARRAYSER_HPP

@@ -22,7 +22,7 @@ std::vector<char> Merge4DxF::merge(const std::vector<char> &buffer1,
   size_t header_end = mergedBuffer.size();
 
   // Deserialize the root nodes.
-  std::bitset<BINS_4096> pop0_1, pop0_2;
+  PopulatedBins<BINS_4096> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLE_4D_4x8, BINS_4096>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_4DxF(mergedRoot.get(), mergedBuffer, false);

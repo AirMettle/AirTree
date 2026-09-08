@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_GRID_GRIDQUERY_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_GRID_GRIDQUERY_HPP
 
+#include <span>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/AirTreeType.hpp>
 #include <cstddef>
@@ -92,7 +93,7 @@ struct GridResult {
  */
 class GridQuery {
 public:
-  explicit GridQuery(std::vector<char> buffer);
+  explicit GridQuery(std::span<const char> buffer);
 
   /**
    * Run the grid query. axes.size() must equal the buffer's dimensionality.

@@ -8,7 +8,7 @@
 using namespace airtree::core;
 
 
-bool verifyEndOfFileMarker(const std::vector<char> &buffer, size_t &offset) {
+bool verifyEndOfFileMarker(std::span<const char> buffer, size_t &offset) {
   if (offset + sizeof(int32_t) > buffer.size()) {
     SPDLOG_LOGGER_ERROR(logger(), "Insufficient data for end marker.");
     return false;

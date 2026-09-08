@@ -4,12 +4,14 @@
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_META_POPULATEDBINS_HPP
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/meta/Histogram.hpp>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -75,6 +77,17 @@ std::vector<PopulatedBin> populatedBins(const std::unique_ptr<NodeType> &root,
   sortByPosition(out, histogram.getBinCount());
   return out;
 }
+
+// The populated leaf bins of a serialized 1D trie, read straight from the bytes — no nodes are
+// built — sorted by value. trieCount is the sum of the root counts (finite, non-zero observations).
+// Throws std::runtime_error on a truncated buffer or a configuration that is not 1D.
+struct PopulatedBinSet {
+  std::vector<PopulatedBin> bins;
+  uint32_t trieCount = 0;
+};
+PopulatedBinSet populatedBins(std::span<const char> buffer,
+                              const airtree::core::common::AirTreeHeader &header,
+                              const Histogram &histogram);
 
 } // namespace airtree::query::meta
 

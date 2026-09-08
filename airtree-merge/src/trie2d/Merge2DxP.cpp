@@ -22,7 +22,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
-  std::bitset<BINS_64> pop0_1, pop0_2;
+  PopulatedBins<BINS_64> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLEoption3_2D, BINS_64>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_2DxP(mergedRoot.get(), mergedBuffer, false);
@@ -31,7 +31,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   // Merge level1 children based on the original populated flags.
   std::unique_ptr<TrieNode_2D_10> temp_node_level1;
   std::unique_ptr<TrieNode_2D_10_Level1> temp_node_level2;
-  std::bitset<BINS_1024> pop0_level1;
+  PopulatedBins<BINS_1024> pop0_level1;
   int nDims = 0;
   for (size_t i = 0; i < BINS_64; i++) {
     // DEBUG_PRINT("Merging 2DxP TLEoption3_2D index " << i);

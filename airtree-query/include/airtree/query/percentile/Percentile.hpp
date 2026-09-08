@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_PERCENTILE_PERCENTILE_HPP
 
+#include <span>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
@@ -34,7 +35,7 @@ struct PercentileResult {
 
 class Percentile {
 public:
-  Percentile(std::vector<char> buffer);
+  Percentile(std::span<const char> buffer);
   /**
    * Get the percentile value from the trie.
    * @param percentile The percentile to calculate (0-100).
@@ -45,17 +46,16 @@ public:
   PercentileResult getPercentileWithBounds(double percentile);
 
 private:
-  template <typename NodeType> PercentileResult calculatePercentile(double percentile);
+  PercentileResult calculatePercentile(double percentile);
 
   uint16_t dims_;
   uint16_t bit_length_;
   uint64_t bin_count_;
-  AirTreeType trie_node_;
   std::shared_ptr<airtree::query::meta::Histogram> histogram_;
   airtree::core::common::AirTreeHeader header_;
   std::vector<airtree::query::meta::PopulatedBin> populated_;
-  bool populated_ready_ = false;
-  template <typename NodeType> const std::vector<airtree::query::meta::PopulatedBin> &populatedBins();
+  bool populated_ready_ = false; // a supported 1D configuration; bins and trie_count_ are set
+  uint32_t trie_count_ = 0; // finite, non-zero observations (the root counts)
 };
 
 } // namespace airtree::query::percentile
