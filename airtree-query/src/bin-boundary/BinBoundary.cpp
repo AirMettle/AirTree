@@ -88,17 +88,17 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxT() {
   auto l0_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
 
-  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
-  for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-    const size_t l0_idx = w * 64 + std::countr_zero(m);
+  for (size_t w0 = 0; w0 < PopulatedBins<BINS_256>::kWords; ++w0)
+  for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+    const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
     // Deserialize l1 populated bitset
     auto l1_populated = deserializeBitset<BINS_32>(buffer_, offset_, 1);
     // Deserialize l1 counts
     auto l1_counts =
         deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-    for (size_t w = 0; w < PopulatedBins<BINS_32>::kWords; ++w)
-    for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-      const size_t l1_idx = w * 64 + std::countr_zero(m);
+    for (size_t w1 = 0; w1 < PopulatedBins<BINS_32>::kWords; ++w1)
+    for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+      const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
 
       // Start by saving the count
       auto count = l1_counts[l1_idx];
@@ -125,18 +125,18 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxF() {
   auto l0_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
 
-  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
-  for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-    const size_t l0_idx = w * 64 + std::countr_zero(m);
+  for (size_t w0 = 0; w0 < PopulatedBins<BINS_256>::kWords; ++w0)
+  for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+    const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
     // Deserialize l1 populated bitset
     auto l1_populated =
         deserializeBitset<BINS_256>(buffer_, offset_, BINS_256 / 64);
     // Deserialize l1 counts
     auto l1_counts =
         deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-    for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
-    for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-      const size_t l1_idx = w * 64 + std::countr_zero(m);
+    for (size_t w1 = 0; w1 < PopulatedBins<BINS_256>::kWords; ++w1)
+    for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+      const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
 
       // Start by saving the count
       auto count = l1_counts[l1_idx];
@@ -164,18 +164,18 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxP() {
   auto l0_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
 
-  for (size_t w = 0; w < PopulatedBins<BINS_256>::kWords; ++w)
-  for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-    const size_t l0_idx = w * 64 + std::countr_zero(m);
+  for (size_t w0 = 0; w0 < PopulatedBins<BINS_256>::kWords; ++w0)
+  for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+    const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
     // Deserialize l1 populated bitset
     auto l1_populated =
         deserializeBitset<BINS_64>(buffer_, offset_, BINS_64 / 64);
     // Deserialize l1 counts
     auto l1_counts =
         deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-    for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
-    for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-      const size_t l1_idx = w * 64 + std::countr_zero(m);
+    for (size_t w1 = 0; w1 < PopulatedBins<BINS_64>::kWords; ++w1)
+    for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+      const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
 
       // Deserialize l2 populated bitset
       auto l2_populated =
@@ -183,9 +183,9 @@ BinBoundary1DList BinBoundary::buildBinBoundaries1DxP() {
       // Deserialize l2 counts
       auto l2_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
-      for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l2_idx = w * 64 + std::countr_zero(m);
+      for (size_t w2 = 0; w2 < PopulatedBins<BINS_64>::kWords; ++w2)
+      for (uint64_t m2 = l2_populated.words[w2]; m2 != 0; m2 &= m2 - 1) {
+        const size_t l2_idx = w2 * 64 + std::countr_zero(m2);
 
         // Start by saving the count
         auto count = l2_counts[l2_idx];
@@ -214,9 +214,9 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
   auto tle_counts =
       deserializeCountsToOriginalLen(buffer_, offset_, tle_populated);
 
-  for (size_t w = 0; w < PopulatedBins<BINS_64>::kWords; ++w)
-  for (uint64_t m = tle_populated.words[w]; m != 0; m &= m - 1) {
-    const size_t tle_idx = w * 64 + std::countr_zero(m);
+  for (size_t wt = 0; wt < PopulatedBins<BINS_64>::kWords; ++wt)
+  for (uint64_t mt = tle_populated.words[wt]; mt != 0; mt &= mt - 1) {
+    const size_t tle_idx = wt * 64 + std::countr_zero(mt);
 
     auto [dimensionInfoVec, specialCount] =
         deconstructTLE(tle_idx, 2); // Deconstruct TLE for 2D
@@ -245,9 +245,9 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Start by saving the count
         auto count = l0_counts[l0_idx];
         // generate bin boundaries
@@ -288,18 +288,18 @@ BinBoundary2DList BinBoundary::buildBinBoundaries2DxP() {
       // deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-          const size_t l1_idx = w * 64 + std::countr_zero(m);
+        for (size_t w1 = 0; w1 < PopulatedBins<BINS_1024>::kWords; ++w1)
+        for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+          const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
 
           // Start by saving the count
           auto count = l1_counts[l1_idx];
@@ -349,9 +349,9 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       deserializeCountsToOriginalLen(buffer_, offset_, tle_populated);
 
   // iterate through TLEs
-  for (size_t w = 0; w < PopulatedBins<BINS_512>::kWords; ++w)
-  for (uint64_t m = tle_populated.words[w]; m != 0; m &= m - 1) {
-    const size_t tle_idx = w * 64 + std::countr_zero(m);
+  for (size_t wt = 0; wt < PopulatedBins<BINS_512>::kWords; ++wt)
+  for (uint64_t mt = tle_populated.words[wt]; mt != 0; mt &= mt - 1) {
+    const size_t tle_idx = wt * 64 + std::countr_zero(mt);
 
     // Deconstruct TLE for 3D
     auto [dimensionInfoVec, specialCount] = deconstructTLE(tle_idx, 3);
@@ -380,9 +380,9 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Start by saving the count
         auto count = l0_counts[l0_idx];
         // generate bin boundaries
@@ -426,18 +426,18 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-          const size_t l1_idx = w * 64 + std::countr_zero(m);
+        for (size_t w1 = 0; w1 < PopulatedBins<BINS_1024>::kWords; ++w1)
+        for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+          const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
 
           // Start by saving the count
           auto count = l1_counts[l1_idx];
@@ -489,27 +489,27 @@ BinBoundary3DList BinBoundary::buildBinBoundaries3DxP() {
       // deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-          const size_t l1_idx = w * 64 + std::countr_zero(m);
+        for (size_t w1 = 0; w1 < PopulatedBins<BINS_1024>::kWords; ++w1)
+        for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+          const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
           // Deserialize l2 populated bitset
           auto l2_populated =
               deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
           // Deserialize l2 counts
           auto l2_counts =
               deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-          for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-          for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
-            const size_t l2_idx = w * 64 + std::countr_zero(m);
+          for (size_t w2 = 0; w2 < PopulatedBins<BINS_1024>::kWords; ++w2)
+          for (uint64_t m2 = l2_populated.words[w2]; m2 != 0; m2 &= m2 - 1) {
+            const size_t l2_idx = w2 * 64 + std::countr_zero(m2);
             // Start by saving the count
             auto count = l2_counts[l2_idx];
             // generate bin boundaries
@@ -566,9 +566,9 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       deserializeCountsToOriginalLen(buffer_, offset_, tle_populated);
 
   // iterate through TLEs
-  for (size_t w = 0; w < PopulatedBins<BINS_4096>::kWords; ++w)
-  for (uint64_t m = tle_populated.words[w]; m != 0; m &= m - 1) {
-    const size_t tle_idx = w * 64 + std::countr_zero(m);
+  for (size_t wt = 0; wt < PopulatedBins<BINS_4096>::kWords; ++wt)
+  for (uint64_t mt = tle_populated.words[wt]; mt != 0; mt &= mt - 1) {
+    const size_t tle_idx = wt * 64 + std::countr_zero(mt);
     // Deconstruct TLE for 4D
     auto [dimensionInfoVec, specialCount] = deconstructTLE(tle_idx, 4);
 
@@ -596,9 +596,9 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Start by saving the count
         auto count = l0_counts[l0_idx];
         // generate bin boundaries
@@ -641,18 +641,18 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // Deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // Deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-          const size_t l1_idx = w * 64 + std::countr_zero(m);
+        for (size_t w1 = 0; w1 < PopulatedBins<BINS_1024>::kWords; ++w1)
+        for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+          const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
           // Start by saving the count
           auto count = l1_counts[l1_idx];
           // generate bin boundaries
@@ -704,27 +704,27 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // Deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-          const size_t l1_idx = w * 64 + std::countr_zero(m);
+        for (size_t w1 = 0; w1 < PopulatedBins<BINS_1024>::kWords; ++w1)
+        for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+          const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
           // deserialize l2 populated bitset
           auto l2_populated =
               deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
           // deserialize l2 counts
           auto l2_counts =
               deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-          for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-          for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
-            const size_t l2_idx = w * 64 + std::countr_zero(m);
+          for (size_t w2 = 0; w2 < PopulatedBins<BINS_1024>::kWords; ++w2)
+          for (uint64_t m2 = l2_populated.words[w2]; m2 != 0; m2 &= m2 - 1) {
+            const size_t l2_idx = w2 * 64 + std::countr_zero(m2);
             // Start by saving the count
             auto count = l2_counts[l2_idx];
             // generate bin boundaries
@@ -779,36 +779,36 @@ BinBoundary4DList BinBoundary::buildBinBoundaries4DxP() {
       // deserialize l0 counts
       auto l0_counts =
           deserializeCountsToOriginalLen(buffer_, offset_, l0_populated);
-      for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-      for (uint64_t m = l0_populated.words[w]; m != 0; m &= m - 1) {
-        const size_t l0_idx = w * 64 + std::countr_zero(m);
+      for (size_t w0 = 0; w0 < PopulatedBins<BINS_1024>::kWords; ++w0)
+      for (uint64_t m0 = l0_populated.words[w0]; m0 != 0; m0 &= m0 - 1) {
+        const size_t l0_idx = w0 * 64 + std::countr_zero(m0);
         // deserialize l1 populated bitset
         auto l1_populated =
             deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
         // deserialize l1 counts
         auto l1_counts =
             deserializeCountsToOriginalLen(buffer_, offset_, l1_populated);
-        for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-        for (uint64_t m = l1_populated.words[w]; m != 0; m &= m - 1) {
-          const size_t l1_idx = w * 64 + std::countr_zero(m);
+        for (size_t w1 = 0; w1 < PopulatedBins<BINS_1024>::kWords; ++w1)
+        for (uint64_t m1 = l1_populated.words[w1]; m1 != 0; m1 &= m1 - 1) {
+          const size_t l1_idx = w1 * 64 + std::countr_zero(m1);
           // deserialize l2 populated bitset
           auto l2_populated =
               deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
           // deserialize l2 counts
           auto l2_counts =
               deserializeCountsToOriginalLen(buffer_, offset_, l2_populated);
-          for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-          for (uint64_t m = l2_populated.words[w]; m != 0; m &= m - 1) {
-            const size_t l2_idx = w * 64 + std::countr_zero(m);
+          for (size_t w2 = 0; w2 < PopulatedBins<BINS_1024>::kWords; ++w2)
+          for (uint64_t m2 = l2_populated.words[w2]; m2 != 0; m2 &= m2 - 1) {
+            const size_t l2_idx = w2 * 64 + std::countr_zero(m2);
             // deserialize l3 populated bitset
             auto l3_populated =
                 deserializeBitset<BINS_1024>(buffer_, offset_, BINS_1024 / 64);
             // deserialize l3 counts
             auto l3_counts =
                 deserializeCountsToOriginalLen(buffer_, offset_, l3_populated);
-            for (size_t w = 0; w < PopulatedBins<BINS_1024>::kWords; ++w)
-            for (uint64_t m = l3_populated.words[w]; m != 0; m &= m - 1) {
-              const size_t l3_idx = w * 64 + std::countr_zero(m);
+            for (size_t w3 = 0; w3 < PopulatedBins<BINS_1024>::kWords; ++w3)
+            for (uint64_t m3 = l3_populated.words[w3]; m3 != 0; m3 &= m3 - 1) {
+              const size_t l3_idx = w3 * 64 + std::countr_zero(m3);
               // Start by saving the count
               auto count = l3_counts[l3_idx];
               // generate bin boundaries
