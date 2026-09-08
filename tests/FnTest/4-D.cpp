@@ -317,7 +317,7 @@ static double encAndRecon(double v) {
   uint64_t fp;
   std::memcpy(&fp, &v, sizeof(v));
   TLE tle = setTLEComponents(fp);
-  unsigned int i10 = createInternal10Bit(fp, true);
+  unsigned int i10 = createInternal10Bit(fp);
   unsigned int prefix;
   switch (tle.encoding) {
   case 2:

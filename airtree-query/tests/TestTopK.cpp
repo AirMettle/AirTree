@@ -65,7 +65,7 @@ TEST_F(TestTopK, TopK_1DxT_POS_POS) {
   }
 
   std::vector<char> buffer =
-      trieManager.MockTrieHeader(bit_length, true, cleanCountsTopK);
+      trieManager.MockTrieHeader(bit_length, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   uint32_t topK = 5; // Get top 5% bins
@@ -117,7 +117,7 @@ TEST_F(TestTopK, TopK_1DxT_POS_NEG) {
   }
 
   std::vector<char> buffer =
-      trieManager.MockTrieHeader(bit_length, true, cleanCountsTopK);
+      trieManager.MockTrieHeader(bit_length, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   uint32_t topK = 5; // Get top 5% bins
@@ -137,7 +137,7 @@ TEST_F(TestTopK, TopK_TrieNode13_POS_NEG) {
 
   uint32_t expected_internal_rep = (120 << 5 | 6);
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -158,7 +158,7 @@ TEST_F(TestTopK, TopK_TrieNode13_NEG_NEG) {
 
   uint32_t expected_internal_rep = (192 << 5 | 2);
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -179,7 +179,7 @@ TEST_F(TestTopK, TopK_TrieNode13_NEG_POS) {
 
   uint32_t expected_internal_rep = (191 << 5 | 30);
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -200,7 +200,7 @@ TEST_F(TestTopK, TopK_TrieNode13_POS_POS) {
 
   uint32_t expected_internal_rep = (12 << 5 | 30);
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -219,7 +219,7 @@ TEST_F(TestTopK, TopK_TrieNode16_POS_NEG) {
   trieManager.insert1DxF(120, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxF(88, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   uint32_t expected_internal_rep = (120 << 8 | 6);
@@ -240,7 +240,7 @@ TEST_F(TestTopK, TopK_TrieNode16_NEG_NEG) {
   trieManager.insert1DxF(212, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxF(234, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   uint32_t expected_internal_rep = (192 << 8 | 2);
@@ -261,7 +261,7 @@ TEST_F(TestTopK, TopK_TrieNode16_NEG_POS) {
   trieManager.insert1DxF(160, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxF(191, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   uint32_t expected_internal_rep = (191 << 8 | 30);
@@ -282,7 +282,7 @@ TEST_F(TestTopK, TopK_TrieNode16_POS_POS) {
   trieManager.insert1DxF(23, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxF(12, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   uint32_t expected_internal_rep = (12 << 8 | 30);
@@ -303,7 +303,7 @@ TEST_F(TestTopK, TopK_TrieNode20_POS_NEG) {
   trieManager.insert1DxP(120, 54, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxP(88, 42, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   uint32_t expected_internal_rep = (120 << 12 | 54 << 6 | 6);
@@ -324,7 +324,7 @@ TEST_F(TestTopK, TopK_TrieNode20_NEG_NEG) {
   trieManager.insert1DxP(212, 33, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxP(234, 22, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   uint32_t expected_internal_rep = (192 << 12 | 62 << 6 | 2);
@@ -345,7 +345,7 @@ TEST_F(TestTopK, TopK_TrieNode20_NEG_POS) {
   trieManager.insert1DxP(160, 22, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxP(191, 2, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCountsTopK);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   uint32_t expected_internal_rep = (191 << 12 | 2 << 6 | 30);
@@ -366,7 +366,7 @@ TEST_F(TestTopK, TopK_TrieNode20_POS_POS) {
   trieManager.insert1DxP(23, 63, 32, DistributionMethod::SINGLE, 6);
   trieManager.insert1DxP(12, 2, 5, DistributionMethod::SINGLE, 30);
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCountsTopK);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCountsTopK);
 
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
@@ -391,7 +391,7 @@ TEST_F(TestTopK, TopK_OnlyPositiveInfinity) {
   TrieManager trieManager;
   SpecialCounts counts{100, 0, 0, 0, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -411,7 +411,7 @@ TEST_F(TestTopK, TopK_OnlyNegativeInfinity) {
   TrieManager trieManager;
   SpecialCounts counts{0, 100, 0, 0, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -431,7 +431,7 @@ TEST_F(TestTopK, TopK_OnlyPositiveZero) {
   TrieManager trieManager;
   SpecialCounts counts{0, 0, 50, 0, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -449,7 +449,7 @@ TEST_F(TestTopK, TopK_OnlyNegativeZero) {
   TrieManager trieManager;
   SpecialCounts counts{0, 0, 0, 50, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -467,7 +467,7 @@ TEST_F(TestTopK, TopK_BothZeros) {
   TrieManager trieManager;
   SpecialCounts counts{0, 0, 70, 30, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -484,7 +484,7 @@ TEST_F(TestTopK, TopK_AllSpecialValues) {
   TrieManager trieManager;
   SpecialCounts counts{25, 15, 20, 10, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -511,7 +511,7 @@ TEST_F(TestTopK, TopK_MixedWithPositiveValues) {
 
   SpecialCounts counts{100, 0, 10, 0, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -535,7 +535,7 @@ TEST_F(TestTopK, TopK_MixedWithNegativeValues) {
 
   SpecialCounts counts{0, 80, 0, 5, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -560,7 +560,7 @@ TEST_F(TestTopK, TopK_PartialK_WithSpecialValues) {
 
   SpecialCounts counts{100, 15, 5, 10, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -587,7 +587,7 @@ TEST_F(TestTopK, TopK_InfinityDominatesSmallK) {
 
   SpecialCounts counts{1000, 0, 0, 0, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);
@@ -607,7 +607,7 @@ TEST_F(TestTopK, TopK_ZeroTransition) {
 
   SpecialCounts counts{0, 0, 35, 40, 0};
 
-  auto buffer = trieManager.MockTrieHeader(13, true, counts);
+  auto buffer = trieManager.MockTrieHeader(13, counts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto topK = airtree::query::topk::TopK(buffer);

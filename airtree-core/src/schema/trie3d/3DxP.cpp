@@ -2,11 +2,13 @@
 
 #include "airtree/core/api/AirTreeGenerator.hpp"
 #include <airtree/core/schema/trie3d/3DxP.hpp>
+#include <airtree/core/common/NodeOps.hpp>
 #include <airtree/core/Logger.hpp>
 #include <airtree/util/FeatureFlags.h>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/common/BitCodec.hpp>
+#include <airtree/core/serdes/Node.hpp>
 #include <airtree/core/serdes/trie3d/3DxP.hpp>
 #include <airtree/util/UUID.hpp>
 
@@ -17,172 +19,59 @@ using namespace airtree::core::schema::trie3d;
 using namespace airtree::util::uuid;
 
 std::vector<char>
-Generator3DxP::generate(const std::vector<const FPHArray *> &arrays,
-                        bool default_mode) const {
+Generator3DxP::generate(const std::vector<const FPHArray *> &arrays) const {
   if (arrays.size() != 3) {
     throw std::invalid_argument("Expected exactly 3 arrays for 3D generation");
   }
-  return generate_3DxP(*arrays[0], *arrays[1], *arrays[2], default_mode);
+  return generate_3DxP(*arrays[0], *arrays[1], *arrays[2]);
 }
 
 void insertintoTrie_3D_3x10(TLE_3D_3x10 *root, unsigned int combined,
                             unsigned int combinedTLE, int ndims,
                             uint64_t &curr_trie_size) {
-  if (!root) {
-    SPDLOG_LOGGER_ERROR(logger(), "Root is null.");
+  static constexpr uint8_t kDepth[8] = {0, 1, 1, 2, 1, 2, 2, 3};
+  const int depth = kDepth[ndims & 0x7];
+  if (depth == 0) {
+    bumpCount(root->populated, root->counts, combinedTLE);
     return;
   }
-
-  // update TLE level and setup child node
-  if (!root->populated.test(combinedTLE)) {
-    root->populated.set(combinedTLE);
-  }
-  root->counts[combinedTLE]++;
-
-  if (ndims == 0) {
+  Node3D_3x10_l0 *l0 = descend(root->populated, root->nodes, combinedTLE, curr_trie_size);
+  const unsigned int c0 = (combined >> (10 * (depth - 1))) & 0x3FF;
+  if (depth == 1) {
+    bumpCount(l0->populated, l0->counts, c0);
     return;
   }
-
-  // if ndims is one of 1, 2 or 4 then we are processing a 10 bit value (max).
-  if (ndims == 1 || ndims == 2 || ndims == 4) {
-    // combined is a 10 bit number
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
-      curr_trie_size += sizeof(Node3D_3x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(combined)) {
-      root->nodes[combinedTLE]->populated.set(combined);
-      root->nodes[combinedTLE]->counts[combined]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[combined]++;
+  Node3D_3x10_l1 *l1 = descend(l0->populated, l0->nodes, c0, curr_trie_size);
+  const unsigned int c1 = (combined >> (10 * (depth - 2))) & 0x3FF;
+  if (depth == 2) {
+    bumpCount(l1->populated, l1->counts, c1);
+    return;
   }
-
-  // if ndims is one of 3, 5 or 6 then we are processing a 20 bit value (max).
-  if (ndims == 3 || ndims == 5 || ndims == 6) {
-    // combined is a 20 bit number
-    unsigned int l0_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l1_10 = combined & 0x3FF;         // 10 bits
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
-      curr_trie_size += sizeof(Node3D_3x10_l0);
-    }
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node3D_3x10_l1>();
-      curr_trie_size += sizeof(Node3D_3x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-  }
-
-  // if ndims is 7 then we are processing a 30 bit value (max).
-  if (ndims == 7) {
-
-    if (!root->nodes[combinedTLE]) {
-      root->nodes[combinedTLE] = std::make_unique<Node3D_3x10_l0>();
-      curr_trie_size += sizeof(Node3D_3x10_l0);
-    }
-
-    // combined is a 30 bit number
-    unsigned int l0_10 = (combined >> 20) & 0x3FF; // 10 bits
-    unsigned int l1_10 = (combined >> 10) & 0x3FF; // 10 bits
-    unsigned int l2_10 = combined & 0x3FF;         // 10 bits
-
-    // if populated of l0_10 is not set
-    if (!root->nodes[combinedTLE]->populated.test(l0_10)) {
-      root->nodes[combinedTLE]->populated.set(l0_10);
-      root->nodes[combinedTLE]->counts[l0_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10] =
-          std::make_unique<Node3D_3x10_l1>();
-      curr_trie_size += sizeof(Node3D_3x10_l1);
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node3D_3x10_l2>();
-      curr_trie_size += sizeof(Node3D_3x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // populated of l0_10 is set - increment count
-    root->nodes[combinedTLE]->counts[l0_10]++;
-
-    // if populated of l0_10 is set and l1_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->populated.test(l1_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->populated.set(l1_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10] =
-          std::make_unique<Node3D_3x10_l2>();
-      curr_trie_size += sizeof(Node3D_3x10_l2);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // l0_10 is set and l1_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->counts[l1_10]++;
-
-    // if populated of l0_10 is set, l1_10 is set and l2_10 is not set
-    if (!root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.test(
-            l2_10)) {
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->populated.set(
-          l2_10);
-      root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-      return;
-    }
-
-    // l0_10 is set, l1_10 is set and l2_10 is set so just increment count
-    root->nodes[combinedTLE]->nodes[l0_10]->nodes[l1_10]->counts[l2_10]++;
-  }
+  Node3D_3x10_l2 *l2 = descend(l1->populated, l1->nodes, c1, curr_trie_size);
+  bumpCount(l2->populated, l2->counts, combined & 0x3FF);
 }
 
+void rollUpCounts(TLE_3D_3x10 *root) { rollUpNode(root); }
+
 std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
-                                const FPHArray &array3, bool default_mode) {
+                                const FPHArray &array3) {
   std::string uuid = AirTreeUUID::generateUUID();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[generate] [traceID: {}] Generating 3DxP Trie for {} values in dim1, "
-      "{} values in dim2 and {} values in dim3 using default_mode {}.",
-      uuid, array1.length, array2.length, array3.length, default_mode);
+      "{} values in dim2 and {} values in dim3.",
+      uuid, array1.length, array2.length, array3.length);
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Filing and inserting {} values for dim1, {} "
-      "values for dim2 and {} values for dim3 using "
-      "default_mode {} into 3DxP Trie.",
-      uuid, array1.length, array2.length, array3.length, default_mode);
+      "values for dim2 and {} values for dim3 "
+      "into 3DxP Trie.",
+      uuid, array1.length, array2.length, array3.length);
   std::unique_ptr<TLE_3D_3x10> root = execCreateAndInsert_3D_3x10(
-      array1, array2, array3, curr_trie_size, specialCounts, default_mode);
+      array1, array2, array3, curr_trie_size, specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[insert] [traceID: {}] Completed filing and inserting into 3DxP Trie. "
@@ -193,7 +82,7 @@ std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
       "[serialization] [traceID: {}] Serializing 3DxP trie of size {}.", uuid,
       curr_trie_size);
   std::vector<char> buffer = execSerialize_3D_3x10(
-      root.get(), curr_trie_size, specialCounts, default_mode);
+      root.get(), specialCounts);
   SPDLOG_LOGGER_DEBUG(
       logger(),
       "[serialization] [traceID: {}] Completed serializing 3DxP Trie.", uuid);
@@ -206,8 +95,7 @@ std::vector<char> generate_3DxP(const FPHArray &array1, const FPHArray &array2,
 std::unique_ptr<TLE_3D_3x10>
 execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
                             const FPHArray &array3, uint64_t &curr_trie_size,
-                            std::unique_ptr<SpecialCounts> &specialCounts,
-                            bool default_mode) {
+                            std::unique_ptr<SpecialCounts> &specialCounts) {
   if (array1.length != array2.length and array1.length != array3.length) {
     throw std::invalid_argument("Dimensions must be of equal length");
     SPDLOG_LOGGER_ERROR(
@@ -225,11 +113,11 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
         for (int i = 0; i < array1.length; ++i) {
 
           std::pair<TLE, unsigned int> input_1 =
-              internal_10bit(vals1[i], default_mode);
+              internal_10bit(vals1[i]);
           std::pair<TLE, unsigned int> input_2 =
-              internal_10bit(vals2[i], default_mode);
+              internal_10bit(vals2[i]);
           std::pair<TLE, unsigned int> input_3 =
-              internal_10bit(vals3[i], default_mode);
+              internal_10bit(vals3[i]);
 
           TLE tle1 = input_1.first;
           TLE tle2 = input_2.first;
@@ -319,13 +207,12 @@ execCreateAndInsert_3D_3x10(const FPHArray &array1, const FPHArray &array2,
     });
   });
 
+  rollUpCounts(root.get());
   return root;
 }
 
 std::vector<char>
-execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
-                      std::unique_ptr<SpecialCounts> &specialCounts,
-                      [[maybe_unused]] bool default_mode) {
+execSerialize_3D_3x10(TLE_3D_3x10 *root, std::unique_ptr<SpecialCounts> &specialCounts) {
   auto header = airtree::core::common::makeHeader(
       ConfigWire::Config_3D_Precise, {}, countObservations(root->counts),
       specialCounts->posInfCount, specialCounts->negInfCount,
@@ -333,7 +220,6 @@ execSerialize_3D_3x10(TLE_3D_3x10 *root, uint64_t &curr_trie_size,
       specialCounts->nanCount);
 
   std::vector<char> buffer;
-  buffer.reserve(kHeaderLength + curr_trie_size);
   serializeHeader(header, buffer);
   size_t header_end = buffer.size();
   serialize_3DxP(root, buffer);

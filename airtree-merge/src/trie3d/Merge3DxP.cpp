@@ -21,7 +21,7 @@ std::vector<char> Merge3DxP::merge(const std::vector<char> &buffer1,
   size_t header_end = mergedBuffer.size();
 
   // Deserialize the root nodes.
-  std::bitset<BINS_512> pop0_1, pop0_2;
+  PopulatedBins<BINS_512> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLE_3D_3x10, BINS_512>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_3DxP(mergedRoot.get(), mergedBuffer, false);
@@ -179,19 +179,14 @@ std::vector<char> Merge3DxP::merge(const std::vector<char> &buffer1,
 std::unique_ptr<Node3D_3x10_l0>
 Merge3DxP::mergeNode3D_3x10_l0(std::unique_ptr<Node3D_3x10_l0> node1,
                                std::unique_ptr<Node3D_3x10_l0> node2) {
-  // DEBUG_PRINT("Entering mergeNode3D_3x10_l0");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
   for (size_t i = 0; i < BINS_1024; ++i) {
-    // DEBUG_PRINT("Merging 3DxP l0 index " << i);
     node1->counts[i] += node2->counts[i];
     if (node2->populated.test(i)) {
-      if (!node1->populated.test(i)) {
-        // DEBUG_PRINT("3DxP l0: adopting child at index " << i);
-        node1->populated.set(i);
-      }
+      node1->populated.set(i);
     }
   }
   return node1;
@@ -200,19 +195,14 @@ Merge3DxP::mergeNode3D_3x10_l0(std::unique_ptr<Node3D_3x10_l0> node1,
 std::unique_ptr<Node3D_3x10_l1>
 Merge3DxP::mergeNode3D_3x10_l1(std::unique_ptr<Node3D_3x10_l1> node1,
                                std::unique_ptr<Node3D_3x10_l1> node2) {
-  // DEBUG_PRINT("Entering mergeNode3D_3x10_l1");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
   for (size_t i = 0; i < BINS_1024; ++i) {
-    // DEBUG_PRINT("Merging 3DxP l1 index " << i);
     node1->counts[i] += node2->counts[i];
     if (node2->populated.test(i)) {
-      if (!node1->populated.test(i)) {
-        // DEBUG_PRINT("3DxP l1: adopting child at index " << i);
-        node1->populated.set(i);
-      }
+      node1->populated.set(i);
     }
   }
   return node1;
@@ -221,14 +211,11 @@ Merge3DxP::mergeNode3D_3x10_l1(std::unique_ptr<Node3D_3x10_l1> node1,
 std::unique_ptr<Node3D_3x10_l2>
 Merge3DxP::mergeNode3D_3x10_l2(std::unique_ptr<Node3D_3x10_l2> node1,
                                std::unique_ptr<Node3D_3x10_l2> node2) {
-  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode3D_3x10_l2");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
   for (size_t i = 0; i < BINS_1024; ++i) {
-    // DEBUG_PRINT("Merging 3DxP l2 index " << i << ": " << node1->counts[i]
-    //             << " + " << node2->counts[i]);
     node1->counts[i] += node2->counts[i];
     if (node2->populated.test(i)) {
       node1->populated.set(i);

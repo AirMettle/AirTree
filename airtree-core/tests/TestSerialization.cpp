@@ -69,79 +69,40 @@ TEST_F(SerializationTest, RoundTripsLargeCountsNeedingOver26Bits) {
   EXPECT_EQ(in_sum, out_sum) << "total count must be preserved on round-trip";
 }
 
-bool compareNodesl3(const std::unique_ptr<Node4D_4x10_l3> &node1,
-                    const std::unique_ptr<Node4D_4x10_l3> &node2) {
+bool compareNodesl3(const std::unique_ptr<Node4D_4x10_l3> &node1, const std::unique_ptr<Node4D_4x10_l3> &node2) {
   for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
   }
   return true;
 }
-
-bool compareNodesl2(const std::unique_ptr<Node4D_4x10_l2> &node1,
-                    const std::unique_ptr<Node4D_4x10_l2> &node2) {
+template <class Node, class Cmp>
+bool compareInner(const std::unique_ptr<Node> &node1, const std::unique_ptr<Node> &node2, Cmp cmp) {
   for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
-      return false;
-    }
-
-    if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
-      EXPECT_EQ(compareNodesl3(node1->nodes[i], node2->nodes[i]), true);
-    }
-  }
-  return true;
-}
-
-bool compareNodesl1(const std::unique_ptr<Node4D_4x10_l1> &node1,
-                    const std::unique_ptr<Node4D_4x10_l1> &node2) {
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
     if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
-      EXPECT_EQ(compareNodesl2(node1->nodes[i], node2->nodes[i]), true);
+      EXPECT_EQ(cmp(node1->nodes[i], node2->nodes[i]), true);
     }
   }
   return true;
 }
-
-bool compareNodesl0(const std::unique_ptr<Node4D_4x10_l0> &node1,
-                    const std::unique_ptr<Node4D_4x10_l0> &node2) {
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
-      return false;
-    }
-    if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
-      EXPECT_EQ(compareNodesl1(node1->nodes[i], node2->nodes[i]), true);
-    }
-  }
-  return true;
-}
-
+bool compareNodesl2(const std::unique_ptr<Node4D_4x10_l2> &node1, const std::unique_ptr<Node4D_4x10_l2> &node2) { return compareInner(node1, node2, compareNodesl3); }
+bool compareNodesl1(const std::unique_ptr<Node4D_4x10_l1> &node1, const std::unique_ptr<Node4D_4x10_l1> &node2) { return compareInner(node1, node2, compareNodesl2); }
+bool compareNodesl0(const std::unique_ptr<Node4D_4x10_l0> &node1, const std::unique_ptr<Node4D_4x10_l0> &node2) { return compareInner(node1, node2, compareNodesl1); }
 TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_4x10) {
 
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_4D_4x10> root = execCreateAndInsert_4D_4x10(
-      array0, array1, array2, array3, curr_trie_size, specialCounts, true);
+      array0, array1, array2, array3, curr_trie_size, specialCounts);
 
 
   std::vector<char> buffer =
-      execSerialize_4D_4x10(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_4D_4x10(root.get(), specialCounts);
 
   auto result = processBuffer_4DxP(buffer);
 
@@ -152,8 +113,7 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_4x10) {
     EXPECT_EQ(root->counts[i], deserializedRoot->counts[i]);
 
     if (root->nodes[i] != nullptr && deserializedRoot->nodes[i] != nullptr) {
-      EXPECT_EQ(
-          compareNodesl0(root->nodes[i], deserializedRoot->nodes[i]), true);
+      EXPECT_EQ(compareNodesl0(root->nodes[i], deserializedRoot->nodes[i]), true);
     }
   }
 }
@@ -222,9 +182,9 @@ TEST_F(SerializationTest, VerifySerializationAndDeserialization_4x8) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_4D_4x8> root = execCreateAndInsert_4D_4x8(
-      array0, array1, array2, array3, curr_trie_size, specialCounts, true);
+      array0, array1, array2, array3, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_4D_4x8(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_4D_4x8(root.get(), specialCounts);
 
   auto result = processBuffer_4DxF(buffer);
 
@@ -244,56 +204,34 @@ TEST_F(SerializationTest, VerifySerializationAndDeserialization_4x8) {
 bool compareNodes3Dl2(const std::unique_ptr<Node3D_3x10_l2> &node1,
                       const std::unique_ptr<Node3D_3x10_l2> &node2) {
   for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
   }
   return true;
 }
-
-bool compareNodes3Dl1(const std::unique_ptr<Node3D_3x10_l1> &node1,
-                      const std::unique_ptr<Node3D_3x10_l1> &node2) {
+template <class Node, class Cmp>
+bool compareDenseInner(const std::unique_ptr<Node> &node1, const std::unique_ptr<Node> &node2, Cmp cmp) {
   for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
     if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
-      EXPECT_EQ(compareNodes3Dl2(node1->nodes[i], node2->nodes[i]), true);
+      EXPECT_EQ(cmp(node1->nodes[i], node2->nodes[i]), true);
     }
   }
   return true;
 }
-
-bool compareNodes3Dl0(const std::unique_ptr<Node3D_3x10_l0> &node1,
-                      const std::unique_ptr<Node3D_3x10_l0> &node2) {
-  for (size_t i = 0; i < BINS_1024; i++) {
-    if (node1->populated[i] != node2->populated[i]) {
-      return false;
-    }
-    if (node1->counts[i] != node2->counts[i]) {
-      return false;
-    }
-    if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
-      EXPECT_EQ(compareNodes3Dl1(node1->nodes[i], node2->nodes[i]), true);
-    }
-  }
-  return true;
-}
-
+bool compareNodes3Dl1(const std::unique_ptr<Node3D_3x10_l1> &node1, const std::unique_ptr<Node3D_3x10_l1> &node2) { return compareDenseInner(node1, node2, compareNodes3Dl2); }
+bool compareNodes3Dl0(const std::unique_ptr<Node3D_3x10_l0> &node1, const std::unique_ptr<Node3D_3x10_l0> &node2) { return compareDenseInner(node1, node2, compareNodes3Dl1); }
 TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_3x10) {
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_3D_3x10> root = execCreateAndInsert_3D_3x10(
-      array0, array1, array2, curr_trie_size, specialCounts, true);
+      array0, array1, array2, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_3D_3x10(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_3D_3x10(root.get(), specialCounts);
 
   auto result = processBuffer_3DxP(buffer);
 
@@ -304,8 +242,7 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_3x10) {
     EXPECT_EQ(root->counts[i], deserializedRoot->counts[i]);
 
     if (root->nodes[i] != nullptr && deserializedRoot->nodes[i] != nullptr) {
-      EXPECT_EQ(
-          compareNodes3Dl0(root->nodes[i], deserializedRoot->nodes[i]), true);
+      EXPECT_EQ(compareNodes3Dl0(root->nodes[i], deserializedRoot->nodes[i]), true);
     }
   }
 }
@@ -357,9 +294,9 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_3x8) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLE_3D_888> root = execCreateAndInsert_3D_888(
-      array0, array1, array2, curr_trie_size, specialCounts, true);
+      array0, array1, array2, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_3D_888(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_3D_888(root.get(), specialCounts);
 
   auto result = processBuffer_3DxF(buffer);
 
@@ -433,9 +370,9 @@ TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_2x8) {
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLETrieNode_2D> root = execCreateAndInsert_2D(
-      array0, array1, curr_trie_size, specialCounts, true);
+      array0, array1, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_2D(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_2D(root.get(), specialCounts);
 
   auto result = processBuffer_2DxF(buffer);
 
@@ -548,62 +485,32 @@ bool compareNodes2D2x10l1(const std::unique_ptr<TrieNode_2D_10_Level1> &node1,
                           const std::unique_ptr<TrieNode_2D_10_Level1> &node2) {
   for (size_t i = 0; i < BINS_1024; i++) {
     if (node1->counts[i] != node2->counts[i]) {
-      std::cout << "compareNodes2D2x10l1: Mismatch at index " << i
-                << ": node1->counts[" << i << "] = " << node1->counts[i]
-                << ", node2->counts[" << i << "] = " << node2->counts[i]
-                << std::endl;
       return false;
     }
   }
   return true;
 }
-
 bool compareNodes2D2x10l0(const std::unique_ptr<TrieNode_2D_10> &node1,
                           const std::unique_ptr<TrieNode_2D_10> &node2) {
   for (size_t i = 0; i < BINS_1024; i++) {
-
-    if (node1->populated[i] != node2->populated[i]) {
-      std::cout << "compareNodes2D2x10l0: Mismatch at index " << i
-                << ": node1->populated[" << i << "] = " << node1->populated[i]
-                << ", node2->populated[" << i << "] = " << node2->populated[i]
-                << std::endl;
+    if (node1->populated[i] != node2->populated[i] || node1->counts[i] != node2->counts[i]) {
       return false;
     }
-    if (node1->counts[i] != node2->counts[i]) {
-      std::cout << "compareNodes2D2x10l0: Mismatch at index " << i
-                << ": node1->counts[" << i << "] = " << node1->counts[i]
-                << ", node2->counts[" << i << "] = " << node2->counts[i]
-                << std::endl;
-      return false;
-    }
-    if (node1->nodes[i] != nullptr && node2->nodes[i] != nullptr) {
-      if (!compareNodes2D2x10l1(node1->nodes[i], node2->nodes[i])) {
-        std::cout << "compareNodes2D2x10l0: Mismatch in child nodes at index "
-                  << i << std::endl;
-        return false;
-      }
-    } else if (node1->nodes[i] != node2->nodes[i]) {
-      std::cout << "compareNodes2D2x10l0: One of the nodes is null at index "
-                << i << ": node1->nodes[" << i
-                << "] = " << (node1->nodes[i] ? "not null" : "null")
-                << ", node2->nodes[" << i
-                << "] = " << (node2->nodes[i] ? "not null" : "null")
-                << std::endl;
+    const bool has1 = node1->nodes[i] != nullptr, has2 = node2->nodes[i] != nullptr;
+    if (has1 != has2 || (has1 && !compareNodes2D2x10l1(node1->nodes[i], node2->nodes[i]))) {
       return false;
     }
   }
   return true;
 }
-
-
 TEST_F(SerializationTest, VerifiesDeserializationConstructsCorrectTrie_2x10) {
   uint64_t curr_trie_size = 0;
   std::unique_ptr<SpecialCounts> specialCounts =
       std::make_unique<SpecialCounts>();
   std::unique_ptr<TLEoption3_2D> root = execCreateAndInsert_2D_2x10(
-      array0, array1, curr_trie_size, specialCounts, true);
+      array0, array1, curr_trie_size, specialCounts);
   std::vector<char> buffer =
-      execSerialize_2D_2x10(root.get(), curr_trie_size, specialCounts, true);
+      execSerialize_2D_2x10(root.get(), specialCounts);
 
   auto result = processBuffer_2DxP(buffer);
 

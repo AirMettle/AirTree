@@ -3,6 +3,7 @@
 #ifndef AIRTREE_CORE_IO_AIRTREEREADER_HPP
 #define AIRTREE_CORE_IO_AIRTREEREADER_HPP
 
+#include <span>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/common/AirTreeType.hpp>
 #include <vector>
@@ -21,7 +22,7 @@ public:
   AirTreeType getType() noexcept;
   const AirTreeHeader &getHeader() const noexcept;
 
-  void read(const std::vector<char> &buffer);
+  void read(std::span<const char> buffer);
 
 private:
   int dims_ = 0;

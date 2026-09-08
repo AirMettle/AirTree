@@ -5,8 +5,10 @@
 
 
 #include <airtree/core/common/Bins.hpp>
+#include <airtree/core/common/Populated.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/api/AirTreeGenerator.hpp>
 #include <memory>
 #include <bitset>
@@ -42,7 +44,7 @@ struct TrieNode_16_Level1; // Forward Declaration
  * @param counts Array to store the count of values in the bucket.
  */
 struct TrieNode_16 {
-  std::bitset<BINS_256> populated;
+  PopulatedBins<BINS_256> populated;
   std::unique_ptr<TrieNode_16_Level1> nodes[BINS_256];
   uint32_t counts[BINS_256] = {0};
 
@@ -66,8 +68,6 @@ struct TrieNode_16_Level1 {
  *
  * @param values Array of floating point values.
  * @param values_len Length of the values array.
- * @param default_mode Flag to check if filing is suppose to be in default mode
- * or not
  * @return Trie in the form of a serialized buffer of characters.
  */
 
@@ -79,6 +79,7 @@ struct TrieNode_16_Level1 {
  * @return The root node of the Trie.
  */
 std::unique_ptr<TrieNode_16> CreateParentNode_16();
+void rollUpCounts(TrieNode_16 *root);
 
 
 /**
@@ -87,23 +88,27 @@ std::unique_ptr<TrieNode_16> CreateParentNode_16();
  *
  * @param node The root node of the Trie.
  * @param fpNumber The floating-point number to file to internal rep and insert.
- * @param default_mode The default mode to use.
  */
-void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber,
-                         uint64_t &curr_trie_size, bool default_mode);
-void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber,
-                            uint64_t &curr_trie_size, bool default_mode);
+inline void createAndInsertFP16(TrieNode_16 *node, uint64_t fpNumber) {
+  const unsigned int code = createInternal16Bit(fpNumber);
+  const unsigned int index8 = (code >> 8) & 0xFF;
+  const unsigned int index8_level2 = code & 0xFF;
+  node->nodes[index8]->counts[index8_level2]++;
+}
+inline void createAndInsertFP16_32(TrieNode_16 *node, uint32_t fpNumber) {
+  const unsigned int code = createInternal16Bit_32(fpNumber);
+  const unsigned int index8 = (code >> 8) & 0xFF;
+  const unsigned int index8_level2 = code & 0xFF;
+  node->nodes[index8]->counts[index8_level2]++;
+}
 
-[[nodiscard]] std::vector<char> generate_1DxF(const FPHArray &array,
-                                              bool default_mode = true);
+[[nodiscard]] std::vector<char> generate_1DxF(const FPHArray &array);
 [[nodiscard]] std::unique_ptr<TrieNode_16>
 execCreateAndInsert_TrieNode16(SpecialCounts &specialCounts,
-                               uint64_t &curr_trie_size, const FPHArray &array,
-                               bool default_mode);
+                               uint64_t &curr_trie_size, const FPHArray &array);
 [[nodiscard]] std::vector<char>
 execSerialization_TrieNode16(const std::unique_ptr<TrieNode_16> &root,
-                             const SpecialCounts &specialCounts,
-                             uint64_t trieSize, bool default_mode);
+                             const SpecialCounts &specialCounts);
 
 namespace airtree::core::schema::trie1d {
 
@@ -111,8 +116,7 @@ namespace airtree::core::schema::trie1d {
 class Generator1DxF : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie1d

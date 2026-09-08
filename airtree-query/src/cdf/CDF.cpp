@@ -1,5 +1,6 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/query/cdf/CDF.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -11,90 +12,33 @@
 using namespace airtree::query::cdf;
 using namespace airtree::core::io;
 
-CDF::CDF(std::vector<char> &buffer) {
-  AirTreeReader reader;
-  reader.read(buffer);
-
-  dims_ = reader.getDims();
-  bit_length_ = reader.getBitLength();
-  trie_node_ = reader.getType();
-  header_ = reader.getHeader();
+CDF::CDF(std::span<const char> buffer) {
+  header_ = airtree::core::common::deserializeHeader(buffer);
+  const auto params = airtree::core::common::configParams(header_);
+  dims_ = params.dims;
+  bit_length_ = params.bit_length;
   bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_shared<airtree::query::meta::Histogram>(bit_length_);
 
-  if (dims_ == 1) { // extract the populated bins now: objects are immutable after construction
-    switch (bit_length_) {
-    case 13: populatedBins<TrieNode_13>(); break;
-    case 16: populatedBins<TrieNode_16>(); break;
-    case 20: populatedBins<TrieNode_20>(); break;
-    default: break;
-    }
+  if (dims_ == 1 && (bit_length_ == 13 || bit_length_ == 16 || bit_length_ == 20)) {
+    // The bins come straight from the bytes; no trie is built. Objects are immutable after this.
+    auto set = airtree::query::meta::populatedBins(buffer, header_, *histogram_);
+    populated_ = std::move(set.bins);
+    trie_count_ = set.trieCount;
+    populated_ready_ = true;
   }
-}
-
-template <typename NodeType>
-inline uint32_t getCount(const std::unique_ptr<NodeType> &trie,
-                         uint64_t internal_rep) {
-  if constexpr (std::is_same_v<NodeType, TrieNode_13>) {
-    uint64_t prefix_8 = (internal_rep >> 5) & 0xFF;
-    uint64_t prefix_5 = internal_rep & 0x1F;
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->counts[prefix_5] > 0) {
-      return trie->nodes[prefix_8]->counts[prefix_5];
-    }
-  } else if constexpr (std::is_same_v<NodeType, TrieNode_16>) {
-    uint64_t prefix_8 = (internal_rep >> 8) & 0xFF;
-    uint64_t suffix_8 = internal_rep & 0xFF;
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->counts[suffix_8] > 0) {
-      return trie->nodes[prefix_8]->counts[suffix_8];
-    }
-  } else if constexpr (std::is_same_v<NodeType, TrieNode_20>) {
-    uint64_t prefix_8 = (internal_rep >> 12) & 0xFF;
-    uint64_t mid_6 = (internal_rep >> 6) & 0x3F;
-    uint64_t suffix_6 = internal_rep & 0x3F;
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->populated.test(mid_6)
-        && trie->nodes[prefix_8]->nodes[mid_6]->counts[suffix_6] > 0) {
-      return trie->nodes[prefix_8]->nodes[mid_6]->counts[suffix_6];
-    }
-  }
-  return 0;
 }
 
 double CDF::getCDF(double value, bool interpolate) {
-  if (trie_node_.valueless_by_exception()) {
-    throw std::runtime_error("Trie node not initialized.");
-  }
 
-  if (dims_ == 1 && bit_length_ == 13) {
-    return calculateCDF<TrieNode_13>(value, interpolate);
-  } else if (dims_ == 1 && bit_length_ == 16) {
-    return calculateCDF<TrieNode_16>(value, interpolate);
-  } else if (dims_ == 1 && bit_length_ == 20) {
-    return calculateCDF<TrieNode_20>(value, interpolate);
-  } else {
+  if (!populated_ready_) {
     throw std::runtime_error("Unsupported dimensions or bit length.");
   }
+  return calculateCDF(value, interpolate);
 }
 
-template <typename NodeType>
-const std::vector<airtree::query::meta::PopulatedBin> &CDF::populatedBins() {
-  if (!populated_ready_) {
-    populated_ = airtree::query::meta::populatedBins(trie_node_.get_ptr<NodeType>(), *histogram_);
-    populated_ready_ = true;
-  }
-  return populated_;
-}
-
-template <typename NodeType>
 double CDF::calculateCDF(double value, bool interpolate) {
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
-
-  uint32_t total_count = 0;
-  for (size_t i = 0; i < trie_root->size(); ++i) {
-    total_count += trie_root->counts[i];
-  }
+  uint32_t total_count = trie_count_;
 
   total_count += header_.pos_zero_count + header_.neg_zero_count
                  + header_.pos_inf_count + header_.neg_inf_count;
@@ -110,7 +54,7 @@ double CDF::calculateCDF(double value, bool interpolate) {
   if (value == -std::numeric_limits<double>::infinity())
     return cumulative / total_count;
 
-  const auto &bins = populatedBins<NodeType>();
+  const auto &bins = populated_;
   const size_t n_bins = histogram_->getBinCount();
   bool neg_zeros_handled = false;
   bool pos_zeros_handled = false;

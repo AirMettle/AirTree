@@ -1,5 +1,6 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/query/meta/PopulatedBins.hpp>
 #include <cstring>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -15,25 +16,20 @@
 using namespace airtree::query::percentile;
 using namespace airtree::core::io;
 
-Percentile::Percentile(std::vector<char> buffer) {
-
-  AirTreeReader reader;
-  reader.read(buffer);
-
-  dims_ = reader.getDims();
-  bit_length_ = reader.getBitLength();
-  trie_node_ = reader.getType();
-  header_ = reader.getHeader();
+Percentile::Percentile(std::span<const char> buffer) {
+  header_ = airtree::core::common::deserializeHeader(buffer);
+  const auto params = airtree::core::common::configParams(header_);
+  dims_ = params.dims;
+  bit_length_ = params.bit_length;
   bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_unique<airtree::query::meta::Histogram>(bit_length_);
 
-  if (dims_ == 1) { // extract the populated bins now: objects are immutable after construction
-    switch (bit_length_) {
-    case 13: populatedBins<TrieNode_13>(); break;
-    case 16: populatedBins<TrieNode_16>(); break;
-    case 20: populatedBins<TrieNode_20>(); break;
-    default: break;
-    }
+  if (dims_ == 1 && (bit_length_ == 13 || bit_length_ == 16 || bit_length_ == 20)) {
+    // The bins come straight from the bytes; no trie is built. Objects are immutable after this.
+    auto set = airtree::query::meta::populatedBins(buffer, header_, *histogram_);
+    populated_ = std::move(set.bins);
+    trie_count_ = set.trieCount;
+    populated_ready_ = true;
   }
 }
 
@@ -42,75 +38,16 @@ double Percentile::getPercentile(double percentile) {
 }
 
 PercentileResult Percentile::getPercentileWithBounds(double percentile) {
-  if (trie_node_.valueless_by_exception()) {
-    throw std::runtime_error("Trie node not initialized.");
-  }
-  if (dims_ == 1 && bit_length_ == 13) {
-    return calculatePercentile<TrieNode_13>(percentile);
-  } else if (dims_ == 1 && bit_length_ == 16) {
-    return calculatePercentile<TrieNode_16>(percentile);
-  } else if (dims_ == 1 && bit_length_ == 20) {
-    return calculatePercentile<TrieNode_20>(percentile);
-  } else {
+  if (!populated_ready_) {
     throw std::runtime_error("Unsupported dimensions or bit length.");
   }
+  return calculatePercentile(percentile);
 }
 
-template <typename NodeType>
-inline uint32_t getCount(const std::unique_ptr<NodeType> &trie,
-                         uint64_t internal_rep) {
-
-  if constexpr (std::is_same_v<NodeType, TrieNode_13>) {
-    uint64_t prefix_8 = (internal_rep >> 5) & 0xFF;
-    uint64_t prefix_5 = internal_rep & 0x1F;
-
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->counts[prefix_5] > 0) {
-      return trie->nodes[prefix_8]->counts[prefix_5];
-    }
-  } else if constexpr (std::is_same_v<NodeType, TrieNode_16>) {
-    uint64_t prefix_8 = (internal_rep >> 8) & 0xFF;
-    uint64_t suffix_8 = internal_rep & 0xFF;
-
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->counts[suffix_8] > 0) {
-      return trie->nodes[prefix_8]->counts[suffix_8];
-    }
-  } else if constexpr (std::is_same_v<NodeType, TrieNode_20>) {
-    uint64_t prefix_8 = (internal_rep >> 12) & 0xFF;
-    uint64_t mid_6 = (internal_rep >> 6) & 0x3F;
-    uint64_t suffix_6 = internal_rep & 0x3F;
-
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->populated.test(mid_6)
-        && trie->nodes[prefix_8]->nodes[mid_6]->counts[suffix_6] > 0) {
-      return trie->nodes[prefix_8]->nodes[mid_6]->counts[suffix_6];
-    }
-  } else {
-    throw std::runtime_error("Unsupported node type for count retrieval.");
-  }
-
-  return 0;
-}
-
-template <typename NodeType>
-const std::vector<airtree::query::meta::PopulatedBin> &Percentile::populatedBins() {
-  if (!populated_ready_) {
-    populated_ = airtree::query::meta::populatedBins(trie_node_.get_ptr<NodeType>(), *histogram_);
-    populated_ready_ = true;
-  }
-  return populated_;
-}
-
-template <typename NodeType>
 PercentileResult Percentile::calculatePercentile(double percentile) {
 
   // Total count from trie
-  uint32_t trie_count = 0;
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
-  for (size_t i = 0; i < trie_root->size(); ++i) {
-    trie_count += trie_root->counts[i];
-  }
+  const uint32_t trie_count = trie_count_;
 
   // Total count including special values (excluding NaN)
   uint32_t total_count = trie_count + header_.pos_zero_count
@@ -133,7 +70,7 @@ PercentileResult Percentile::calculatePercentile(double percentile) {
     return {-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()};
   }
 
-  const auto &bins = populatedBins<NodeType>();
+  const auto &bins = populated_;
   const size_t last_position = histogram_->getBinCount() - 1;
   bool zeros_handled = false;
   for (const auto &bin : bins) {

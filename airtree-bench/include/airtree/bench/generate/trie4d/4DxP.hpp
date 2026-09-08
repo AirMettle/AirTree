@@ -32,30 +32,28 @@ inline uint64_t countPreciseBins4DxP(const TLE_4D_4x10 *root) {
   if (!root) {
     return 0;
   }
-
   uint64_t precise_bins = 0;
   for (unsigned int i = 0; i < BINS_4096; ++i) {
     if (!root->populated.test(i) || !root->nodes[i]) {
       continue;
     }
     for (unsigned int j = 0; j < BINS_1024; ++j) {
-      if (!root->nodes[i]->populated.test(j) || !root->nodes[i]->nodes[j]) {
+      const Node4D_4x10_l1 *l1 = root->nodes[i]->nodes[j].get();
+      if (!l1) {
         continue;
       }
       for (unsigned int k = 0; k < BINS_1024; ++k) {
-        if (!root->nodes[i]->nodes[j]->populated.test(k) ||
-            !root->nodes[i]->nodes[j]->nodes[k]) {
+        const Node4D_4x10_l2 *l2 = l1->nodes[k].get();
+        if (!l2) {
           continue;
         }
         for (unsigned int l = 0; l < BINS_1024; ++l) {
-          if (!root->nodes[i]->nodes[j]->nodes[k]->populated.test(l) ||
-              !root->nodes[i]->nodes[j]->nodes[k]->nodes[l]) {
+          const Node4D_4x10_l3 *l3 = l2->nodes[l].get();
+          if (!l3) {
             continue;
           }
           for (unsigned int m = 0; m < BINS_1024; ++m) {
-            if (root->nodes[i]->nodes[j]->nodes[k]->nodes[l]->counts[m] > 0) {
-              ++precise_bins;
-            }
+            precise_bins += l3->counts[m] > 0;
           }
         }
       }
@@ -100,13 +98,14 @@ protected:
 
     for (auto _ : state) {
       state.PauseTiming();
+      airTree4DxP_root.reset();
       specialCounts = std::make_unique<SpecialCounts>();
       curr_trie_size = 0;
       state.ResumeTiming();
 
       airTree4DxP_root = execCreateAndInsert_4D_4x10(
           fpharray1, fpharray2, fpharray3, fpharray4, curr_trie_size,
-          specialCounts, true);
+          specialCounts);
 
       benchmark::DoNotOptimize(airTree4DxP_root);
     }
@@ -147,12 +146,12 @@ protected:
 
     airTree4DxP_root =
         execCreateAndInsert_4D_4x10(fpharray1, fpharray2, fpharray3, fpharray4,
-                                    curr_trie_size, specialCounts, true);
+                                    curr_trie_size, specialCounts);
 
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_4D_4x10(
-          airTree4DxP_root.get(), curr_trie_size, specialCounts, true);
+          airTree4DxP_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
@@ -164,7 +163,7 @@ protected:
     // Untimed materialize: write serialized histogram once if requested.
     if (!BenchPaths::write_airtree_path.empty()) {
       auto buffer = execSerialize_4D_4x10(
-          airTree4DxP_root.get(), curr_trie_size, specialCounts, true);
+          airTree4DxP_root.get(), specialCounts);
       airtree::core::io::AirTreeWriter::Write(buffer,
                                               BenchPaths::write_airtree_path);
       BenchPaths::write_airtree_path.clear();

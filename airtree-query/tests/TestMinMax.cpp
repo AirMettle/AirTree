@@ -29,7 +29,7 @@ TEST_F(TestMinMax, MaxCount_1DxF) {
   trieManager.insert1DxF(25, 256, DistributionMethod::EVEN);
   trieManager.insert1DxF(25, 1, DistributionMethod::SINGLE, 2);
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCounts);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   auto expected_result = reConstruct<double>((25 << 8 | 2), 16);
@@ -49,7 +49,7 @@ TEST_F(TestMinMax, MinCount_1DxF) {
   trieManager.insert1DxF(15, 512, DistributionMethod::SINGLE, 2);
   trieManager.insert1DxF(25, 256, DistributionMethod::SINGLE, 2);
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCounts);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   auto expected_result = reConstruct<double>((25 << 8 | 2), 16);
@@ -68,7 +68,7 @@ TEST_F(TestMinMax, MaxCount_1DxT) {
   trieManager.insert1DxT(25, 32, DistributionMethod::EVEN);
   trieManager.insert1DxT(25, 1, DistributionMethod::SINGLE, 2);
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCounts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto expected_result = reConstruct<double>((25 << 5 | 2), 13);
@@ -87,7 +87,7 @@ TEST_F(TestMinMax, MinCount_1DxT) {
   trieManager.insert1DxT(15, 512, DistributionMethod::SINGLE, 2);
   trieManager.insert1DxT(25, 256, DistributionMethod::SINGLE, 2);
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCounts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto expected_result = reConstruct<double>((25 << 5 | 2), 13);
@@ -106,7 +106,7 @@ TEST_F(TestMinMax, MaxCount_1DxP) {
   trieManager.insert1DxP(25, 15, 64, DistributionMethod::EVEN);
   trieManager.insert1DxP(25, 15, 1, DistributionMethod::SINGLE, 2);
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCounts);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   auto expected_result = reConstruct<double>((25 << 12 | 15 << 6 | 2), 20);
@@ -125,7 +125,7 @@ TEST_F(TestMinMax, MinCount_1DxP) {
   trieManager.insert1DxP(25, 15, 128, DistributionMethod::SINGLE, 2);
   trieManager.insert1DxP(15, 13, 1, DistributionMethod::SINGLE, 2);
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCounts);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   auto expected_result = reConstruct<double>((15 << 12 | 13 << 6 | 2), 20);
@@ -164,7 +164,7 @@ TEST_F(TestMinMax, MinValue_1DxF) {
                            DistributionMethod::SINGLE, (internal_rep & 0xFF));
   }
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCounts);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   auto expected_result = reConstruct<double>(expected_internal_rep, 16);
@@ -203,7 +203,7 @@ TEST_F(TestMinMax, MaxValue_1DxF) {
                            DistributionMethod::SINGLE, (internal_rep & 0xFF));
   }
 
-  auto buffer = trieManager.MockTrieHeader(16, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(16, cleanCounts);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   auto expected_result = reConstruct<double>(expected_internal_rep, 16);
@@ -242,7 +242,7 @@ TEST_F(TestMinMax, MinValue_1DxT) {
                            DistributionMethod::SINGLE, (internal_rep & 0x1F));
   }
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCounts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto expected_result = reConstruct<double>(expected_internal_rep, 13);
@@ -281,7 +281,7 @@ TEST_F(TestMinMax, MaxValue_1DxT) {
                            DistributionMethod::SINGLE, (internal_rep & 0x1F));
   }
 
-  auto buffer = trieManager.MockTrieHeader(13, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(13, cleanCounts);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto expected_result = reConstruct<double>(expected_internal_rep, 13);
@@ -321,7 +321,7 @@ TEST_F(TestMinMax, MinValue_1DxP) {
                            DistributionMethod::SINGLE, (internal_rep & 0x3F));
   }
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCounts);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   auto expected_result = reConstruct<double>(expected_internal_rep, 20);
@@ -362,7 +362,7 @@ TEST_F(TestMinMax, MaxValue_1DxP) {
                            DistributionMethod::SINGLE, (internal_rep & 0x3F));
   }
 
-  auto buffer = trieManager.MockTrieHeader(20, true, cleanCounts);
+  auto buffer = trieManager.MockTrieHeader(20, cleanCounts);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   auto expected_result = reConstruct<double>(expected_internal_rep, 20);

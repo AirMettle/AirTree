@@ -3,6 +3,7 @@
 #ifndef AIRTREE_CORE_AIRTREE_HEADER_HPP
 #define AIRTREE_CORE_AIRTREE_HEADER_HPP
 
+#include <span>
 #include <airtree/core/common/ConfigWire.hpp>
 
 #include <array>
@@ -49,7 +50,7 @@ void serializeHeader(const AirTreeHeader &header,
                      std::vector<char> &buffer);
 
 
-AirTreeHeader deserializeHeader(const std::vector<char> &buffer);
+AirTreeHeader deserializeHeader(std::span<const char> buffer);
 
 
 void finalizeHeader(std::vector<char> &buffer,

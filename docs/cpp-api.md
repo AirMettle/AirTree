@@ -139,7 +139,6 @@ enum class ConfigType {
 struct AirTreeOptions {
   int        dimensions   = 1;
   ConfigType type         = ConfigType::XP;
-  bool       default_mode = true;
 };
 
 } // namespace airtree::core::api
@@ -148,8 +147,6 @@ struct AirTreeOptions {
 - `dimensions` — overridden automatically by the convenience overloads to match
   the number of array arguments.
 - `type` — the trie variant. `XT` is only valid for 1D.
-- `default_mode` — internal mode toggle for trie construction. Leave `true`
-  unless you have a specific reason to change it.
 
 ### Full Example (1D with explicit options)
 

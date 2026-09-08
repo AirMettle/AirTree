@@ -22,15 +22,13 @@ enum class ConfigType {
 struct AirTreeOptions {
   int dimensions = 1;
   ConfigType type = ConfigType::XP;
-  bool default_mode = true;
 };
 
 class AirTreeGenerator {
 public:
   virtual ~AirTreeGenerator() = default;
   [[nodiscard]] virtual std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const = 0;
+  generate(const std::vector<const FPHArray *> &arrays) const = 0;
 };
 
 class AirTreeGeneratorRegistry {
@@ -71,7 +69,7 @@ public:
 generate(const std::vector<const FPHArray *> &arrays,
          const AirTreeOptions &options) {
   auto generator = AirTreeGeneratorFactory::create(options);
-  return generator->generate(arrays, options.default_mode);
+  return generator->generate(arrays);
 }
 
 // 1D Convenience Overload

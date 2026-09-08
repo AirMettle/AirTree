@@ -15,11 +15,11 @@ using airtree::merge::mergeAirTrees;
 
 namespace {
 
-using Gen = std::vector<char> (*)(const FPHArray &, bool);
+using Gen = std::vector<char> (*)(const FPHArray &);
 
 std::vector<char> gen(Gen g, const std::vector<double> &v) {
   FPHArray a = buildFPHArray(v.data(), static_cast<int>(v.size()));
-  return g(a, true);
+  return g(a);
 }
 
 std::vector<char> fold(const std::vector<std::vector<char>> &parts) {

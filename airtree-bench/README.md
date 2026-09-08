@@ -160,9 +160,9 @@ airtree_bench query \
 
 - `-s/--schema` must match a schema that has a query suite (see table above).
 - `-q/--queries` is optional; if omitted, all queries allowed for that schema run.
-- Google Benchmark flags (for example `--benchmark_out=... --benchmark_out_format=csv`) must appear **before** the `query` subcommand.
+- Google Benchmark flags (for example `--benchmark_out=... --benchmark_out_format=csv`) can appear before or after the subcommand.
 
-Extra arguments after the subcommand are forwarded to Google Benchmark where applicable (filters, repetitions, output format, etc.).
+Unrecognized arguments anywhere on the command line are forwarded to Google Benchmark (filters, repetitions, output format, etc.).
 
 ---
 
@@ -188,7 +188,7 @@ $CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/
 
 1. **Build** — runs `tools/build/partial_build.sh` to build `airtree_bench`.
 2. **Datasets** — ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `get_bench_datasets.sh` to fetch and prepare inputs.
-3. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and writes `<dataset>_<schema>.csv`.
+3. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and `BENCH_REPS` repetitions (default 5) and writes `<dataset>_<schema>.csv`.
    - For `jane_street` + `1DxT`, also writes `airtree_files/jane_street_1DxT.airtree` via `--write-airtree`.
 4. **Generate (parquet)** — for each `*.parquet` in `bench_data` and schemas `1DxF` … `4DxP`, runs `generate parquet` with dataset-specific correlated columns:
    | Dataset pattern | Columns (first *N* for *N*-D) |

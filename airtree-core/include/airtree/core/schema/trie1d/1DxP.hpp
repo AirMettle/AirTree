@@ -5,8 +5,10 @@
 
 
 #include <airtree/core/common/Bins.hpp>
+#include <airtree/core/common/Populated.hpp>
 #include <airtree/core/common/FPHArray.hpp>
 #include <airtree/core/common/SpecialCounts.hpp>
+#include <airtree/core/common/InternalEncoding.hpp>
 #include <airtree/core/api/AirTreeGenerator.hpp>
 #include <memory>
 #include <bitset>
@@ -44,7 +46,7 @@ struct TrieNode_20_Level2; // Forward Declaration
  * @param counts Array to store the count of values in the bucket.
  */
 struct TrieNode_20 {
-  std::bitset<BINS_256> populated;
+  PopulatedBins<BINS_256> populated;
   std::unique_ptr<TrieNode_20_Level1> nodes[BINS_256];
   uint32_t counts[BINS_256] = {0};
 
@@ -62,7 +64,7 @@ struct TrieNode_20 {
  * Level 1.
  */
 struct TrieNode_20_Level1 {
-  std::bitset<BINS_64> populated; // 32 bytes
+  PopulatedBins<BINS_64> populated;
   std::unique_ptr<TrieNode_20_Level2> nodes[BINS_64];
   uint32_t counts[BINS_64] = {0};
 };
@@ -84,26 +86,22 @@ struct TrieNode_20_Level2 {
  * @return The root node of the Trie.
  */
 std::unique_ptr<TrieNode_20> CreateParentNode_20();
+void rollUpCounts(TrieNode_20 *root);
 
 /**
  * Function to generate the Roaring20 Trie.
  *
  * @param values Array of floating point values.
  * @param values_len Length of the values array.
- * @param default_mode Flag to check if filing is suppose to be in default mode
- * or not
  * @return Trie in the form of a serialized buffer of characters.
  */
-[[nodiscard]] std::vector<char> generate_1DxP(const FPHArray &array,
-                                              bool default_mode = true);
+[[nodiscard]] std::vector<char> generate_1DxP(const FPHArray &array);
 [[nodiscard]] std::unique_ptr<TrieNode_20>
 execCreateAndInsert_TrieNode20(SpecialCounts &specialCounts,
-                               uint64_t &curr_trie_size, const FPHArray &array,
-                               bool default_mode);
+                               uint64_t &curr_trie_size, const FPHArray &array);
 [[nodiscard]] std::vector<char>
 execSerialization_TrieNode20(const std::unique_ptr<TrieNode_20> &root,
-                             const SpecialCounts &specialCounts,
-                             uint64_t trieSize, bool default_mode);
+                             const SpecialCounts &specialCounts);
 
 
 /**
@@ -112,20 +110,38 @@ execSerialization_TrieNode20(const std::unique_ptr<TrieNode_20> &root,
  *
  * @param node The root node of the Trie.
  * @param fpNumber The floating-point number to file to internal rep and insert.
- * @param default_mode The default mode to use.
  */
-void createAndInsertFP20(TrieNode_20 *node, uint64_t fpNumber,
-                         uint64_t &curr_trie_size, bool default_mode);
-void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber,
-                            uint64_t &curr_trie_size, bool default_mode);
+TrieNode_20_Level2 *newLevel2(TrieNode_20_Level1 *level1, unsigned int index);
+
+inline void createAndInsertFP20(TrieNode_20 *node, uint64_t fpNumber) {
+  const unsigned int code = createInternal20Bit(fpNumber);
+  const unsigned int index8 = (code >> 12) & 0xFF;
+  const unsigned int index6_level1 = (code >> 6) & 0x3F;
+  const unsigned int index6_level2 = code & 0x3F;
+  TrieNode_20_Level1 *level1 = node->nodes[index8].get();
+  TrieNode_20_Level2 *level2 = level1->nodes[index6_level1].get();
+  if (!level2) [[unlikely]]
+    level2 = newLevel2(level1, index6_level1);
+  level2->counts[index6_level2]++;
+}
+inline void createAndInsertFP20_32(TrieNode_20 *node, uint32_t fpNumber) {
+  const unsigned int code = createInternal20Bit_32(fpNumber);
+  const unsigned int index8 = (code >> 12) & 0xFF;
+  const unsigned int index6_level1 = (code >> 6) & 0x3F;
+  const unsigned int index6_level2 = code & 0x3F;
+  TrieNode_20_Level1 *level1 = node->nodes[index8].get();
+  TrieNode_20_Level2 *level2 = level1->nodes[index6_level1].get();
+  if (!level2) [[unlikely]]
+    level2 = newLevel2(level1, index6_level1);
+  level2->counts[index6_level2]++;
+}
 
 namespace airtree::core::schema::trie1d {
 
 class Generator1DxP : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie1d

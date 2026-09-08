@@ -99,12 +99,13 @@ protected:
 
     for (auto _ : state) {
       state.PauseTiming();
+      airTree3DxF_root.reset();
       specialCounts = std::make_unique<SpecialCounts>();
       curr_trie_size = 0;
       state.ResumeTiming();
 
       airTree3DxF_root = execCreateAndInsert_3D_888(
-          fpharray1, fpharray2, fpharray3, curr_trie_size, specialCounts, true);
+          fpharray1, fpharray2, fpharray3, curr_trie_size, specialCounts);
 
       benchmark::DoNotOptimize(airTree3DxF_root);
     }
@@ -143,12 +144,12 @@ protected:
     const auto &fpharray3 = BenchmarkData<T>::fpharrays[2];
 
     airTree3DxF_root = execCreateAndInsert_3D_888(
-        fpharray1, fpharray2, fpharray3, curr_trie_size, specialCounts, true);
+        fpharray1, fpharray2, fpharray3, curr_trie_size, specialCounts);
 
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_3D_888(
-          airTree3DxF_root.get(), curr_trie_size, specialCounts, true);
+          airTree3DxF_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();
