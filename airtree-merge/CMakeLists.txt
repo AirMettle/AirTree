@@ -19,6 +19,7 @@ add_library(libairtree-merge STATIC
     ${SRC_DIR}/MergeFactory.cpp
     ${SRC_DIR}/MergeStrategy.cpp
     ${SRC_DIR}/AirTreeMerge.cpp
+    ${SRC_DIR}/NWayMerge.cpp
 )
 
 set_target_properties(libairtree-merge PROPERTIES OUTPUT_NAME airtree-merge)
@@ -54,6 +55,7 @@ if(AIRTREE_ENABLE_TESTING)
 # Unit tests
 add_executable(ut_merge_test
     tests/TestMergeFunction.cpp
+    tests/TestNWayMerge.cpp
 )
 
 target_compile_definitions(ut_merge_test PRIVATE UNIT_TEST)

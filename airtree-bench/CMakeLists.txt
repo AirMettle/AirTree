@@ -39,7 +39,10 @@ add_executable(airtree_bench
     ${BENCHMARK_DIR}/src/query/percentile/PercentileBench.cpp
     ${BENCHMARK_DIR}/src/query/grid/GridBench.cpp
     ${BENCHMARK_DIR}/src/query/boundingbox/BoundingBoxBench.cpp
-    
+    ${BENCHMARK_DIR}/src/query/cdf/CDFBench.cpp
+    ${BENCHMARK_DIR}/src/query/binboundary/BinBoundaryBench.cpp
+    ${BENCHMARK_DIR}/src/merge/MergeBench.cpp
+    ${BENCHMARK_DIR}/src/reader/ReaderBench.cpp
 )
 
 if(TARGET am_airtree_dependencies)
@@ -57,6 +60,7 @@ target_link_libraries(airtree_bench PRIVATE
     airtree::airtree-reader
     airtree::airtree-core 
     airtree::airtree-query
+    airtree::libairtree-merge
     spdlog::spdlog
     # netcdf::netcdf  
     # hdf5::hdf5_hl 

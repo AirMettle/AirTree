@@ -3,6 +3,7 @@
 #ifndef AIRTREE_CORE_AIRTREE_HEADER_HPP
 #define AIRTREE_CORE_AIRTREE_HEADER_HPP
 
+#include <span>
 #include <airtree/core/common/ConfigWire.hpp>
 
 #include <array>
@@ -30,6 +31,14 @@ struct AirTreeHeader {
   uint32_t nan_count = 0;
 };
 
+// Observations held by a root node: the sum of its bucket counts.
+template <size_t N> inline uint32_t countObservations(const uint32_t (&counts)[N]) {
+  uint64_t total = 0;
+  for (uint32_t c : counts)
+    total += c;
+  return static_cast<uint32_t>(total);
+}
+
 AirTreeHeader makeHeader(ConfigWire config,
                          std::array<uint8_t, 4> data_types,
                          uint32_t trie_count, uint32_t pos_inf_count,
@@ -41,7 +50,7 @@ void serializeHeader(const AirTreeHeader &header,
                      std::vector<char> &buffer);
 
 
-AirTreeHeader deserializeHeader(const std::vector<char> &buffer);
+AirTreeHeader deserializeHeader(std::span<const char> buffer);
 
 
 void finalizeHeader(std::vector<char> &buffer,

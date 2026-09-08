@@ -19,10 +19,10 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
   std::vector<char> mergedBuffer;
   airtree::core::common::serializeHeader(mergedHeader, mergedBuffer);
   size_t header_end = mergedBuffer.size();
-  SPDLOG_LOGGER_INFO(logger(), "Merged headers successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
-  std::bitset<BINS_256> pop0_1, pop0_2;
+  PopulatedBins<BINS_256> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TrieNode_20, BINS_256>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_1DxP(mergedRoot.get(), mergedBuffer, false);
@@ -41,7 +41,7 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
       temp_node_level1.reset();
       for (size_t j = 0; j < BINS_64; j++) {
         if (pop0_level1.test(j)) {
-          SPDLOG_LOGGER_INFO(
+          SPDLOG_LOGGER_TRACE(
               logger(), "Deserializing Trie20 Level2 index {} from buffer1", j);
           temp_node_level2 = deserialize_1DxP_l2(buffer1, offset1);
           serialize_1DxP_l2(temp_node_level2.get(), mergedBuffer);
@@ -56,7 +56,7 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
       temp_node_level1.reset();
       for (size_t j = 0; j < BINS_64; j++) {
         if (pop0_level1.test(j)) {
-          SPDLOG_LOGGER_INFO(
+          SPDLOG_LOGGER_TRACE(
               logger(), "Deserializing Trie20 Level2 index {} from buffer2", j);
           temp_node_level2 = deserialize_1DxP_l2(buffer2, offset2);
           serialize_1DxP_l2(temp_node_level2.get(), mergedBuffer);
@@ -93,7 +93,7 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
   }
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Serialized merged trie (all levels) successfully");
   return mergedBuffer;
 }
@@ -101,13 +101,13 @@ std::vector<char> Merge1DxP::merge(const std::vector<char> &buffer1,
 std::unique_ptr<TrieNode_20_Level2>
 Merge1DxP::mergeTrieNode20_Level2(std::unique_ptr<TrieNode_20_Level2> node1,
                                   std::unique_ptr<TrieNode_20_Level2> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeTrieNode20_Level2");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeTrieNode20_Level2");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
   for (size_t i = 0; i < BINS_64; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie20 Level2 index {}: {} + {}", i,
+    SPDLOG_LOGGER_TRACE(logger(), "Merging Trie20 Level2 index {}: {} + {}", i,
                        node1->counts[i], node2->counts[i]);
     node1->counts[i] += node2->counts[i];
   }
@@ -117,7 +117,7 @@ Merge1DxP::mergeTrieNode20_Level2(std::unique_ptr<TrieNode_20_Level2> node1,
 std::unique_ptr<TrieNode_20_Level1>
 Merge1DxP::mergeTrieNode20_Level1(std::unique_ptr<TrieNode_20_Level1> node1,
                                   std::unique_ptr<TrieNode_20_Level1> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeTrieNode20_Level1");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeTrieNode20_Level1");
   if (!node1)
     return node2;
   if (!node2)
@@ -125,7 +125,7 @@ Merge1DxP::mergeTrieNode20_Level1(std::unique_ptr<TrieNode_20_Level1> node1,
 
   // Merge counts for Level1.
   for (size_t i = 0; i < BINS_64; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging Trie20 Level1 index {}: {} + {}", i,
+    SPDLOG_LOGGER_TRACE(logger(), "Merging Trie20 Level1 index {}: {} + {}", i,
                        node1->counts[i], node2->counts[i]);
     node1->counts[i] += node2->counts[i];
 

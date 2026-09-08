@@ -16,7 +16,6 @@ class BitManipulationTest : public ::testing::Test {
 protected:
   double orignalNumber;
   uint64_t fpNumber;
-  bool default_mode;
   bool placed_sign_bit;
   bool placed_signedExponentBit;
   uint64_t exponent;
@@ -26,7 +25,7 @@ protected:
   int zeroCount;
   uint64_t precisionBits;
 
-  void runBitManipulation(bool defaultMode) {
+  void runBitManipulation() {
     std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
     // Extract and calculate necessary bits directly from the floating-point
     // number
@@ -37,7 +36,7 @@ protected:
         placed_signedExponentBit ? (1023 - exponent) : (exponent - 1023);
 
 
-    if (defaultMode && placed_signedExponentBit) {
+    if (placed_signedExponentBit) {
       adjustedExponent = ((adjustedExponent - 1) & 0x7FF);
     }
 
@@ -82,8 +81,7 @@ TEST_F(BitManipulationTest, NormalOperation_TestCase1) {
   orignalNumber = 1.113;
   // fpNumber = 0x3FF1CED916872B02; // decimal - 1.113
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
   EXPECT_EQ(fpNumber,
             0b0011111111110001110011101101100100010110100001110010101100000010);
   EXPECT_EQ(placed_sign_bit, 0);
@@ -100,9 +98,8 @@ TEST_F(BitManipulationTest, NormalOperation_TestCase1) {
 TEST_F(BitManipulationTest, NormalOperation_TestCase2) {
   orignalNumber = 85.125;
 
-  default_mode = true;
 
-  runBitManipulation(default_mode);
+  runBitManipulation();
   EXPECT_EQ(
       fpNumber,
       0b0100000001010101010010000000000000000000000000000000000000000000); // decimal
@@ -122,8 +119,7 @@ TEST_F(BitManipulationTest, NormalOperation_TestCase2) {
 TEST_F(BitManipulationTest, NegativeExponet_TestCase1) {
   setManualExponent(1.0, 1022); // Manually set exponent to 1022
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
   EXPECT_EQ(fpNumber,
             0b0011111111100000000000000000000000000000000000000000000000000000);
   EXPECT_EQ(placed_sign_bit, 0);
@@ -139,8 +135,7 @@ TEST_F(BitManipulationTest, NegativeExponet_TestCase1) {
 TEST_F(BitManipulationTest, NegativeExponet_TestCase2) {
   setManualExponent(1.0, 540); // Manually set exponent to 1021
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(fpNumber,
             0b0010000111000000000000000000000000000000000000000000000000000000);
@@ -158,8 +153,7 @@ TEST_F(BitManipulationTest, NegativeExponet_TestCase2) {
 TEST_F(BitManipulationTest, NegativeExponet_TestCase3) {
   setManualExponent(1.0, 1); // Orignal Number - 2.22507e-308
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 0);
   EXPECT_EQ(exponent, 1);
@@ -175,8 +169,7 @@ TEST_F(BitManipulationTest, NegativeExponet_TestCase3) {
 TEST_F(BitManipulationTest, EqualExponent_TestCase) {
   setManualExponent(1.0, 1023); // Orignal Number - 1
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 0);
   EXPECT_EQ(exponent, 1023);
@@ -191,8 +184,7 @@ TEST_F(BitManipulationTest, EqualExponent_TestCase) {
 TEST_F(BitManipulationTest, PositiveExponet_TestCase1) {
   setManualExponent(1.0, 1024); // Orignal Number - 2
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 0);
   EXPECT_EQ(exponent, 1024);
@@ -208,8 +200,7 @@ TEST_F(BitManipulationTest, PositiveExponet_TestCase1) {
 TEST_F(BitManipulationTest, PositiveExponet_TestCase2) {
   setManualExponent(1.0, 1099); // Orignal Number - 7.55579e+22
 
-  default_mode = true;
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 0);
   EXPECT_EQ(exponent, 1099);
@@ -225,9 +216,8 @@ TEST_F(BitManipulationTest, PositiveExponet_TestCase2) {
 TEST_F(BitManipulationTest, NegativeNumber_TestCase1) {
   orignalNumber = -1.4;
 
-  default_mode = true;
 
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 1);
   EXPECT_EQ(exponent, 1023);
@@ -243,9 +233,8 @@ TEST_F(BitManipulationTest, NegativeNumber_TestCase1) {
 TEST_F(BitManipulationTest, NegativeNumber_TestCase2) {
   orignalNumber = -0.0001321;
 
-  default_mode = true;
 
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 1);
   EXPECT_EQ(exponent, 1010);
@@ -261,9 +250,8 @@ TEST_F(BitManipulationTest, NegativeNumber_TestCase2) {
 TEST_F(BitManipulationTest, NegativeNumber_TestCase3) {
   orignalNumber = -15515.15151;
 
-  default_mode = true;
 
-  runBitManipulation(default_mode);
+  runBitManipulation();
 
   EXPECT_EQ(placed_sign_bit, 1);
   EXPECT_EQ(exponent, 1036);

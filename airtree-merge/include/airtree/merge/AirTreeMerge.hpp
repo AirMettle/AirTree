@@ -30,6 +30,10 @@ void mergeAirTree(const std::vector<char> &buffer1,
                   const std::vector<char> &buffer2,
                   const std::string &output_path);
 
+// Merges N buffers of one schema in a single streaming pass; 1D schemas never build a trie,
+// other schemas fall back to a pairwise fold. Same bytes as folding mergeAirTree.
+std::vector<char> mergeAirTrees(const std::vector<std::vector<char>> &buffers);
+
 } // namespace airtree::merge
 
 #endif // AIRTREE_MERGE_AIRTREEMERGE_HPP

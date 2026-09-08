@@ -27,7 +27,7 @@ TEST_F(TestCDF, TestCDF1DxT_SpecialValuesZerosOnly) {
   TrieManager trieManager;
 
   SpecialCounts noSpecial{0, 0, 10, 10, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -40,7 +40,7 @@ TEST_F(TestCDF, TestCDF1DxT_SpecialValuesNegInf) {
   TrieManager trieManager;
 
   SpecialCounts noSpecial{0, 10, 0, 0, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -54,7 +54,7 @@ TEST_F(TestCDF, TestCDF1DxT_SpecialValuesPosNegInf) {
   TrieManager trieManager;
 
   SpecialCounts noSpecial{10, 10, 0, 0, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -68,7 +68,7 @@ TEST_F(TestCDF, TestCDF1DxT_SpecialValuesPosInf) {
   TrieManager trieManager;
 
   SpecialCounts noSpecial{10, 10, 0, 0, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -83,7 +83,7 @@ TEST_F(TestCDF, TestCDF1DxT_MixedSpecialValues) {
 
   // 5 PosInf, 5 NegInf, 5 PosZero, 5 NegZero = Total Count of 20
   SpecialCounts mixedSpecial{5, 5, 5, 5, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, mixedSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, mixedSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -108,7 +108,7 @@ TEST_F(TestCDF, TestCDFEmptyHistogram) {
   TrieManager trieManager;
 
   SpecialCounts noSpecial{0, 0, 0, 0, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -125,7 +125,7 @@ TEST_F(TestCDF, TestCDF1DxT_AboveHighestBin) {
   trieManager.insert1DxT(0, 1, DistributionMethod::SINGLE, 0);
 
   SpecialCounts noSpecial{0, 0, 0, 0, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   // verify that the trie is populated correctly
@@ -167,7 +167,7 @@ TEST_F(TestCDF, TestCDF1DxT_InterpolationVsStep) {
   }
 
   SpecialCounts noSpecial{0, 0, 0, 0, 0};
-  std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+  std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto cdf = std::make_shared<CDF>(buffer);
@@ -215,7 +215,7 @@ TEST_F(TestCDF, TestCDF1DxT_InterpolationVsStep) {
 //   }
 
 //   SpecialCounts noSpecial{0, 0, 0, 0, 0};
-//   std::vector<char> buffer = trieManager.MockTrieHeader(13, true, noSpecial);
+//   std::vector<char> buffer = trieManager.MockTrieHeader(13, noSpecial);
 //   trieManager.serializeTrie<TrieNode_13>(buffer);
 //   airtree::xport::exportAirTree(
 //       buffer, "exported_buffer.csv", airtree::xport::ExportFormat::CSV);

@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
-#include <bitset>
+#include <stdexcept>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
 
@@ -37,90 +37,43 @@ public:
                                    const std::string &outputFile);
 };
 
-template <typename NodeType, size_t BucketCount>
+template <typename NodeType, size_t BucketCount, typename Pop>
 std::unique_ptr<NodeType>
 Root_merge(const std::vector<char> &buffer1, const std::vector<char> &buffer2,
-           size_t &offset1, size_t &offset2, std::bitset<BucketCount> &pop1,
-           std::bitset<BucketCount> &pop2) {
+           size_t &offset1, size_t &offset2, Pop &pop1, Pop &pop2) {
   auto mergedRoot = std::make_unique<NodeType>();
-  std::vector<uint64_t> compact_arr_values1 =
-      deserializeCompactBooleanArray(buffer1, offset1, BucketCount / 64);
-  std::vector<uint64_t> compact_arr_values2 =
-      deserializeCompactBooleanArray(buffer2, offset2, BucketCount / 64);
-
-  BooleanArray compact_array1 = BooleanArray(compact_arr_values1);
-  BooleanArray compact_array2 = BooleanArray(compact_arr_values2);
-
-  auto counts1 = deserializeCounts(buffer1, offset1, compact_array1.count());
-  auto counts2 = deserializeCounts(buffer2, offset2, compact_array2.count());
-
-  size_t idx1 = 0, idx2 = 0;
-  for (size_t i = 0; i < BucketCount; i++) {
-    pop1[i] = compact_array1.get(i);
-    pop2[i] = compact_array2.get(i);
-
-    if (pop1.test(i) || pop2.test(i)) {
-      mergedRoot->populated.set(i);
-      if (pop1.test(i) && pop2.test(i)) {
-        // If both nodes are populated, merge their counts
-        mergedRoot->counts[i] = counts1[idx1] + counts2[idx2];
-        idx1++;
-        idx2++;
-      } else if (pop1.test(i)) {
-        // If only node1 is populated
-        mergedRoot->counts[i] = counts1[idx1];
-        idx1++;
-      } else if (pop2.test(i)) {
-        // If only node2 is populated
-        mergedRoot->counts[i] = counts2[idx2];
-        idx2++;
-      }
-    }
+  uint64_t mask1[(BucketCount + 63) / 64], mask2[(BucketCount + 63) / 64];
+  uint32_t counts2[BucketCount] = {0};
+  if (!readPopulatedMask(buffer1, offset1, mask1, BucketCount)
+      || !deserializeCounts(buffer1, offset1, mask1, BucketCount, mergedRoot->counts)
+      || !readPopulatedMask(buffer2, offset2, mask2, BucketCount)
+      || !deserializeCounts(buffer2, offset2, mask2, BucketCount, counts2)) {
+    throw std::runtime_error("mergeAirTree: truncated root node");
   }
+  setPopulated(pop1, mask1);
+  setPopulated(pop2, mask2);
+  mergedRoot->populated = pop1 | pop2;
+  forEachSetBit(mask2, BucketCount, [&](size_t i) { mergedRoot->counts[i] += counts2[i]; });
   return mergedRoot;
 }
 
-template <typename NodeType, size_t BucketCount>
-std::unique_ptr<NodeType> Root_merge_TLE(const std::vector<char> &buffer1,
-                                         const std::vector<char> &buffer2,
-                                         size_t &offset1, size_t &offset2,
-                                         std::bitset<BucketCount> &pop1,
-                                         std::bitset<BucketCount> &pop2) {
+template <typename NodeType, size_t BucketCount, typename Pop>
+std::unique_ptr<NodeType>
+Root_merge_TLE(const std::vector<char> &buffer1, const std::vector<char> &buffer2,
+           size_t &offset1, size_t &offset2, Pop &pop1, Pop &pop2) {
   auto mergedRoot = std::make_unique<NodeType>();
-  std::vector<uint64_t> compact_arr_values1 =
-      deserializeCompactBooleanArray(buffer1, offset1, BucketCount / 64);
-  std::vector<uint64_t> compact_arr_values2 =
-      deserializeCompactBooleanArray(buffer2, offset2, BucketCount / 64);
-
-  BooleanArray compact_array1 = BooleanArray(compact_arr_values1);
-  BooleanArray compact_array2 = BooleanArray(compact_arr_values2);
-
-  auto counts1 = deserializeCounts(buffer1, offset1, compact_array1.count());
-  auto counts2 = deserializeCounts(buffer2, offset2, compact_array2.count());
-
-  size_t idx1 = 0, idx2 = 0;
-  for (size_t i = 0; i < BucketCount; i++) {
-    pop1[i] = compact_array1.get(i);
-    pop2[i] = compact_array2.get(i);
-
-    if (pop1.test(i) || pop2.test(i)) {
-      mergedRoot->populated.set(i);
-      if (pop1.test(i) && pop2.test(i)) {
-        // If both nodes are populated, merge their counts
-        mergedRoot->TLEcounts[i] = counts1[idx1] + counts2[idx2];
-        idx1++;
-        idx2++;
-      } else if (pop1.test(i)) {
-        // If only node1 is populated
-        mergedRoot->TLEcounts[i] = counts1[idx1];
-        idx1++;
-      } else if (pop2.test(i)) {
-        // If only node2 is populated
-        mergedRoot->TLEcounts[i] = counts2[idx2];
-        idx2++;
-      }
-    }
+  uint64_t mask1[(BucketCount + 63) / 64], mask2[(BucketCount + 63) / 64];
+  uint32_t counts2[BucketCount] = {0};
+  if (!readPopulatedMask(buffer1, offset1, mask1, BucketCount)
+      || !deserializeCounts(buffer1, offset1, mask1, BucketCount, mergedRoot->TLEcounts)
+      || !readPopulatedMask(buffer2, offset2, mask2, BucketCount)
+      || !deserializeCounts(buffer2, offset2, mask2, BucketCount, counts2)) {
+    throw std::runtime_error("mergeAirTree: truncated root node");
   }
+  setPopulated(pop1, mask1);
+  setPopulated(pop2, mask2);
+  mergedRoot->populated = pop1 | pop2;
+  forEachSetBit(mask2, BucketCount, [&](size_t i) { mergedRoot->TLEcounts[i] += counts2[i]; });
   return mergedRoot;
 }
 

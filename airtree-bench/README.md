@@ -64,9 +64,9 @@ Query fixtures load a pre-serialized `.airtree` buffer (untimed) and time indivi
 
 | Schema | Allowed `--queries` values |
 | ------ | -------------------------- |
-| `1DxT`, `1DxF`, `1DxP` | `topk`, `minmax`, `percentile` |
-| `2DxP`, `3DxP` | `grid`, `boundingbox` |
-| `4DxP` | `grid` |
+| `1DxT`, `1DxF`, `1DxP` | `topk`, `minmax`, `percentile`, `cdf`, `binboundary`, `reader` |
+| `2DxP`, `3DxP` | `grid`, `boundingbox`, `binboundary`, `reader` |
+| `4DxP` | `grid`, `binboundary`, `reader` |
 
 Other schemas (for example Fast multi-D) have generate benches only; they have no query suite in this build.
 
@@ -87,6 +87,22 @@ Each timed query variant records a fixed `query_id` (defined in `QueryFixtureBas
 | `8` | `Percentile_p90` | `Percentile::getPercentile(90)` | `Param_p=90` |
 | `9` | `Grid_steps8` | `GridQuery::getGrid(...)` | 8 linear steps per axis over full extent; `Param_steps=8`, `Dims` = 2/3/4 |
 | `10` | `BoundingBox_mid50` | `BoundingBox::getCounts(...)` | Fixed mid-50% box on a nominal `[0,100]` span per axis (`[25,75]`); `Dims` = 2/3 |
+| `11` | `Percentile_p99` | `Percentile::getPercentile(99)` | `Param_p=99` |
+| `12` | `Percentile_ctor` | `Percentile(buffer)` construction only | builds the full `2^bits` bin table; nothing queried |
+| `13` | `Percentile_cold_p50` | construction + `getPercentile(50)` per iteration | what a service pays per request on a fresh buffer |
+| `14` | `Percentile_cold_p99` | construction + `getPercentile(99)` per iteration | `Param_p=99` |
+| `15` | `MinMax_ctor` | `MinMax(buffer)` construction only | — |
+| `16` | `TopK_ctor` | `TopK(buffer)` construction only | — |
+| `17` | `CDF_ctor` | `CDF(buffer)` construction only | — |
+| `18` | `CDF_at_p50` | `CDF::getCDF(v, interpolate=true)` | `v` = the buffer's own median, computed untimed in `SetUp`; `Param_value` |
+| `19` | `CDF_cold_at_p50` | construction + `getCDF(v, true)` per iteration | — |
+| `20` | `BinBoundary_generate` | `BinBoundary(buffer).generateBinBoundaries()` | single-use object, so construction and generation are timed together; `Bins` = occupied bins |
+| `21` | `Merge_pair` | `mergeAirTree(a, b)` | `merge` subcommand; `N=2`, `InputBytes` |
+| `22` | `Merge_fold` | pairwise fold over all N inputs | the cost of a range query over N stored windows today; `N`, `InputBytes` |
+| `23` | `Reader_read` | `AirTreeReader::read(buffer)` | deserialization alone (buffer → trie, plus its teardown); the floor under every `ctor`/`cold` number |
+| `24` | `Merge_nway` | `mergeAirTrees(all N)` | single streaming pass over the same N inputs as `Merge_fold`; `N`, `InputBytes` |
+
+**Warm vs cold.** Fixtures `0`–`11` and `18` build the query object once, outside the timed loop, and time the call — the cost of the algorithm. The `ctor` and `cold` fixtures time construction (which for the 1D classes builds the full bin table from the schema, independent of buffer size) so that the per-request cost of a service answering one query per stored buffer is visible. Compare `Percentile_cold_p50` with `Percentile_p50` to see how much of a request is construction.
 
 Google Benchmark names look like `AirTreeQuery1DxF_TopK/TopK_k5` or `AirTreeQuery2DxP_Grid/Grid_steps8`. The numeric `query_id` is the stable join key across schemas and runs.
 
@@ -124,6 +140,15 @@ airtree_bench generate binary \
   -d float
 ```
 
+### Merge — two or more `.airtree` files
+
+```bash
+airtree_bench merge -s 1DxP -i w1.airtree w2.airtree w3.airtree ... \
+  --benchmark_out=merge.csv --benchmark_out_format=csv
+```
+
+`Merge_pair` merges the first two inputs; `Merge_fold` folds all of them in the given order.
+
 ### Query — existing `.airtree`
 
 ```bash
@@ -135,9 +160,9 @@ airtree_bench query \
 
 - `-s/--schema` must match a schema that has a query suite (see table above).
 - `-q/--queries` is optional; if omitted, all queries allowed for that schema run.
-- Google Benchmark flags (for example `--benchmark_out=... --benchmark_out_format=csv`) must appear **before** the `query` subcommand.
+- Google Benchmark flags (for example `--benchmark_out=... --benchmark_out_format=csv`) can appear before or after the subcommand.
 
-Extra arguments after the subcommand are forwarded to Google Benchmark where applicable (filters, repetitions, output format, etc.).
+Unrecognized arguments anywhere on the command line are forwarded to Google Benchmark (filters, repetitions, output format, etc.).
 
 ---
 
@@ -165,10 +190,9 @@ $CMAKE_BUILD_DIR/bench_data/output/<DD-MM-YYYY>/benchmark-<HH:MM>/plots/index.md
 
 #### Pipeline stages
 
-1. **Host setup** — runs `tools/setup/setup.sh` so a fresh machine gets the toolchain (gcc/g++, CMake, Ninja, Python 3.12 + venv) needed to build and plot.
-2. **Build** — runs `tools/build/partial_build.sh` to build `airtree_bench`.
-3. **Datasets** — `cd`s to `tools/bench`, then ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `get_bench_datasets.sh` to fetch and prepare inputs. Conversion helpers (`csv_to_parquet.py`, `combine_taxi_datasets.py`) are invoked by absolute path, so they work from any CWD.
-4. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and writes `<dataset>_<schema>.csv`.
+1. **Build** — runs `tools/build/partial_build.sh` to build `airtree_bench`.
+2. **Datasets** — ensures `$CMAKE_BUILD_DIR/bench_data` exists; if not, calls `get_bench_datasets.sh` to fetch and prepare inputs.
+3. **Generate (binary)** — for each `*.bin` in `bench_data` and schemas `1DxT`, `1DxF`, `1DxP`, runs `generate binary` with `--data-type float` and `BENCH_REPS` repetitions (default 5) and writes `<dataset>_<schema>.csv`.
    - For `jane_street` + `1DxT`, also writes `airtree_files/jane_street_1DxT.airtree` via `--write-airtree`.
 5. **Generate (parquet)** — for each `*.parquet` in `bench_data` and schemas `1DxF` … `4DxP`, runs `generate parquet` with dataset-specific correlated columns:
    | Dataset pattern | Columns (first *N* for *N*-D) |

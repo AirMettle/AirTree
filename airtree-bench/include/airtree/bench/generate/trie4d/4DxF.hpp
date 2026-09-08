@@ -108,13 +108,14 @@ protected:
 
     for (auto _ : state) {
       state.PauseTiming();
+      airTree4DxF_root.reset();
       specialCounts = std::make_unique<SpecialCounts>();
       curr_trie_size = 0;
       state.ResumeTiming();
 
       airTree4DxF_root =
           execCreateAndInsert_4D_4x8(fpharray1, fpharray2, fpharray3, fpharray4,
-                                     curr_trie_size, specialCounts, true);
+                                     curr_trie_size, specialCounts);
 
       benchmark::DoNotOptimize(airTree4DxF_root);
     }
@@ -155,12 +156,12 @@ protected:
 
     airTree4DxF_root =
         execCreateAndInsert_4D_4x8(fpharray1, fpharray2, fpharray3, fpharray4,
-                                   curr_trie_size, specialCounts, true);
+                                   curr_trie_size, specialCounts);
 
 
     for (auto _ : state) {
       auto serializedTrieLocal = execSerialize_4D_4x8(
-          airTree4DxF_root.get(), curr_trie_size, specialCounts, true);
+          airTree4DxF_root.get(), specialCounts);
 
       benchmark::DoNotOptimize(serializedTrieLocal.data());
       benchmark::ClobberMemory();

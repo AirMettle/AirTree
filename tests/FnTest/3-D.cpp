@@ -135,7 +135,7 @@ static unsigned int encode_12bit(double val) {
   uint64_t fp;
   std::memcpy(&fp, &val, sizeof(val));
   TLE tle = setTLEComponents(fp);
-  unsigned int internal10 = createInternal10Bit(fp, true);
+  unsigned int internal10 = createInternal10Bit(fp);
   unsigned int prefix;
   switch (tle.encoding) {
   case 2:

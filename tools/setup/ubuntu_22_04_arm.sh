@@ -41,6 +41,11 @@ install_package() {
     $SUDO apt-get install -y "$package"
 }
 
+# Entries left by earlier add-apt-repository runs conflict with the signed-by entry written below
+# (apt refuses one source with two Signed-By values), so clear them before the first apt-get update.
+run_step "[ airtree-setup ] Remove stale deadsnakes PPA entries" $SUDO rm -f \
+  /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-*.list /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-*.sources \
+  /etc/apt/trusted.gpg.d/deadsnakes-ubuntu-ppa.gpg /etc/apt/trusted.gpg.d/deadsnakes-ubuntu-ppa.gpg~
 run_step --retries 3 --retry-delay 5 \
   "[ airtree-setup ] Run apt-get update" \
   $SUDO apt-get update
@@ -87,8 +92,16 @@ else
   log "INFO" "CMake version $CMAKE_INSTALLED is already installed and meets the requirement."
 fi
 
-# install python3.12 by specifying the apt-get repository
-run_step "[ airtree-setup ] Add deadsnakes PPA" $SUDO add-apt-repository ppa:deadsnakes/ppa -y
+install_package gnupg
+# python3.12 from the deadsnakes PPA. The signing key is committed (tools/setup/keys, fingerprint
+# F23C5A6CF475977595C89F51BA6932366A755776) so setup does not depend on Launchpad's key service.
+run_step "[ airtree-setup ] Add deadsnakes PPA" bash -c '
+  set -e
+  . /etc/os-release
+  '"$SUDO"' install -d -m 0755 /etc/apt/keyrings
+  gpg --dearmor < "'"$ROOT_DIR"'/tools/setup/keys/deadsnakes-ppa.asc" | '"$SUDO"' tee /etc/apt/keyrings/deadsnakes-ppa.gpg > /dev/null
+  echo "deb [signed-by=/etc/apt/keyrings/deadsnakes-ppa.gpg] https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu $VERSION_CODENAME main" \
+    | '"$SUDO"' tee /etc/apt/sources.list.d/deadsnakes-ppa.list > /dev/null'
 run_step --retries 3 --retry-delay 5 \
   "[ airtree-setup ] Update package list" \
   $SUDO apt-get update

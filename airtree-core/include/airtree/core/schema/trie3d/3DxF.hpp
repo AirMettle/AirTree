@@ -5,6 +5,7 @@
 
 
 #include <airtree/core/schema/trie1d/1DxF.hpp>
+#include <airtree/core/common/Populated.hpp>
 
 
 #include <airtree/core/common/Bins.hpp>
@@ -16,7 +17,7 @@
 struct Node3D_888_l0;
 
 struct TLE_3D_888 {
-  std::bitset<BINS_512> populated;
+  PopulatedBins<BINS_512> populated;
   uint32_t counts[BINS_512] = {0};
   std::unique_ptr<Node3D_888_l0> nodes[BINS_512];
 
@@ -26,7 +27,7 @@ struct TLE_3D_888 {
 };
 
 struct Node3D_888_l0 {
-  std::bitset<BINS_256> populated;
+  PopulatedBins<BINS_256> populated;
   uint32_t counts[BINS_256] = {0};
   std::unique_ptr<TrieNode_16> nodes[BINS_256];
 
@@ -39,16 +40,13 @@ struct Node3D_888_l0 {
 [[nodiscard]] std::unique_ptr<TLE_3D_888>
 execCreateAndInsert_3D_888(const FPHArray &array1, const FPHArray &array2,
                            const FPHArray &array3, uint64_t &curr_trie_size,
-                           std::unique_ptr<SpecialCounts> &specialCounts,
-                           bool default_mode = true);
+                           std::unique_ptr<SpecialCounts> &specialCounts);
+void rollUpCounts(TLE_3D_888 *root);
 [[nodiscard]] std::vector<char>
-execSerialize_3D_888(TLE_3D_888 *root, uint64_t &curr_trie_size,
-                     std::unique_ptr<SpecialCounts> &specialCounts,
-                     bool default_mode);
+execSerialize_3D_888(TLE_3D_888 *root, std::unique_ptr<SpecialCounts> &specialCounts);
 [[nodiscard]] std::vector<char> generate_3DxF(const FPHArray &array1,
                                               const FPHArray &array2,
-                                              const FPHArray &array3,
-                                              bool default_mode = true);
+                                              const FPHArray &array3);
 
 
 namespace airtree::core::schema::trie3d {
@@ -56,8 +54,7 @@ namespace airtree::core::schema::trie3d {
 class Generator3DxF : public airtree::core::api::AirTreeGenerator {
 public:
   [[nodiscard]] std::vector<char>
-  generate(const std::vector<const FPHArray *> &arrays,
-           bool default_mode) const override;
+  generate(const std::vector<const FPHArray *> &arrays) const override;
 };
 
 } // namespace airtree::core::schema::trie3d

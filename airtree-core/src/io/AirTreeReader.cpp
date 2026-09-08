@@ -19,7 +19,7 @@ using namespace airtree::core::common;
 
 namespace airtree::core::io {
 
-void AirTreeReader::read(const std::vector<char> &buffer) {
+void AirTreeReader::read(std::span<const char> buffer) {
   // Deserialize and validate header (magic, version, CRC, config)
   header_ = airtree::core::common::deserializeHeader(buffer);
 

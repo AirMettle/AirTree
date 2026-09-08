@@ -48,13 +48,13 @@ TEST(ReconstructionTestManual, TestCase1) {
   uint64_t fpNumber;
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
 
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
 
@@ -69,13 +69,13 @@ TEST(ReconstructionTestManual, TestCase2) {
   uint64_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
 
@@ -90,13 +90,13 @@ TEST(ReconstructionTestManual, TestCase3) {
   uint64_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
 
@@ -113,13 +113,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_One) {
   uint64_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -136,13 +136,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_Half) {
   uint64_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -158,13 +158,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_NegativeOne) {
   uint64_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -180,13 +180,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_NegativeHalf) {
   uint64_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -202,13 +202,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_Float_One) {
   uint32_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit_32(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit_32(fpNumber);
   float reconstructedNumber13 = reConstruct<float>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit_32(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit_32(fpNumber);
   float reconstructedNumber16 = reConstruct<float>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit_32(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit_32(fpNumber);
   float reconstructedNumber20 = reConstruct<float>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -224,13 +224,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_Float_Half) {
   uint32_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit_32(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit_32(fpNumber);
   float reconstructedNumber13 = reConstruct<float>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit_32(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit_32(fpNumber);
   float reconstructedNumber16 = reConstruct<float>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit_32(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit_32(fpNumber);
   float reconstructedNumber20 = reConstruct<float>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -246,13 +246,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_Float_NegativeOne) {
   uint32_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit_32(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit_32(fpNumber);
   float reconstructedNumber13 = reConstruct<float>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit_32(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit_32(fpNumber);
   float reconstructedNumber16 = reConstruct<float>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit_32(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit_32(fpNumber);
   float reconstructedNumber20 = reConstruct<float>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -268,13 +268,13 @@ TEST(ReconstructionTestManual, TestCase_PowerOfTwo_Float_NegativeHalf) {
   uint32_t fpNumber;
 
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
-  unsigned int internalRep13 = createInternal13Bit_32(fpNumber, true);
+  unsigned int internalRep13 = createInternal13Bit_32(fpNumber);
   float reconstructedNumber13 = reConstruct<float>(internalRep13, 13);
 
-  unsigned int internalRep16 = createInternal16Bit_32(fpNumber, true);
+  unsigned int internalRep16 = createInternal16Bit_32(fpNumber);
   float reconstructedNumber16 = reConstruct<float>(internalRep16, 16);
 
-  unsigned int internalRep20 = createInternal20Bit_32(fpNumber, true);
+  unsigned int internalRep20 = createInternal20Bit_32(fpNumber);
   float reconstructedNumber20 = reConstruct<float>(internalRep20, 20);
 
   // Exact powers of 2 should reconstruct exactly with saturation fix
@@ -291,13 +291,13 @@ TEST(ReconstructionTestForFile, TestCase_vx) {
 
 
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       EXPECT_NEAR(reconstructedNumber13, originalNumber, tolerance_13);
@@ -316,13 +316,13 @@ TEST(ReconstructionTestForFile, TestCase_vy) {
     uint64_t fpNumber;
     std::memcpy(&fpNumber, &originalNumber, sizeof(originalNumber));
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       EXPECT_NEAR(reconstructedNumber13, originalNumber, tolerance_13);
@@ -341,13 +341,13 @@ TEST(ReconstructionTestForFile, TestCase_vz) {
     uint64_t fpNumber;
     std::memcpy(&fpNumber, &originalNumber, sizeof(originalNumber));
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       EXPECT_NEAR(reconstructedNumber13, originalNumber, tolerance_13);
@@ -365,13 +365,13 @@ TEST(ReconstructionTestManual, TestCaseFloat) {
   uint32_t fpNumber;
   std::memcpy(&fpNumber, &orignalNumber, sizeof(orignalNumber));
 
-  unsigned int internalRep = createInternal13Bit_32(fpNumber, true);
+  unsigned int internalRep = createInternal13Bit_32(fpNumber);
   float reconstructedNumber13 = reConstruct<float>(internalRep, 13);
 
-  internalRep = createInternal16Bit_32(fpNumber, true);
+  internalRep = createInternal16Bit_32(fpNumber);
   float reconstructedNumber16 = reConstruct<float>(internalRep, 16);
 
-  internalRep = createInternal20Bit_32(fpNumber, true);
+  internalRep = createInternal20Bit_32(fpNumber);
   float reconstructedNumber20 = reConstruct<float>(internalRep, 20);
 
   double tolerance_13_int32 =
@@ -392,13 +392,13 @@ TEST(ReconstructionTestManual, TestCaseInt32) {
   uint64_t fpNumber;
   std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
 
-  unsigned int internalRep = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep, 13);
 
-  internalRep = createInternal16Bit(fpNumber, true);
+  internalRep = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep, 16);
 
-  internalRep = createInternal20Bit(fpNumber, true);
+  internalRep = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep, 20);
 
   double tolerance_13_int32 =
@@ -420,13 +420,13 @@ TEST(ReconstructionTestManual, TestCaseInt64) {
   uint64_t fpNumber;
   std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
 
-  unsigned int internalRep = createInternal13Bit(fpNumber, true);
+  unsigned int internalRep = createInternal13Bit(fpNumber);
   double reconstructedNumber13 = reConstruct<double>(internalRep, 13);
 
-  internalRep = createInternal16Bit(fpNumber, true);
+  internalRep = createInternal16Bit(fpNumber);
   double reconstructedNumber16 = reConstruct<double>(internalRep, 16);
 
-  internalRep = createInternal20Bit(fpNumber, true);
+  internalRep = createInternal20Bit(fpNumber);
   double reconstructedNumber20 = reConstruct<double>(internalRep, 20);
 
   double tolerance_13_int32 =
@@ -451,13 +451,13 @@ TEST(ReconstructionTestForFile, TestCase_int32_element_id) {
     std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
 
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       double tolerance_13_int32 = std::max(floatValue * 0.06, 1.0);
@@ -482,13 +482,13 @@ TEST(ReconstructionTestForFile, TestCase_int32_vertex_id) {
     std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
 
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
 
@@ -519,13 +519,13 @@ TEST(ReconstructionTestForFile, TestCase_rho) {
     uint64_t fpNumber;
     std::memcpy(&fpNumber, &originalNumber, sizeof(originalNumber));
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       EXPECT_NEAR(reconstructedNumber13, originalNumber, tolerance_13)
@@ -552,13 +552,13 @@ TEST(ReconstructionTestForFile, TestCase_e) {
     uint64_t fpNumber;
     std::memcpy(&fpNumber, &originalNumber, sizeof(originalNumber));
     if (!isSpecialCase(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       EXPECT_NEAR(reconstructedNumber13, originalNumber, tolerance_13)
@@ -621,13 +621,13 @@ TEST(ReconstructionTestForFile, DumpErrorsToFileWithSummaryforInt32) {
     std::memcpy(&fpNumber, &floatValue, sizeof(floatValue));
 
     if (!isSpecialCase_32(fpNumber, specialCounts)) {
-      unsigned int internalRep13 = createInternal13Bit_32(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit_32(fpNumber);
       float reconstructedNumber13 = reConstruct<float>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit_32(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit_32(fpNumber);
       float reconstructedNumber16 = reConstruct<float>(internalRep16, 16);
 
-      unsigned int internalRep20 = createInternal20Bit_32(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit_32(fpNumber);
       float reconstructedNumber20 = reConstruct<float>(internalRep20, 20);
 
       // Compute absolute differences
@@ -734,13 +734,13 @@ TEST(ReconstructionTestForFile, DumpErrorsToFileWithSummary) {
 
     if (!isSpecialCase(fpNumber, specialCounts)) {
 
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
     
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       // Compute absolute differences
@@ -822,13 +822,13 @@ TEST(ReconstructionTest, FileBasedTest) {
 
     if (!isSpecialCase(fpNumber, specialCounts)) {
 
-      unsigned int internalRep13 = createInternal13Bit(fpNumber, true);
+      unsigned int internalRep13 = createInternal13Bit(fpNumber);
       double reconstructedNumber13 = reConstruct<double>(internalRep13, 13);
 
-      unsigned int internalRep16 = createInternal16Bit(fpNumber, true);
+      unsigned int internalRep16 = createInternal16Bit(fpNumber);
       double reconstructedNumber16 = reConstruct<double>(internalRep16, 16);
     
-      unsigned int internalRep20 = createInternal20Bit(fpNumber, true);
+      unsigned int internalRep20 = createInternal20Bit(fpNumber);
       double reconstructedNumber20 = reConstruct<double>(internalRep20, 20);
 
       // Write values to corresponding files

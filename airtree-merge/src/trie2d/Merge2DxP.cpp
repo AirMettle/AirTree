@@ -19,10 +19,10 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   std::vector<char> mergedBuffer;
   airtree::core::common::serializeHeader(mergedHeader, mergedBuffer);
   size_t header_end = mergedBuffer.size();
-  SPDLOG_LOGGER_INFO(logger(), "Merged headers successfully");
+  SPDLOG_LOGGER_DEBUG(logger(), "Merged headers successfully");
 
   // Deserialize the root nodes.
-  std::bitset<BINS_64> pop0_1, pop0_2;
+  PopulatedBins<BINS_64> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLEoption3_2D, BINS_64>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_2DxP(mergedRoot.get(), mergedBuffer, false);
@@ -31,17 +31,17 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   // Merge level1 children based on the original populated flags.
   std::unique_ptr<TrieNode_2D_10> temp_node_level1;
   std::unique_ptr<TrieNode_2D_10_Level1> temp_node_level2;
-  std::bitset<BINS_1024> pop0_level1;
+  PopulatedBins<BINS_1024> pop0_level1;
   int nDims = 0;
   for (size_t i = 0; i < BINS_64; i++) {
     // DEBUG_PRINT("Merging 2DxP TLEoption3_2D index " << i);
     nDims = getNumDims2D(i);
-    SPDLOG_LOGGER_INFO(logger(), "Number of dimensions: {}", nDims);
+    SPDLOG_LOGGER_DEBUG(logger(), "Number of dimensions: {}", nDims);
     if (nDims == 0) {
       continue;
     }
     if (pop0_1.test(i) && !pop0_2.test(i)) {
-      SPDLOG_LOGGER_INFO(logger(), "Only buffer1 has a node at index {}", i);
+      SPDLOG_LOGGER_TRACE(logger(), "Only buffer1 has a node at index {}", i);
       temp_node_level1 = deserialize_2DxP_l0(buffer1, offset1, nDims, false);
       serialize_2DxP_l0(temp_node_level1.get(), mergedBuffer, false);
       pop0_level1 = temp_node_level1->populated;
@@ -57,7 +57,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
       }
     } else if (pop0_2.test(i) && !pop0_1.test(i)) {
       // Similar check for buffer2.
-      SPDLOG_LOGGER_INFO(logger(), "Only buffer2 has a node at index {}", i);
+      SPDLOG_LOGGER_TRACE(logger(), "Only buffer2 has a node at index {}", i);
       temp_node_level1 = deserialize_2DxP_l0(buffer2, offset2, nDims, false);
       serialize_2DxP_l0(temp_node_level1.get(), mergedBuffer, false);
       pop0_level1 = temp_node_level1->populated;
@@ -73,7 +73,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
       }
     } else if (pop0_1.test(i) && pop0_2.test(i)) {
       if (offset1 < buffer1.size() && offset2 < buffer2.size()) {
-        SPDLOG_LOGGER_INFO(logger(), "Both buffers have a node at index {}", i);
+        SPDLOG_LOGGER_TRACE(logger(), "Both buffers have a node at index {}", i);
         auto node1_level1 = deserialize_2DxP_l0(buffer1, offset1, nDims, false);
         auto node2_level1 = deserialize_2DxP_l0(buffer2, offset2, nDims, false);
         auto pop1_level1 = node1_level1->populated;
@@ -105,7 +105,7 @@ std::vector<char> Merge2DxP::merge(const std::vector<char> &buffer1,
   }
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Serialized merged trie (all levels) successfully");
   return mergedBuffer;
 }

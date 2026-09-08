@@ -1,5 +1,7 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
+#include <airtree/core/common/AirTreeHeader.hpp>
+#include <airtree/query/meta/PopulatedBins.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
 #include <airtree/query/topk/TopK.hpp>
 #include <airtree/query/Logger.hpp>
@@ -21,18 +23,21 @@ using namespace airtree::core::io;
 // Sentinel for special values not in the Trie
 constexpr uint32_t SPECIAL_VAL_REP = std::numeric_limits<uint32_t>::max();
 
-TopK::TopK(std::vector<char> buffer) : buffer_(std::move(buffer)) {
-
-  AirTreeReader reader;
-  reader.read(buffer_);
-
-  dims_ = reader.getDims();
-  bit_length_ = reader.getBitLength();
-  trie_node_ = reader.getType();
-  header_ = reader.getHeader();
-
+TopK::TopK(std::span<const char> buffer) {
+  header_ = airtree::core::common::deserializeHeader(buffer);
+  const auto params = airtree::core::common::configParams(header_);
+  dims_ = params.dims;
+  bit_length_ = params.bit_length;
   bin_count_ = 1ULL << bit_length_;
   histogram_ = std::make_shared<airtree::query::meta::Histogram>(bit_length_);
+
+  if (dims_ == 1 && (bit_length_ == 13 || bit_length_ == 16 || bit_length_ == 20)) {
+    // The bins come straight from the bytes; no trie is built. Objects are immutable after this.
+    auto set = airtree::query::meta::populatedBins(buffer, header_, *histogram_);
+    populated_ = std::move(set.bins);
+    trie_count_ = set.trieCount;
+    populated_ready_ = true;
+  }
 }
 
 TopKResultVector TopK::getTopK(double k) {
@@ -41,10 +46,6 @@ TopKResultVector TopK::getTopK(double k) {
     throw std::runtime_error("Histogram not initialized.");
   }
 
-  if (trie_node_.valueless_by_exception()) {
-    SPDLOG_LOGGER_ERROR(logger(), "Trie node not initialized.");
-    throw std::runtime_error("Trie node not initialized.");
-  }
 
   if (k <= 0 || k > 100.0) {
     SPDLOG_LOGGER_ERROR(
@@ -53,70 +54,23 @@ TopKResultVector TopK::getTopK(double k) {
         "k must be a percentage greater than 0 and less than or equal to 100.");
   }
 
-  if (dims_ == 1 && bit_length_ == 13) {
-    return fetchTopK<TrieNode_13>(k);
-  } else if (dims_ == 1 && bit_length_ == 16) {
-    return fetchTopK<TrieNode_16>(k);
-  } else if (dims_ == 1 && bit_length_ == 20) {
-    return fetchTopK<TrieNode_20>(k);
-  } else {
+  if (!populated_ready_) {
     SPDLOG_LOGGER_ERROR(logger(), "Unsupported dimensions or bit length: {}x{}",
                         dims_, bit_length_);
     throw std::runtime_error("Unsupported dimensions or bit length.");
   }
+  return fetchTopK(k);
 }
 
-template <typename NodeType>
-inline uint32_t getCount(const std::unique_ptr<NodeType> &trie,
-                         uint64_t internal_rep) {
-
-  if constexpr (std::is_same_v<NodeType, TrieNode_13>) {
-    uint64_t prefix_8 = (internal_rep >> 5) & 0xFF;
-    uint64_t prefix_5 = internal_rep & 0x1F;
-
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->counts[prefix_5] > 0) {
-      return trie->nodes[prefix_8]->counts[prefix_5];
-    }
-  } else if constexpr (std::is_same_v<NodeType, TrieNode_16>) {
-    uint64_t prefix_8 = (internal_rep >> 8) & 0xFF;
-    uint64_t suffix_8 = internal_rep & 0xFF;
-
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->counts[suffix_8] > 0) {
-      return trie->nodes[prefix_8]->counts[suffix_8];
-    }
-  } else if constexpr (std::is_same_v<NodeType, TrieNode_20>) {
-    uint64_t prefix_8 = (internal_rep >> 12) & 0xFF;
-    uint64_t mid_6 = (internal_rep >> 6) & 0x3F;
-    uint64_t suffix_6 = internal_rep & 0x3F;
-
-    if (trie->populated.test(prefix_8)
-        && trie->nodes[prefix_8]->populated.test(mid_6)
-        && trie->nodes[prefix_8]->nodes[mid_6]->counts[suffix_6] > 0) {
-      return trie->nodes[prefix_8]->nodes[mid_6]->counts[suffix_6];
-    }
-  } else {
-    throw std::runtime_error("Unsupported node type for count retrieval.");
-  }
-
-  return 0;
-}
-
-template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
+TopKResultVector TopK::fetchTopK(double k) {
 
   uint64_t total_count_u64 = header_.pos_inf_count + header_.neg_inf_count
                              + header_.pos_zero_count + header_.neg_zero_count;
 
-  const auto &trie_root = trie_node_.get_ptr<NodeType>();
 
-  auto histogram_bins = histogram_->getBins();
-  uint64_t histogram_bin_size = histogram_bins.size();
-
-  for (size_t i = 0; i < histogram_bin_size; ++i) {
-    uint64_t internal_rep =
-        histogram_bins[i].second.getInternalRepresentation();
-    total_count_u64 += getCount(trie_root, internal_rep);
+  const auto &bins = populated_;
+  for (const auto &bin : bins) {
+    total_count_u64 += bin.count;
   }
 
   if (total_count_u64 == 0) {
@@ -144,13 +98,8 @@ template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
   bool zeros_handled = false;
 
   // Iterate bins backwards (highest to lowest values)
-  size_t idx = histogram_bin_size;
-  while (idx > 0) {
-    size_t bin_idx = idx - 1;
-    idx--;
-
-    double lower_bound = histogram_->getBinLowerBound(bin_idx);
-
+  for (auto it = bins.rbegin(); it != bins.rend(); ++it) {
+    double lower_bound = histogram_->getBinLowerBound(it->position);
     if (lower_bound < 0.0 && !zeros_handled) {
       if (header_.pos_zero_count > 0) {
         cumulative_count += header_.pos_zero_count;
@@ -168,26 +117,11 @@ template <typename NodeType> TopKResultVector TopK::fetchTopK(double k) {
       }
       zeros_handled = true;
     }
-
-    uint64_t internal_rep = histogram_->getInternalRepresentation(bin_idx);
-    uint32_t bin_count = getCount<NodeType>(trie_root, internal_rep);
-
-    if (bin_count == 0) {
-      continue; // Skip empty bins
-    }
-
-    cumulative_count += bin_count;
-    double upper_bound = histogram_->getBinUpperBound(bin_idx);
-
+    cumulative_count += it->count;
+    double upper_bound = histogram_->getBinUpperBound(it->position);
     top_k_bins.emplace_back(
-        lower_bound, upper_bound, bin_count, (uint32_t)internal_rep);
-
+        lower_bound, upper_bound, it->count, static_cast<uint32_t>(it->code));
     if (cumulative_count >= n) {
-      SPDLOG_LOGGER_DEBUG(
-          logger(),
-          "Reached top-k threshold at index: {} with cumulative "
-          "count: {} >= {}",
-          bin_idx, cumulative_count, n);
       return top_k_bins;
     }
   }

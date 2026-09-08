@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <airtree/core/AirTreeCore_internal.hpp>
+#include <airtree/core/serdes/BooleanArray.hpp>
 #include <airtree/merge/trie4d/Merge4DxP.hpp>
 #include <airtree/merge/MergeStrategy.hpp>
 #include <airtree/merge/Logger.hpp>
@@ -22,7 +23,7 @@ std::vector<char> Merge4DxP::merge(const std::vector<char> &buffer1,
   size_t header_end = mergedBuffer.size();
 
   // Deserialize the root nodes.
-  std::bitset<BINS_4096> pop0_1, pop0_2;
+  PopulatedBins<BINS_4096> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLE_4D_4x10, BINS_4096>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_4DxP(mergedRoot.get(), mergedBuffer, false);
@@ -273,7 +274,7 @@ std::vector<char> Merge4DxP::merge(const std::vector<char> &buffer1,
   }
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Serialized merged trie (all levels) successfully");
   return mergedBuffer;
 }
@@ -281,90 +282,61 @@ std::vector<char> Merge4DxP::merge(const std::vector<char> &buffer1,
 std::unique_ptr<Node4D_4x10_l0>
 Merge4DxP::mergeNode4D_4x10_l0(std::unique_ptr<Node4D_4x10_l0> node1,
                                std::unique_ptr<Node4D_4x10_l0> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x10_l0");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
-  for (size_t i = 0; i < BINS_1024; ++i) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
+    node1->populated.set(i);
     node1->counts[i] += node2->counts[i];
-    if (node2->populated.test(i)) {
-      if (!node1->populated.test(i)) {
-        SPDLOG_LOGGER_INFO(logger(), "4DxP l0: adopting child at index {}", i);
-        node1->populated.set(i);
-        node1->nodes[i] = std::move(node2->nodes[i]);
-      } else {
-        node1->nodes[i] = mergeNode4D_4x10_l1(
-            std::move(node1->nodes[i]), std::move(node2->nodes[i]));
-      }
-    }
-  }
+    auto &child1 = node1->nodes[i];
+    child1 = child1 ? mergeNode4D_4x10_l1(std::move(child1), std::move(node2->nodes[i])) : std::move(node2->nodes[i]);
+  });
   return node1;
 }
 
 std::unique_ptr<Node4D_4x10_l1>
 Merge4DxP::mergeNode4D_4x10_l1(std::unique_ptr<Node4D_4x10_l1> node1,
                                std::unique_ptr<Node4D_4x10_l1> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x10_l1");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
-  for (size_t i = 0; i < BINS_1024; ++i) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
+    node1->populated.set(i);
     node1->counts[i] += node2->counts[i];
-    if (node2->populated.test(i)) {
-      if (!node1->populated.test(i)) {
-        SPDLOG_LOGGER_INFO(logger(), "4DxP l1: adopting child at index {}", i);
-        node1->populated.set(i);
-        node1->nodes[i] = std::move(node2->nodes[i]);
-      } else {
-        node1->nodes[i] = mergeNode4D_4x10_l2(
-            std::move(node1->nodes[i]), std::move(node2->nodes[i]));
-      }
-    }
-  }
+    auto &child1 = node1->nodes[i];
+    child1 = child1 ? mergeNode4D_4x10_l2(std::move(child1), std::move(node2->nodes[i])) : std::move(node2->nodes[i]);
+  });
   return node1;
 }
 
 std::unique_ptr<Node4D_4x10_l2>
 Merge4DxP::mergeNode4D_4x10_l2(std::unique_ptr<Node4D_4x10_l2> node1,
                                std::unique_ptr<Node4D_4x10_l2> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x10_l2");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
-  for (size_t i = 0; i < BINS_1024; ++i) {
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
+    node1->populated.set(i);
     node1->counts[i] += node2->counts[i];
-    if (node2->populated.test(i)) {
-      if (!node1->populated.test(i)) {
-        SPDLOG_LOGGER_INFO(logger(), "4DxP l2: adopting child at index {}", i);
-        node1->populated.set(i);
-        node1->nodes[i] = std::move(node2->nodes[i]);
-      } else {
-        node1->nodes[i] = mergeNode4D_4x10_l3(
-            std::move(node1->nodes[i]), std::move(node2->nodes[i]));
-      }
-    }
-  }
+    auto &child1 = node1->nodes[i];
+    child1 = child1 ? mergeNode4D_4x10_l3(std::move(child1), std::move(node2->nodes[i])) : std::move(node2->nodes[i]);
+  });
   return node1;
 }
 
 std::unique_ptr<Node4D_4x10_l3>
 Merge4DxP::mergeNode4D_4x10_l3(std::unique_ptr<Node4D_4x10_l3> node1,
                                std::unique_ptr<Node4D_4x10_l3> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x10_l3");
   if (!node1)
     return node2;
   if (!node2)
     return node1;
-  for (size_t i = 0; i < BINS_1024; ++i) {
-    SPDLOG_LOGGER_INFO(logger(), "Merging 4DxP l3 index {}: {} + {}", i,
-                       node1->counts[i], node2->counts[i]);
+  forEachSetBit(node2->populated.words, BINS_1024, [&](size_t i) {
+    node1->populated.set(i);
     node1->counts[i] += node2->counts[i];
-    if (node2->populated.test(i)) {
-      node1->populated.set(i);
-    }
-  }
+  });
   return node1;
 }

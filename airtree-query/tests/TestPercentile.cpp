@@ -54,7 +54,7 @@ TEST_F(TestPercentile, TestPercentile1DxT_RankEqualsBinCount) {
   SpecialCounts noSpecialValues{
       0, 0, 0, 0, 0}; // No special values for this test
   std::vector<char> buffer =
-      trieManager.MockTrieHeader(13, true, noSpecialValues);
+      trieManager.MockTrieHeader(13, noSpecialValues);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto percentileQuery = std::make_shared<Percentile>(buffer);
@@ -112,7 +112,7 @@ TEST_F(TestPercentile, TestPercentile1DxT_RankLessThanBinCount) {
   SpecialCounts noSpecialValues{
       0, 0, 0, 0, 0}; // No special values for this test
   std::vector<char> buffer =
-      trieManager.MockTrieHeader(13, true, noSpecialValues);
+      trieManager.MockTrieHeader(13, noSpecialValues);
   trieManager.serializeTrie<TrieNode_13>(buffer);
 
   auto percentileQuery = std::make_shared<Percentile>(buffer);
@@ -209,7 +209,7 @@ TEST_F(TestPercentile, TestPercentile1DxF_RankLessThanBinCount) {
   SpecialCounts noSpecialValues{
       0, 0, 0, 0, 0}; // No special values for this test
   std::vector<char> buffer =
-      trieManager.MockTrieHeader(16, true, noSpecialValues);
+      trieManager.MockTrieHeader(16, noSpecialValues);
   trieManager.serializeTrie<TrieNode_16>(buffer);
 
   auto percentileQuery = std::make_shared<Percentile>(buffer);
@@ -331,7 +331,7 @@ TEST_F(TestPercentile, TestPercentile1DxP_RankLessThanBinCount) {
   SpecialCounts noSpecialValues{
       0, 0, 0, 0, 0}; // No special values for this test
   std::vector<char> buffer =
-      trieManager.MockTrieHeader(20, true, noSpecialValues);
+      trieManager.MockTrieHeader(20, noSpecialValues);
   trieManager.serializeTrie<TrieNode_20>(buffer);
 
   auto percentileQuery = std::make_shared<Percentile>(buffer);

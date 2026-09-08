@@ -167,17 +167,17 @@ public:
   void print1DxP() const;
 
   // Generate a mock trie header for testing purposes.
-  std::vector<char> MockTrieHeader(int precisionBits, bool default_mode = true,
+  std::vector<char> MockTrieHeader(int precisionBits,
                                    const SpecialCounts &specialCounts =
                                        SpecialCounts{10, 5, 100, 80, 3}) const;
 
   std::vector<char>
-  MockTrieHeader2D(int precisionBits, bool default_mode = true,
+  MockTrieHeader2D(int precisionBits,
                    const SpecialCounts &specialCounts = SpecialCounts{
                        10, 5, 100, 80, 3}) const;
 
   std::vector<char>
-  MockTrieHeader3D(int precisionBits, bool default_mode = true,
+  MockTrieHeader3D(int precisionBits,
                    const SpecialCounts &specialCounts = SpecialCounts{
                        10, 5, 100, 80, 3}) const;
 

@@ -22,7 +22,7 @@ std::vector<char> Merge4DxF::merge(const std::vector<char> &buffer1,
   size_t header_end = mergedBuffer.size();
 
   // Deserialize the root nodes.
-  std::bitset<BINS_4096> pop0_1, pop0_2;
+  PopulatedBins<BINS_4096> pop0_1, pop0_2;
   auto mergedRoot = Root_merge<TLE_4D_4x8, BINS_4096>(
       buffer1, buffer2, offset1, offset2, pop0_1, pop0_2);
   serialize_4DxF(mergedRoot.get(), mergedBuffer, false);
@@ -276,7 +276,7 @@ std::vector<char> Merge4DxF::merge(const std::vector<char> &buffer1,
   add_EOF(mergedBuffer);
   airtree::core::common::finalizeHeader(mergedBuffer, mergedBuffer.size() - header_end);
 
-  SPDLOG_LOGGER_INFO(
+  SPDLOG_LOGGER_DEBUG(
       logger(), "Serialized merged trie (root and children) successfully");
   return mergedBuffer;
 }
@@ -284,7 +284,7 @@ std::vector<char> Merge4DxF::merge(const std::vector<char> &buffer1,
 std::unique_ptr<Node4D_4x8_l0>
 Merge4DxF::mergeNode4D_4x8_l0(std::unique_ptr<Node4D_4x8_l0> node1,
                               std::unique_ptr<Node4D_4x8_l0> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x8_l0");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode4D_4x8_l0");
   if (!node1)
     return node2;
   if (!node2)
@@ -307,7 +307,7 @@ Merge4DxF::mergeNode4D_4x8_l0(std::unique_ptr<Node4D_4x8_l0> node1,
 std::unique_ptr<Node4D_4x8_l1>
 Merge4DxF::mergeNode4D_4x8_l1(std::unique_ptr<Node4D_4x8_l1> node1,
                               std::unique_ptr<Node4D_4x8_l1> node2) {
-  SPDLOG_LOGGER_INFO(logger(), "Entering mergeNode4D_4x8_l1");
+  SPDLOG_LOGGER_TRACE(logger(), "Entering mergeNode4D_4x8_l1");
   if (!node1)
     return node2;
   if (!node2)

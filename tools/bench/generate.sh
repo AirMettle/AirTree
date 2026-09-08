@@ -27,6 +27,7 @@ BENCH_DATA_DIR="$CMAKE_BUILD_DIR/bench_data"
 DATE_FOLDER="$(date +%d-%m-%Y)"
 TIMESTAMP=$(date +%H:%M)
 OUTPUT_DIR="$BENCH_DATA_DIR"/output/$DATE_FOLDER/benchmark-${TIMESTAMP}
+BENCH_REPS="${BENCH_REPS:-5}"
 
 if [ ! -d "$BENCH_DATA_DIR" ]; then
     log_warn "Benchmark data directory $BENCH_DATA_DIR does not exist. Fetching benchmark data..."
@@ -85,8 +86,8 @@ for schema in "${binary_schemas[@]}"; do
             fi
             
 
-            run_bench "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
-            --benchmark_out_format=csv \
+            "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
+            --benchmark_out_format=csv --benchmark_repetitions="$BENCH_REPS" \
             generate binary \
             --input "$file" \
             --schema "$schema" \
@@ -160,12 +161,11 @@ for schema in "${parquet_schemas[@]}"; do
                 esac
             fi
      
-            run_bench "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
-            --benchmark_out_format=csv \
+            "$CMAKE_BUILD_DIR/airtree-bench/airtree_bench" --benchmark_out="$output_csv" \
+            --benchmark_out_format=csv --benchmark_repetitions="$BENCH_REPS" \
             generate parquet \
             --input "$file" \
             --schema "$schema" \
-            --data-type float \
             --columns "${active_columns[@]}" \
             "${write_args[@]}"
         

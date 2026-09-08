@@ -9,6 +9,7 @@ add_library(airtree-query STATIC
     ${SOURCE_FILES}/Logger.cpp
     # meta module
     ${SOURCE_FILES}/meta/Histogram.cpp
+    ${SOURCE_FILES}/meta/PopulatedBins.cpp
     # percentile module
     ${SOURCE_FILES}/percentile/Percentile.cpp
     # topK module
@@ -51,8 +52,10 @@ add_executable(ut_query_test
     tests/TestFuzzEncoding.cpp
     tests/TestMinMax.cpp
     tests/TestPercentile.cpp
+    tests/TestPopulatedBins.cpp
     tests/TestTopK.cpp
-    tests/TestGridQuery.cpp)
+    tests/TestGridQuery.cpp
+    tests/TestSparseWalk.cpp)
 
 target_link_libraries(ut_query_test PRIVATE 
     airtree::airtree-util 

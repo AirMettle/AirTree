@@ -374,63 +374,44 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
     if (!n0) {
       continue;
     }
-    if (finiteDims == 1) {
-      for (size_t a = 0; a < BINS_1024; ++a) {
-        uint32_t c = n0->counts[a];
-        if (c == 0) {
-          continue;
-        }
-        uint32_t chunks[1];
-        splitChunks(a, 1, chunks);
-        emitRecord(4, e.axes, chunks, bt, c, cb);
+    auto emit = [&](uint64_t combined, int dims, uint32_t c) {
+      if (c == 0) {
+        return;
       }
-      continue;
-    }
+      uint32_t chunks[4];
+      splitChunks(combined, dims, chunks);
+      emitRecord(4, e.axes, chunks, bt, c, cb);
+    };
     for (size_t a = 0; a < BINS_1024; ++a) {
       if (!n0->populated[a]) {
+        continue;
+      }
+      if (finiteDims == 1) {
+        emit(a, 1, n0->counts[a]);
         continue;
       }
       const Node4D_4x10_l1 *n1 = n0->nodes[a].get();
       if (!n1) {
         continue;
       }
-      if (finiteDims == 2) {
-        for (size_t b = 0; b < BINS_1024; ++b) {
-          uint32_t c = n1->counts[b];
-          if (c == 0) {
-            continue;
-          }
-          uint64_t combined = (static_cast<uint64_t>(a) << 10) | b;
-          uint32_t chunks[2];
-          splitChunks(combined, 2, chunks);
-          emitRecord(4, e.axes, chunks, bt, c, cb);
-        }
-        continue;
-      }
       for (size_t b = 0; b < BINS_1024; ++b) {
         if (!n1->populated[b]) {
+          continue;
+        }
+        if (finiteDims == 2) {
+          emit((static_cast<uint64_t>(a) << 10) | b, 2, n1->counts[b]);
           continue;
         }
         const Node4D_4x10_l2 *n2 = n1->nodes[b].get();
         if (!n2) {
           continue;
         }
-        if (finiteDims == 3) {
-          for (size_t c3 = 0; c3 < BINS_1024; ++c3) {
-            uint32_t c = n2->counts[c3];
-            if (c == 0) {
-              continue;
-            }
-            uint64_t combined = (static_cast<uint64_t>(a) << 20) |
-                                (static_cast<uint64_t>(b) << 10) | c3;
-            uint32_t chunks[3];
-            splitChunks(combined, 3, chunks);
-            emitRecord(4, e.axes, chunks, bt, c, cb);
-          }
-          continue;
-        }
         for (size_t c3 = 0; c3 < BINS_1024; ++c3) {
           if (!n2->populated[c3]) {
+            continue;
+          }
+          if (finiteDims == 3) {
+            emit((static_cast<uint64_t>(a) << 20) | (static_cast<uint64_t>(b) << 10) | c3, 3, n2->counts[c3]);
             continue;
           }
           const Node4D_4x10_l3 *n3 = n2->nodes[c3].get();
@@ -438,16 +419,8 @@ void visit4D(const TLE_4D_4x10 *root, const BinTable &bt, Cb &&cb) {
             continue;
           }
           for (size_t d4 = 0; d4 < BINS_1024; ++d4) {
-            uint32_t c = n3->counts[d4];
-            if (c == 0) {
-              continue;
-            }
-            uint64_t combined = (static_cast<uint64_t>(a) << 30) |
-                                (static_cast<uint64_t>(b) << 20) |
-                                (static_cast<uint64_t>(c3) << 10) | d4;
-            uint32_t chunks[4];
-            splitChunks(combined, 4, chunks);
-            emitRecord(4, e.axes, chunks, bt, c, cb);
+            emit((static_cast<uint64_t>(a) << 30) | (static_cast<uint64_t>(b) << 20) |
+                     (static_cast<uint64_t>(c3) << 10) | d4, 4, n3->counts[d4]);
           }
         }
       }
@@ -798,7 +771,7 @@ std::vector<GridCell> GridResult::materializeRows() const {
 // ---------------------------------------------------------------------------
 // GridQuery.
 // ---------------------------------------------------------------------------
-GridQuery::GridQuery(std::vector<char> buffer) {
+GridQuery::GridQuery(std::span<const char> buffer) {
   AirTreeReader reader;
   reader.read(buffer);
   dims_ = reader.getDims();

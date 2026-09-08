@@ -3,6 +3,7 @@
 #ifndef AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BIN_BOUNDARY_BIN_BOUNDARY_HPP
 #define AIRTREE_QUERY_INCLUDE_AIRTREE_QUERY_BIN_BOUNDARY_BIN_BOUNDARY_HPP
 
+#include <span>
 #include <airtree/core/common/SpecialCounts.hpp>
 #include <airtree/core/common/AirTreeHeader.hpp>
 #include <airtree/core/AirTreeCore_internal.hpp>
@@ -159,7 +160,7 @@ private:
 */
 class BinBoundary {
 public:
-  BinBoundary(std::vector<char> buffer);
+  BinBoundary(std::span<const char> buffer);
 
   [[nodiscard]] BinBoundaryResult generateBinBoundaries();
 

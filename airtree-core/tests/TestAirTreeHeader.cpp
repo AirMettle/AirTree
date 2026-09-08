@@ -4,6 +4,8 @@
 #include <airtree/core/common/ConfigWire.hpp>
 
 #include <gtest/gtest.h>
+#include <airtree/core/AirTreeCore_internal.hpp>
+#include <limits>
 
 using namespace airtree::core::common;
 
@@ -244,4 +246,21 @@ TEST_F(AirTreeHeaderTest, LargePayloadLength) {
 
   auto decoded = deserializeHeader(buffer);
   EXPECT_EQ(decoded.payload_length, large_payload);
+}
+
+TEST(AirTreeHeader, GeneratorsWriteTheObservationCount) {
+  std::vector<double> v;
+  for (int i = 0; i < 1234; ++i)
+    v.push_back(0.001 * (i + 1));
+  v.insert(v.end(), {0.0, -0.0, std::numeric_limits<double>::infinity(),
+                     -std::numeric_limits<double>::infinity(), std::nan("")});
+  FPHArray a = buildFPHArray(v.data(), static_cast<int>(v.size()));
+  for (const auto &buf : {generate_1DxT(a), generate_1DxF(a), generate_1DxP(a)}) {
+    const auto h = airtree::core::common::deserializeHeader(buf);
+    EXPECT_EQ(h.trie_count, 1234u);
+    EXPECT_EQ(h.pos_zero_count + h.neg_zero_count + h.pos_inf_count + h.neg_inf_count + h.nan_count, 5u);
+  }
+  FPHArray b = buildFPHArray(v.data(), 1234);
+  EXPECT_EQ(airtree::core::common::deserializeHeader(generate_2DxP(b, b)).trie_count, 1234u);
+  EXPECT_EQ(airtree::core::common::deserializeHeader(generate_3DxP(b, b, b)).trie_count, 1234u);
 }

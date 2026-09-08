@@ -1,6 +1,8 @@
 // Required Notice: Copyright AirMettle, Inc. 2026 (https://airmettle.com/)
 
 #include <algorithm>
+#include <bit>
+#include <cstring>
 #include <airtree/core/serdes/Count.hpp>
 
 #include <airtree/core/Logger.hpp>
@@ -55,7 +57,7 @@ std::vector<char> serializeCounts(const uint32_t counts[], size_t len) {
   return buffer;
 }
 
-std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
+std::vector<uint32_t> deserializeCounts(std::span<const char> buffer,
                                         size_t &offset, size_t len) {
   if (offset >= buffer.size()) {
     SPDLOG_LOGGER_ERROR(
@@ -100,4 +102,115 @@ std::vector<uint32_t> deserializeCounts(const std::vector<char> &buffer,
   }
 
   return counts;
+}
+bool deserializeCounts(std::span<const char> buffer, size_t &offset,
+                       const uint64_t *mask, size_t bins, uint32_t *counts) {
+  const size_t nWords = (bins + 63) / 64;
+  size_t populated = 0;
+  for (size_t w = 0; w < nWords; ++w)
+    populated += static_cast<size_t>(std::popcount(mask[w]));
+  if (offset >= buffer.size()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Buffer underflow while reading count width.");
+    return false;
+  }
+  const int minBits = static_cast<unsigned char>(buffer[offset++]);
+  if (minBits > 32) {
+    SPDLOG_LOGGER_ERROR(logger(), "Invalid count width {} bits.", minBits);
+    return false;
+  }
+  // The node's count payload is exactly ceil(populated * minBits / 8) bytes; refills never cross it.
+  const size_t end = offset + (populated * minBits + 7) / 8;
+  if (end > buffer.size()) {
+    SPDLOG_LOGGER_ERROR(logger(), "Buffer underflow while reading {} counts.", populated);
+    return false;
+  }
+  const auto *bytes = reinterpret_cast<const unsigned char *>(buffer.data());
+  const uint64_t valueMask = (static_cast<uint64_t>(1) << minBits) - 1;
+  uint64_t bitBuffer = 0;
+  int bitsInBuffer = 0;
+  for (size_t w = 0; w < nWords; ++w) {
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      const size_t i = w * 64 + static_cast<size_t>(std::countr_zero(m));
+      if (i >= bins) {
+        SPDLOG_LOGGER_ERROR(logger(), "Populated bit {} outside node of {} bins.", i, bins);
+        return false;
+      }
+      if (bitsInBuffer < minBits) {
+        if (offset + sizeof(uint64_t) <= end) {
+          uint64_t next = 0;
+          if constexpr (std::endian::native == std::endian::little) {
+            std::memcpy(&next, bytes + offset, sizeof(next));
+          } else {
+            for (int b = 0; b < 8; ++b)
+              next |= static_cast<uint64_t>(bytes[offset + b]) << (8 * b);
+          }
+          const int take = (64 - bitsInBuffer) >> 3; // whole bytes that still fit
+          if (take < 8)
+            next &= (static_cast<uint64_t>(1) << (take * 8)) - 1;
+          bitBuffer |= next << bitsInBuffer;
+          offset += take;
+          bitsInBuffer += take * 8;
+        } else {
+          while (bitsInBuffer < minBits) {
+            bitBuffer |= static_cast<uint64_t>(bytes[offset++]) << bitsInBuffer;
+            bitsInBuffer += 8;
+          }
+        }
+      }
+      counts[i] = static_cast<uint32_t>(bitBuffer & valueMask);
+      bitBuffer >>= minBits;
+      bitsInBuffer -= minBits;
+    }
+  }
+  offset = end;
+  return true;
+}
+
+void serializeCounts(const uint64_t *mask, size_t bins, const uint32_t *counts,
+                     std::vector<char> &out) {
+  const size_t nWords = (bins + 63) / 64;
+  uint32_t maxCount = 0;
+  size_t populated = 0;
+  for (size_t w = 0; w < nWords; ++w) {
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      maxCount = std::max(maxCount, counts[w * 64 + std::countr_zero(m)]);
+      ++populated;
+    }
+  }
+  const int minBits = minimumBits(maxCount);
+  // Exact payload size is known up front: one width byte, then ceil(populated * minBits / 8).
+  const size_t start = out.size();
+  out.resize(start + 1 + (populated * static_cast<size_t>(minBits) + 7) / 8);
+  char *p = out.data() + start;
+  *p++ = static_cast<char>(minBits);
+  uint64_t bitBuffer = 0;
+  int bitCount = 0;
+  for (size_t w = 0; w < nWords; ++w) {
+    for (uint64_t m = mask[w]; m != 0; m &= m - 1) {
+      bitBuffer |= static_cast<uint64_t>(counts[w * 64 + std::countr_zero(m)]) << bitCount;
+      bitCount += minBits;
+      while (bitCount >= 8) {
+        *p++ = static_cast<char>(bitBuffer & 0xFF);
+        bitBuffer >>= 8;
+        bitCount -= 8;
+      }
+    }
+  }
+  if (bitCount > 0)
+    *p++ = static_cast<char>(bitBuffer & 0xFF);
+}
+
+bool skipCounts(std::span<const char> buffer, size_t &offset,
+                const uint64_t *mask, size_t bins) {
+  size_t populated = 0;
+  for (size_t w = 0; w < (bins + 63) / 64; ++w)
+    populated += static_cast<size_t>(std::popcount(mask[w]));
+  if (offset >= buffer.size())
+    return false;
+  const int minBits = static_cast<unsigned char>(buffer[offset++]);
+  const size_t end = offset + (populated * minBits + 7) / 8;
+  if (end > buffer.size())
+    return false;
+  offset = end;
+  return true;
 }
