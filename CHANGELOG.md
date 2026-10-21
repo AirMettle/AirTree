@@ -4,6 +4,31 @@ All notable changes to AirTree are listed here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-10-21
+
+### Added
+- Benchmark plots. `tools/bench/plot_benchmarks.py <run_dir>` draws the
+  generate and query results from a run's consolidated CSVs as PNG (SVG with
+  `--format png,svg`) and writes a `plots/index.md` catalog. `generate.sh`
+  runs it as its last stage, creating the project venv and installing
+  `tools/bench/requirements-plot.txt` when needed; a failed install is a
+  warning, not a failed run.
+
+### Changed
+- `generate.sh` runs `tools/setup/setup.sh` first, pins `airtree_bench` to
+  CPU 0 only where `taskset` exists (macOS and Windows run unpinned), and
+  skips a query suite with a warning when its histogram is missing or the
+  query fails, instead of stopping the run.
+- `get_bench_datasets.sh` keeps its venv in `tools/bench/.venv`, installs
+  pandas and pyarrow there instead of system-wide, and runs from any
+  directory.
+
+### Fixed
+- Arrow's bundled Thrift is built without OpenSSL on Linux and macOS. It
+  picked up the host's OpenSSL and failed to compile against OpenSSL 4,
+  which is Homebrew's default `openssl` on macOS. Parquet does not use
+  Thrift's TLS transport.
+
 ## [1.8.0] - 2026-09-08
 
 ### Added
