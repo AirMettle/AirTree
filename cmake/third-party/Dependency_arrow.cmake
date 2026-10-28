@@ -24,12 +24,20 @@ function(external_configure_arrow _EP_BASE _EP_BUILD_DIR _INSTALL_DIR  _ARROW_SH
       list(APPEND ARROW_EXTRA_ARGS "-DCMAKE_SYSTEM_PROCESSOR=AMD64")
   endif()
 
+  # Arrow's bundled Thrift is built without OpenSSL: parquet doesn't use its TLS
+  # transport, which would otherwise build against the host's OpenSSL 4 and fail.
+  set(ARROW_PATCH_COMMAND "")
+  if(NOT WIN32)
+      set(ARROW_PATCH_COMMAND PATCH_COMMAND perl -pi -e
+          "s/-DWITH_ZLIB=OFF\\)/-DWITH_ZLIB=OFF -DWITH_OPENSSL=OFF)/"
+          <SOURCE_DIR>/cpp/cmake_modules/ThirdpartyToolchain.cmake)
+  endif()
+
   # Xcode 26's libtool -V reports "cctools_ld-NNNN"; arrow 20.0.0 greps for
   # "cctools-" and rejects Apple's own libtool. Loosen the regex the way
   # upstream did (apache/arrow#49369).
-  set(ARROW_PATCH_COMMAND "")
   if(APPLE)
-      set(ARROW_PATCH_COMMAND PATCH_COMMAND perl -pi -e "s/cctools-\\(/cctools.+(/"
+      list(APPEND ARROW_PATCH_COMMAND COMMAND perl -pi -e "s/cctools-\\(/cctools.+(/"
           <SOURCE_DIR>/cpp/cmake_modules/BuildUtils.cmake)
   endif()
 

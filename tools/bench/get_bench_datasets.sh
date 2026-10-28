@@ -11,6 +11,11 @@
 # -yellow_tripdata: parquet
 # -FRED: CSV converted to parquet via csv_to_parquet.py
 
+#future improvements for the generate.sh benchmarking workflow should include a larger dataset.
+#Canidates for larger datasets include 3-4 dimensional datasets where the columns are highly corelated and 
+#and those four columns alone equate to 1+ GB of data. Currently yellow_tripdata_2025_combined.parquet is large but 
+#when only using the first 3-4 columns, the dataset is fairly small.
+
 set -euo pipefail
 
 #Dataset and fileID from Google drive
@@ -46,7 +51,8 @@ ensure_gdown() {
     fi
 }
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="${ROOT_DIR%/tools*}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd )"
+ROOT_DIR="${SCRIPT_DIR%/tools*}"
 . "$ROOT_DIR/tools/utils/import.sh"
 import utils/common_func.sh
 
@@ -55,7 +61,14 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-VENV_DIR=".venv"
+CSV_TO_PARQUET="$SCRIPT_DIR/csv_to_parquet.py"
+COMBINE_TAXI="$SCRIPT_DIR/combine_taxi_datasets.py"
+if [[ ! -f "$CSV_TO_PARQUET" || ! -f "$COMBINE_TAXI" ]]; then
+    log_error "Missing $CSV_TO_PARQUET or $COMBINE_TAXI"
+    exit 1
+fi
+
+VENV_DIR="$SCRIPT_DIR/.venv"
 
 if [ ! -d "$VENV_DIR" ];then
 
@@ -69,6 +82,7 @@ if [ ! -d "$VENV_DIR" ];then
 fi
 
 source "$VENV_DIR/bin/activate"
+VENV_PYTHON="$VENV_DIR/bin/python"
 
 BENCH_DATA_DIR="$1"
 mkdir -p "$BENCH_DATA_DIR"
@@ -117,18 +131,12 @@ for month in {01..12}; do
     curl -L -o "$BENCH_DATA_DIR/yellow_tripdata_2025-${month}.parquet" "$url"
 done
 
-#format or combine datasets 
-if python3 -c "import pandas" &> /dev/null; then
-    python3 csv_to_parquet.py "$BENCH_DATA_DIR"
-    python3 combine_taxi_datasets.py "$BENCH_DATA_DIR"
-else
-    sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        python3-pip python3-dev
-    pip3 install --no-cache-dir pandas pyarrow
-    python3 csv_to_parquet.py "$BENCH_DATA_DIR"
-    python3 combine_taxi_datasets.py "$BENCH_DATA_DIR"
-
+# format or combine datasets (absolute paths — safe from any CWD)
+if ! "$VENV_PYTHON" -c "import pandas, pyarrow" &> /dev/null; then
+    "$VENV_PYTHON" -m pip install --upgrade pip
+    "$VENV_PYTHON" -m pip install --no-cache-dir pandas pyarrow
 fi
+"$VENV_PYTHON" "$CSV_TO_PARQUET" "$BENCH_DATA_DIR"
+"$VENV_PYTHON" "$COMBINE_TAXI" "$BENCH_DATA_DIR"
 
 echo "retrieved datasets"
